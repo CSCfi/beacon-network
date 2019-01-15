@@ -1,0 +1,6 @@
+asyncio
+aiohttp
+aiohttp_cors
+uvloop
+asyncpg
+jsonschema==3.0.0a3

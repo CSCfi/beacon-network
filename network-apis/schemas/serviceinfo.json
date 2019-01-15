@@ -1,0 +1,98 @@
+{
+  "definitions": {},
+  "type": "object",
+  "title": "The Root Schema",
+  "required": [
+    "id",
+    "name",
+    "serviceType",
+    "apiVersion",
+    "serviceUrl",
+    "organization",
+    "publicKey",
+    "open"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "serviceType": {
+      "type": "string",
+      "enum": [
+        "GA4GHBeacon",
+        "GA4GHBeaconAggregator",
+        "GA4GHRegistry"
+      ]
+    },
+    "apiVersion": {
+      "type": "string"
+    },
+    "serviceUrl": {
+      "type": "string"
+    },
+    "organization": {
+      "type": "object",
+      "required": [
+        "id",
+        "name"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string",
+          "default": ""
+        },
+        "address": {
+          "type": "string",
+          "default": ""
+        },
+        "welcomeUrl": {
+          "type": "string",
+          "default": ""
+        },
+        "contactUrl": {
+          "type": "string",
+          "default": ""
+        },
+        "logoUrl": {
+          "type": "string",
+          "default": ""
+        },
+        "info": {
+          "type": "object",
+          "default": {}
+        }
+      }
+    },
+    "description": {
+      "type": "string",
+      "default": ""
+    },
+    "version": {
+      "type": "string",
+      "default": ""
+    },
+    "publicKey": {
+      "type": "string"
+    },
+    "open": {
+      "type": "boolean"
+    },
+    "welcomeUrl": {
+      "type": "string",
+      "default": ""
+    },
+    "alternativeUrl": {
+      "type": "string",
+      "default": ""
+    }
+  }
+}

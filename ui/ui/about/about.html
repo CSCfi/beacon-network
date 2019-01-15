@@ -1,0 +1,142 @@
+<div id="beaconLogin" id="popupContainer">
+  <a href="#!/view">
+    <md-button class="md-raised md-primary">
+      <i class="fas fa-hand-point-left"></i>
+      Go Back
+    </md-button>
+  </a>
+  <span ng-if="checkLogin()">
+    <a ng-if="checkLogin() && !checkBonaFide()" href="https://www.elixir-europe.org/services/compute/aai/bonafide" class="btn btn-info" tabindex="-1" role="button" aria-disabled="true"><i class="fas fa-hand-point-right"></i> Discover more as Bona
+      Fide!</a>
+    <a ng-if="checkLogin() && checkBonaFide()" href="#" class="btn btn-success disabled" tabindex="-1" role="button" aria-disabled="true">Bona Fide</a>
+    <a ng-if="checkLogin()" href="#" class="btn btn-primary disabled" tabindex="-1" role="button" aria-disabled="true">User Authenticated</a>
+  </span>
+  <span ng-if="!checkLogin()">
+    <a href="https://beacon-auth-beacon.rahtiapp.fi/app">
+      <img width="150" src="assets/elixir-login-new.png" title="ELIXIR AAI" />
+    </a>
+  </span>
+</div>
+<div id="beaconLogo">
+  <a href="#"><img id="logo" src="assets/beacon-small-3.png" /></a>
+</div>
+<div class="row result-row">
+  <md-card class="resultCard">
+    <md-card-header class="cardItem" id="topCard">
+      <md-card-header-text>
+        <span class="md-title">Connected Beacons</span>
+      </md-card-header-text>
+    </md-card-header>
+    <div class="cardItem">
+      <md-card-content>
+        Beacons that are connected to the aggregator behind this UI.
+        <ul>
+          <li><a href="https://beaconpy-elixirbeacon.rahtiapp.fi/">ELIXIR Finland</a> (CSC)</li>
+          <li><a href="https://swefreq-dev.nbis.se/api/beacon-elixir/">ELIXIR Sweden</a> (NBIS)</li>
+          <li><a href="https://beacon.progenetix.org/beaconplus-server/beaconresponse.cgi">Progenetix Beacon+</a></li>
+        </ul>
+      </md-card-content>
+    </div>
+    <md-card-actions layout="column" layout-align="start" class="cardItem">
+    </md-card-actions>
+  </md-card>
+  <md-card class="resultCard">
+    <md-card-header class="cardItem" id="topCard">
+      <md-card-header-text>
+        <span class="md-title">About Beacon</span>
+      </md-card-header-text>
+    </md-card-header>
+    <div class="cardItem">
+      <md-card-content>
+          The Beacon project was launched in 2014 to show the willingness of researchers to enable the secure sharing of genomic data from participants of genomic studies. Beacons are web-servers that answer questions such as <i>Does your dataset include a genome that has a specific nucleotide (e.g. G) at a specific genomic coordinate (e.g. Chr.1 position 111,111)?</i> to which the Beacon must respond with yes or no, without referring to a specific individual.
+      </md-card-content>
+      <md-card-content>
+          <a href="https://beacon-project.io/">Beacon Project</a>
+      </md-card-content>
+    </div>
+    <md-card-actions layout="column" layout-align="start" class="cardItem">
+    </md-card-actions>
+  </md-card>
+  <md-card class="resultCard">
+    <md-card-header class="cardItem" id="topCard">
+      <md-card-header-text>
+        <span class="md-title">ELIXIR Beacon Network</span>
+      </md-card-header-text>
+    </md-card-header>
+    <div class="cardItem">
+      <md-card-content>
+        These Beacon services are developed by CSC - IT Center for Science Ltd. in Finland. CSC is hosting ELIXIR Finland node as part of the European ELIXIR infrastructure.
+      </md-card-content>
+      <hr />
+      <md-card-content>
+        <span class="md-title">Beacon UI</span>
+        Beacon UI <i>also Beacon Network</i> is a graphical user interface that is connected to one or many Beacon Aggregators. Beacon UI's role is to offer an easy-to-approach application for the discovery of genomic datasets.
+      </md-card-content>
+      <md-card-content>
+        Beacon UI is developed as open source. The repository is available <a href="https://github.com/CSCfi/beacon-openshift/tree/master/beacon-ui">here</a>.
+      </md-card-content>
+      <hr />
+      <md-card-content>
+        <span class="md-title">Beacon Aggregator</span>
+        Beacon Aggregator is a proxy service that broadens the user's search area. Beacon Aggregators maintain a list of known Beacon services that may be queried to find genomic datasets. The aggregator works in an asynchronous manner utilising websockets.
+      </md-card-content>
+      <md-card-content>
+        Beacon Aggregator is developed as open source. The repository is available <a href="https://github.com/CSCfi/beacon-openshift/tree/master/beacon_aggregator">here</a>.
+      </md-card-content>
+      <hr />
+      <md-card-content>
+        <span class="md-title">Beacon API</span>
+        Beacon API is a discovery service that can be used to find genomic datasets. Queries are structured from defined variants that the user wishes to find. Example queries can be seen below.
+      </md-card-content>
+      <md-card-content>
+        Beacon API is developed as open source. The repository is available <a href="https://github.com/CSCfi/beacon-python/">here</a>.
+      </md-card-content>
+    </div>
+    <md-card-actions layout="column" layout-align="start" class="cardItem">
+    </md-card-actions>
+  </md-card>
+  <md-card class="resultCard">
+    <md-card-header class="cardItem" id="topCard">
+      <md-card-header-text>
+        <span class="md-title">How to use Beacon</span>
+      </md-card-header-text>
+    </md-card-header>
+    <div class="cardItem">
+      <md-card-content>
+        <span class="md-title">Beacon UI</span>
+        The Beacon UI searchbar is a simple form with two options: selection of assembly and definition of variant. The assembly can be selected from the dropdown menu on the left side, currently supporting assemblies GRCh37 and GRCh38. The searchbar then takes the desired variant information as a search term which will be queried for in the dataset database.
+      </md-card-content>
+      <md-card-content>
+        The search structure follows a strict convention of {CHROMOSOME} : {CHROMOSOMAL POSITION} {REFERENCE BASES} > {ALTERNATE BASES | VARIANT TYPE}. Note that the UI uses an adaptive coordinate system (0-1-based), while the API uses 0-based (interbase) coordinate system.
+      </md-card-content>
+      <md-card-content>
+        Example query: <i>I want to find a genomic dataset which has samples of insertion type variants in chromosome 1 at position 104431390 where the reference base is C.</i> This would transform into the following statement in the searchbar: 1 : 104431390 C > INS.
+      </md-card-content>
+      <md-card-content>
+        Example query: <i>I want to find a genomic dataset which has samples of single nucleotide polymorphism type of variant in the mitochondrial chromosome at position 7600 where the reference base is G and the alternate base is A.</i> This would transform into the following statement in the searchbar: MT : 7600 G > A.
+      </md-card-content>
+      <md-card-content>
+        Example query: <i>I want to find a genomic dataset which has samples of multiple nucleotide polymorphism type of variant in the mitochondrial chromosome at position 195 where the reference base is TTACTAAAGT and the alternate base is of same length, ending in GT, but having any variations of bases in the preceding bases.</i> In such cases, where the bases are unknown, we can use a wildcard <i>N</i> to denote the existence of an unknown nucleotide. This would transform into the following statement in the searchbar: MT : 195 TTACTAAAGT > NNNNNNNNGT.
+      </md-card-content>
+      <md-card-content>
+        Try them out in the searchbar!
+      </md-card-content>
+      <hr />
+      <md-card-content>
+        <span class="md-title">Beacon API</span>
+        The Beacon API can be utilised by advanced users, as it has more options available compared to the Beacon UI searchbar, e.g. region queries instead of exact positions. For full Beacon API usage, please consult the <a href="https://app.swaggerhub.com/apis-docs/ELIXIR-Finland/ga-4_gh_beacon_api_specification/1.0.0-rc1">Beacon API specification</a>.
+      </md-card-content>
+      <md-card-content>
+        Example manual usage of the Beacon API, using the ELIXIR Finland Beacon by CSC (values taken from the first two examples in the previous Beacon UI example paragraph). Note that the API uses 0-based (interbase) coordinate system, while the UI uses an adaptive 0-1-based coordinate system.
+      </md-card-content>
+      <md-card-content>
+        <a href="https://beaconpy-elixirbeacon.rahtiapp.fi/query?assemblyId=GRCh38&referenceName=1&start=104431389&referenceBases=C&variantType=INS&includeDatasetResponses=HIT">https://beaconpy-elixirbeacon.rahtiapp.fi/query?assemblyId=GRCh38&referenceName=1&start=104431389&referenceBases=C&variantType=INS</a>
+      </md-card-content>
+      <md-card-content>
+        <a href="https://beaconpy-elixirbeacon.rahtiapp.fi/query?assemblyId=GRCh38&referenceName=MT&start=7599&referenceBases=G&alternateBases=A&includeDatasetResponses=HIT">https://beaconpy-elixirbeacon.rahtiapp.fi/query?assemblyId=GRCh38&referenceName=MT&start=7599&referenceBases=G&alternateBases=A</a>
+      </md-card-content>
+    </div>
+    <md-card-actions layout="column" layout-align="start" class="cardItem">
+    </md-card-actions>
+  </md-card>
+</div>
