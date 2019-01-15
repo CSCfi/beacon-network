@@ -72,12 +72,10 @@ async def query_service(service, params, access_token, ws=None):
                                    params=params,
                                    ssl=os.environ.get('HTTPS_ONLY', False),
                                    headers=headers) as response:
-                LOG.debug(response)
                 # On successful response, forward response
                 if response.status == 200:
                     result = await response.json()
-                    LOG.debug(result)
-                    if ws:
+                    if isinstance(ws, web.WebSocketResponse):
                         # Send result to websocket (if using websockets)
                         return await ws.send_str(json.dumps(result))
                     else:
@@ -85,14 +83,13 @@ async def query_service(service, params, access_token, ws=None):
                         return result
                 else:
                     # HTTP errors
+                    error = {"service": service,
+                             "queryParams": params,
+                             "responseStatus": response.status}
                     if ws:
-                        return await ws.send_str(json.dumps(str({"service": service,
-                                                                 "queryParams": params,
-                                                                 "responseStatus": response.status})))
+                        return await ws.send_str(json.dumps(str(error)))
                     else:
-                        return {"service": service,
-                                "queryParams": params,
-                                "responseStatus": response.status}
+                        return error
 
         except Exception as e:
             LOG.debug(f'Query error {e}.')
