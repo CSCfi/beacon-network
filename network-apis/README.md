@@ -1,3 +1,0 @@
-# Beacon Network APIs
-
-WIP
