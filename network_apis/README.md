@@ -11,13 +11,13 @@ It is recommended to set up a containerised database for services in case of mul
 Database connection credentials for both the Registry and Aggregator services can be changed at the [configuration file](/network_apis/config/config.ini). Using the example values, to set up a database for the Registry service:
 ```
 cd db
-docker run -e POSTGRES_USER=reg_user -e POSTGRES_PASSWORD=reg_pass -e POSTGRES_DB=reg_db -v "$PWD"/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/ -p 5438:5432 postgres:9.6
+docker run -d -e POSTGRES_USER=reg_user -e POSTGRES_PASSWORD=reg_pass -e POSTGRES_DB=reg_db -v "$PWD"/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/ -p 5438:5432 postgres:9.6
 ```
 
 Using the same command, but changing the port for the Aggregator service:
 ```
 cd db
-docker run -e POSTGRES_USER=reg_user -e POSTGRES_PASSWORD=reg_pass -e POSTGRES_DB=reg_db -v "$PWD"/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/ -p 5439:5432 postgres:9.6
+docker run -d -e POSTGRES_USER=agg_user -e POSTGRES_PASSWORD=agg_pass -e POSTGRES_DB=agg_db -v "$PWD"/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/ -p 5439:5432 postgres:9.6
 ```
 
 Now Registry DB should be available at `localhost:5438` and Aggregator DB should be available at `localhost:5439`.
@@ -52,6 +52,43 @@ curl -X POST \
   -d '{
     "id": "org.ga4gh.registry",
     "name": "ELIXIR Beacon Registry",
+    "serviceType": "GA4GHRegistry",
+    "serviceUrl": "https://example.org/service",
+    "open": true,
+    "apiVersion": "0.1",
+    "organization": {
+        "id": "org.ga4gh",
+        "name": "Global Alliance for Genomic Health",
+        "description": "Enabling responsible genomic data sharing for the benefit of human health.",
+        "address": "Netstreet 100, Internet, Webland",
+        "welcomeUrl": "https://ga4gh.org/",
+        "contactUrl": "https://ga4gh.org/contactus/",
+        "logoUrl": "https://www.ga4gh.org/wp-content/themes/ga4gh-theme/gfx/GA-logo-footer.png",
+        "info": {
+            "agenda": "Global Health",
+            "affiliation": "The World"
+        }
+    },
+    "description": "Beacon Registry service for ELIXIR node",
+    "version": "1.0.0",
+    "publicKey": "string",
+    "welcomeUrl": "https://example.org/home",
+    "alternativeUrl": "https://example.org/internal"
+}'
+
+# RESPONSE:
+Service has been registered. Service key for updating and deleting registration, keep it safe: {SECRET_KEY}
+```
+`POST /services` returns a service key that the registrar should keep safe for updating and deleting the service details.
+
+Updating service details, in this case, changing service id and name. The service key should be given in the `Beacon-Service-Key` header.
+```
+curl -X PUT \
+  http://localhost:3000/services/org.ga4gh.registry \
+  -H 'Beacon-Service-Key: {SECRET_KEY}' \
+  -d '{
+    "id": "org.ga4gh.registry-new",
+    "name": "ELIXIR Central Registry",
     "serviceType": "GA4GHRegistry",
     "serviceUrl": "https://example.org/service",
     "open": true,

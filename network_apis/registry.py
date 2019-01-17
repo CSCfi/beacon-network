@@ -59,10 +59,10 @@ async def services_post(request):
     db_pool = request.app['pool']
 
     # Send request for processing
-    await register_service(request, db_pool)
+    service_key = await register_service(request, db_pool)
 
-    # Return confirmation if no problems occurred during processing
-    return web.HTTPCreated(text='Service was registered.')
+    # Return confirmation and service key if no problems occurred during processing
+    return web.HTTPCreated(text=f'Service has been registered. Service key for updating and deleting registration, keep it safe: {service_key}')
 
 
 @routes.get('/services')

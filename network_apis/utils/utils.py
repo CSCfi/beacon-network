@@ -2,13 +2,58 @@
 
 import os
 import json
+import secrets
 
 import aiohttp
 
 from aiohttp import web
 
 from .logging import LOG
-from .db_ops import db_get_service_urls
+# from .db_ops import db_get_service_urls
+
+
+async def construct_json(data, model=None, list_format='full'):
+    """Construct proper JSON response from dictionary data."""
+    LOG.debug('Construct JSON response from DB record.')
+    # Minimal body when list_format='short'
+    response = {
+        "id": data.get('ser_id', ''),
+        "name": data.get('ser_name', ''),
+        "serviceType": data.get('ser_service_type', ''),
+        "serviceUrl": data.get('ser_service_url', ''),
+        "open": data.get('ser_open', '')
+    }
+
+    if list_format == 'full':
+        # if list_format='full' or not specified -> defaults to full
+        # update response to include all keys
+        response.update(
+            {
+                "apiVersion": data.get('ser_api_version', ''),
+                "organization": {
+                    "id": data.get('org_id', ''),
+                    "name": data.get('org_name', ''),
+                    "description": data.get('org_description', ''),
+                    "address": data.get('org_address', ''),
+                    "welcomeUrl": data.get('org_welcome_url', ''),
+                    "contactUrl": data.get('org_contact_url', ''),
+                    "logoUrl": data.get('org_logo_url', ''),
+                    "info": {}
+                },
+                "description": data.get('ser_description', ''),
+                "version": data.get('ser_service_version', ''),
+                "publicKey": data.get('ser_public_key', ''),
+                "welcomeUrl": data.get('ser_welcome_url', ''),
+                "alternativeUrl": data.get('ser_alt_url', ''),
+                "createDateTime": str(data.get('ser_createtime', '')),
+                "updateDateTime": str(data.get('ser_updatetime', ''))
+            }
+        )
+        if 'info' in data:
+            # Load the jsonb string into a dict and update the info-key
+            response['organization']['info'].update(json.loads(data.get('org_info', '')))
+
+    return response
 
 
 async def query_params(request):
@@ -20,6 +65,12 @@ async def query_params(request):
     # Path param
     service_id = request.match_info.get('service_id', None)
     return service_id, params
+
+
+async def fetch_service_key(request):
+    """Fetch service key from headers."""
+    LOG.debug('Fetch service key.')
+    return request.headers.get('Beacon-Service-Key')
 
 
 async def get_access_token(request):
@@ -94,3 +145,9 @@ async def query_service(service, params, access_token, ws=None):
         except Exception as e:
             LOG.debug(f'Query error {e}.')
             web.HTTPInternalServerError(text=f'An error occurred while attempting to query services: {e}')
+
+
+async def generate_service_key():
+    """Generate a service key."""
+    LOG.debug('Generate service key.')
+    return secrets.token_urlsafe(64)

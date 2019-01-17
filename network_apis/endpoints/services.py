@@ -3,8 +3,8 @@
 from aiohttp import web
 
 from utils.logging import LOG
-from utils.db_ops import db_check_service_id, db_register_service, db_get_service_details, db_delete_services, db_update_sequence
-from utils.utils import query_params
+from utils.db_ops import db_check_service_id, db_register_service, db_get_service_details, db_delete_services, db_update_sequence, db_verify_service_key
+from utils.utils import query_params, fetch_service_key
 
 
 async def register_service(request, db_pool):
@@ -20,9 +20,8 @@ async def register_service(request, db_pool):
         if id_taken:
             raise web.HTTPConflict(text='Service ID is taken.')
         # Register service to host
-        await db_register_service(connection, service)
-
-    return True
+        service_key = await db_register_service(connection, service)
+        return service_key
 
 
 async def get_services(request, db_pool):
@@ -52,20 +51,28 @@ async def update_service(request, db_pool):
 
     # Parse query params from path, mainly service_id
     service_id, params = await query_params(request)
+    # Fetch service key from header
+    service_key = await fetch_service_key(request)
 
-    # Take connection from the database pool
-    async with db_pool.acquire() as connection:
-        # If user gave service ID, start processes
-        if service_id:
-            # Verify that given service exists
-            id_found_service = await db_check_service_id(connection, service_id)
-            if not id_found_service:
-                raise web.HTTPNotFound(text='No services found with given service ID.')
-            # Service ID exists, initiate update sequence
-            await db_update_sequence(connection, service_id, service)
-        # User didn't give service ID in path -> 400 BadRequest
+    # Check that user specified id in path
+    if service_id:
+        # Check that user provided service key
+        if service_key:
+            # Take connection from the database pool
+            async with db_pool.acquire() as connection:
+                # Verify that given service exists
+                id_found_service = await db_check_service_id(connection, service_id)
+                if not id_found_service:
+                    raise web.HTTPNotFound(text='No services found with given service ID.')
+                # Verify that provided service key is authorised
+                await db_verify_service_key(connection, service_id, service_key)
+                # Service ID exists and service key is authorised, initiate update sequence
+                await db_update_sequence(connection, service_id, service)
+                # User didn't give service ID in path -> 400 BadRequest
         else:
-            raise web.HTTPBadRequest(text='Missing path parameter Service ID: "/services/<service_id>"')
+            raise web.HTTPBadRequest(text='Missing header Beacon-Service-Key.')
+    else:
+        raise web.HTTPBadRequest(text='Missing path parameter Service ID: "/services/<service_id>"')
 
 
 async def delete_services(request, db_pool):
@@ -74,16 +81,24 @@ async def delete_services(request, db_pool):
 
     # Parse query params from path, mainly service_id
     service_id, params = await query_params(request)
+    # Fetch service key from header
+    service_key = await fetch_service_key(request)
 
-    # Take connection from the database pool
-    async with db_pool.acquire() as connection:
-        # Delete specified service
-        if service_id:
+    # Delete specified service
+    if service_id:
+        # Take connection from the database pool
+        async with db_pool.acquire() as connection:
+            # # Delete specified service
+            # if service_id:
             # Verify that given service_id exists
             id_found = await db_check_service_id(connection, service_id)
             if not id_found:
                 raise web.HTTPNotFound(text='No services found with given service ID.')
+            # Verify that provided service key is authorised
+            await db_verify_service_key(connection, service_id, service_key)
             await db_delete_services(connection, id=service_id)
-        # Delete all services
-        else:
-            await db_delete_services(connection)
+            # # Delete all services
+            # else:
+            #     await db_delete_services(connection)
+    else:
+        raise web.HTTPForbidden(text='Mass deletion has been disabled.')

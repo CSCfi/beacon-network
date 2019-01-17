@@ -31,6 +31,13 @@ CREATE TABLE IF NOT EXISTS services (
     FOREIGN KEY (host_org) REFERENCES organisations (id)
 );
 
+CREATE TABLE service_keys (
+    service_id VARCHAR(64),
+    service_key VARCHAR(128)
+);
+
+CREATE UNIQUE INDEX unique_service ON service_keys (service_id);
+
 /* NOT IMPLEMENTED */
 
 -- CREATE TABLE IF NOT EXISTS networks (

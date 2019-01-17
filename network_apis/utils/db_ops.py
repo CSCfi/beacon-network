@@ -5,6 +5,7 @@ import json
 from aiohttp import web
 
 from .logging import LOG
+from .utils import construct_json, generate_service_key
 
 """COMMON"""
 
@@ -63,6 +64,40 @@ async def db_register_organisation(connection, organisation):
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to register organisation.')
 
 
+async def db_store_service_key(connection, id, service_key):
+    """Store generated service key."""
+    LOG.debug('Store service key.')
+    try:
+        # Database commit occurs on transaction closure
+        async with connection.transaction():
+            await connection.execute(f"""INSERT INTO service_keys (service_id, service_key)
+                                         VALUES ($1, $2)""",
+                                         id, service_key)
+    except Exception as e:
+        LOG.debug(f'DB error: {e}')
+        raise web.HTTPInternalServerError(text='Database error occurred while attempting to store service key.')
+
+
+async def db_update_service_key(connection, old_id, new_id):
+    """Update stored service key's service id."""
+    LOG.debug('Update service key\'s service id.')
+    try:
+        await connection.execute(f"""UPDATE service_keys SET service_id='{new_id}' WHERE service_id='{old_id}'""")
+    except Exception as e:
+        LOG.debug(f'DB error: {e}')
+        raise web.HTTPInternalServerError(text='Database error occurred while attempting to update service key\'s service id.')
+
+
+async def db_delete_service_key(connection, id):
+    """Delete stored service key."""
+    LOG.debug('Delete service key.')
+    try:
+        await connection.execute(f"""DELETE FROM service_keys WHERE service_id='{id}'""")
+    except Exception as e:
+        LOG.debug(f'DB error: {e}')
+        raise web.HTTPInternalServerError(text='Database error occurred while attempting to delete service key.')
+
+
 async def db_register_service(connection, service):
     """Register new service at host."""
     LOG.debug('Register new service.')
@@ -78,56 +113,14 @@ async def db_register_service(connection, service):
                                          service['id'], service['name'], service['serviceType'], service['apiVersion'], service['serviceUrl'],
                                          service['organization']['id'], service.get('description', ''), service.get('version', ''), service['publicKey'],
                                          service['open'], service.get('welcomeUrl', ''), service.get('alternativeUrl', ''))
-            return True
+            # If service registration was successful, generate and store a service key
+            service_key = await generate_service_key()
+            await db_store_service_key(connection, service['id'], service_key)
+            return service_key  # return service key to registrar for later use
 
     except Exception as e:
         LOG.debug(f'DB error: {e}')
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to register service.')
-
-
-async def construct_json(data, model=None, list_format='full'):
-    """Construct proper JSON response from dictionary data."""
-    LOG.debug('Construct JSON response from DB record.')
-    LOG.debug(data)
-    # Minimal body when list_format='short'
-    response = {
-        "id": data.get('ser_id', ''),
-        "name": data.get('ser_name', ''),
-        "serviceType": data.get('ser_service_type', ''),
-        "serviceUrl": data.get('ser_service_url', ''),
-        "open": data.get('ser_open', '')
-    }
-
-    if list_format == 'full':
-        # if list_format='full' or not specified -> defaults to full
-        # update response to include all keys
-        response.update(
-            {
-                "apiVersion": data.get('ser_api_version', ''),
-                "organization": {
-                    "id": data.get('org_id', ''),
-                    "name": data.get('org_name', ''),
-                    "description": data.get('org_description', ''),
-                    "address": data.get('org_address', ''),
-                    "welcomeUrl": data.get('org_welcome_url', ''),
-                    "contactUrl": data.get('org_contact_url', ''),
-                    "logoUrl": data.get('org_logo_url', ''),
-                    "info": {}
-                },
-                "description": data.get('ser_description', ''),
-                "version": data.get('ser_service_version', ''),
-                "publicKey": data.get('ser_public_key', ''),
-                "welcomeUrl": data.get('ser_welcome_url', ''),
-                "alternativeUrl": data.get('ser_alt_url', ''),
-                "createDateTime": str(data.get('ser_createtime', '')),
-                "updateDateTime": str(data.get('ser_updatetime', ''))
-            }
-        )
-        if 'info' in data:
-            # Load the jsonb string into a dict and update the info-key
-            response['organization']['info'].update(json.loads(data.get('org_info', '')))
-
-    return response
 
 
 async def db_get_service_details(connection, id=None, service_type=None, api_version=None, list_format='full'):
@@ -188,6 +181,7 @@ async def db_delete_services(connection, id=None):
     LOG.debug('Delete service(s).')
     try:
         await connection.execute(f"""DELETE FROM services {"WHERE id='" + id + "'" if id else ''}""")
+        await db_delete_service_key(connection, id)
     except Exception as e:
         LOG.debug(f'DB error: {e}')
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to delete service(s).')
@@ -252,6 +246,23 @@ async def db_update_sequence(connection, id, updates):
         # Update organisation first, because service has foreign key on organisation
         await db_update_organisation(connection, id, updates['organization'])
         await db_update_service(connection, id, updates)
+        await db_update_service_key(connection, id, updates['id'])
+
+
+async def db_verify_service_key(connection, service_id, service_key):
+    """Check if service id exists."""
+    LOG.debug('Querying database to verify service key.')
+    try:
+        # Database query
+        query = f"""SELECT * FROM service_keys WHERE service_id='{service_id}' AND service_key='{service_key}'"""
+        statement = await connection.prepare(query)
+        response = await statement.fetch()
+    except Exception as e:
+        LOG.debug(f'DB error: {e}')
+        raise web.HTTPInternalServerError(text='Database error occurred while attempting to verify availability of service ID.')
+    else:
+        if len(response) == 0:
+            raise web.HTTPUnauthorized(text='Unauthorised service key.')
 
 
 """AGGREGATOR SPECIFIC"""
