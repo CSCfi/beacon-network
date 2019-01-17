@@ -97,6 +97,28 @@ async def get_access_token(request):
     return access_token
 
 
+# db function temporarily placed here due to import-loop issues
+async def db_get_service_urls(connection):
+    """Return queryable service urls."""
+    LOG.debug('Querying database for service urls.')
+    service_urls = []
+    try:
+        # Database query
+        query = f"""SELECT service_url FROM services WHERE service_type='GA4GHBeacon' OR service_type='GA4GHBeaconAggregator'"""
+        statement = await connection.prepare(query)
+        response = await statement.fetch()
+        if len(response) > 0:
+            # Parse urls from psql records and append to list
+            for record in response:
+                service_urls.append(record['service_url'])
+            return service_urls
+        else:
+            raise web.HTTPNotFound(text='No queryable services found.')
+    except Exception as e:
+        LOG.debug(f'DB error: {e}')
+        raise web.HTTPInternalServerError(text='Database error occurred while attempting to fetch service urls.')
+
+
 async def get_services(db_pool):
     """Return service urls."""
     LOG.debug('Fetch service urls.')
