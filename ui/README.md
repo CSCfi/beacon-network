@@ -108,4 +108,7 @@ Run the created container:
 ```
 docker run -p 8080:8080 beacon_auth
 ```
+
+#### Important
+The beacon auth -app relies on an active ELIXIR AAI registration. New clients can be registered at [ELIXIR CZ](https://login.elixir-czech.org/oidc).
 </details>

@@ -14,7 +14,6 @@ from schemas import load_schema
 from utils.validate import validate
 from utils.db_pool import init_db_pool
 from utils.logging import LOG
-
 from config import CONFIG
 
 routes = web.RouteTableDef()

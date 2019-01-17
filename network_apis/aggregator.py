@@ -10,13 +10,12 @@ from aiohttp import web
 from endpoints.info import get_info
 from endpoints.service_types import get_service_types
 from endpoints.services import register_service, get_services, update_service, delete_services
+from endpoints.query import send_beacon_query, send_beacon_query_websocket
 from schemas import load_schema
 from utils.validate import validate
 from utils.db_pool import init_db_pool
 from utils.logging import LOG
-
 from config import CONFIG
-from endpoints.query import send_beacon_query, send_beacon_query_websocket
 
 routes = web.RouteTableDef()
 
