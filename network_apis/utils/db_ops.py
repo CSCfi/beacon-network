@@ -53,9 +53,9 @@ async def db_register_organisation(connection, organisation):
                                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                                      ON CONFLICT (id) DO NOTHING""",
                                      organisation['id'], organisation['name'],
-                                     organisation.get('description'), organisation.get('address'),
-                                     organisation.get('welcomeUrl'), organisation.get('contactUrl'),
-                                     organisation.get('logoUrl'), json.dumps(organisation.get('info')))
+                                     organisation.get('description', ''), organisation.get('address', ''),
+                                     organisation.get('welcomeUrl', ''), organisation.get('contactUrl', ''),
+                                     organisation.get('logoUrl', ''), json.dumps(organisation.get('info', '')))
         return True
 
     except Exception as e:
@@ -76,8 +76,8 @@ async def db_register_service(connection, service):
                                          service_version, public_key, open, welcome_url, alt_url, create_datetime, update_datetime)
                                          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())""",
                                          service['id'], service['name'], service['serviceType'], service['apiVersion'], service['serviceUrl'],
-                                         service['organization']['id'], service.get('description'), service.get('version'), service['publicKey'],
-                                         service['open'], service.get('welcomeUrl'), service.get('alternativeUrl'))
+                                         service['organization']['id'], service.get('description', ''), service.get('version', ''), service['publicKey'],
+                                         service['open'], service.get('welcomeUrl', ''), service.get('alternativeUrl', ''))
             return True
 
     except Exception as e:
@@ -88,6 +88,7 @@ async def db_register_service(connection, service):
 async def construct_json(data, model=None, list_format='full'):
     """Construct proper JSON response from dictionary data."""
     LOG.debug('Construct JSON response from DB record.')
+    LOG.debug(data)
     # Minimal body when list_format='short'
     response = {
         "id": data.get('ser_id', ''),
@@ -122,8 +123,9 @@ async def construct_json(data, model=None, list_format='full'):
                 "updateDateTime": str(data.get('ser_updatetime', ''))
             }
         )
-        # Load the jsonb string into a dict and update the info-key
-        response['organization']['info'].update(json.loads(data.get('org_info', '')))
+        if 'info' in data:
+            # Load the jsonb string into a dict and update the info-key
+            response['organization']['info'].update(json.loads(data.get('org_info', '')))
 
     return response
 
@@ -133,49 +135,49 @@ async def db_get_service_details(connection, id=None, service_type=None, api_ver
     LOG.debug('Get service details.')
     services = []
 
-    try:
-        # Database query
-        query = ''
-        if list_format == 'short':
-            # Minimal query
-            query = f"""SELECT id AS ser_id, name AS ser_name, service_type AS ser_service_type,
-                        service_url AS ser_service_url, open AS ser_open
-                        FROM services
-                        WHERE
-                        {"id='" + id + "'" if id else 'TRUE'} AND
-                        {"service_type='" + service_type + "'" if service_type else 'TRUE'} AND
-                        {"api_version='" + api_version + "'" if api_version else 'TRUE'}"""
-        else:
-            # Full query (default)
-            query = f"""SELECT s.id AS ser_id, s.name AS ser_name, s.service_type AS ser_service_type, s.api_version AS ser_api_version,
-                        s.service_url AS ser_service_url, s.host_org AS ser_host_org, s.description AS ser_description,
-                        s.service_version AS ser_service_version, s.public_key AS ser_public_key, s.open AS ser_open,
-                        s.welcome_url AS ser_welcome_url, s.alt_url AS ser_alt_url, s.create_datetime AS ser_createtime,
-                        s.update_datetime AS ser_updatetime, o.id AS org_id, o.name AS org_name, o.description AS org_description,
-                        o.address AS org_address, o.welcome_url AS org_welcome_url, o.contact_url AS org_contact_url,
-                        o.logo_url AS org_logo_url, o.info AS org_info
-                        FROM services s, organisations o
-                        WHERE
-                        {"s.id='" + id + "'" if id else 'TRUE'} AND
-                        {"s.service_type='" + service_type + "'" if service_type else 'TRUE'} AND
-                        {"s.api_version='" + api_version + "'" if api_version else 'TRUE'} AND
-                        s.host_org=o.id"""
-        statement = await connection.prepare(query)
-        response = await statement.fetch()
-        if len(response) > 0:
-            for record in response:
-                # Build JSON response
-                service = await construct_json(record, list_format=list_format)
-                if id:
-                    # If user specified ID, database gave a single response -> return it
-                    return service
-                else:
-                    # If user didn't specify ID, get all services -> combine all and return
-                    services.append(service)
-            return services
-    except Exception as e:
-        LOG.debug(f'DB error: {e}')
-        raise web.HTTPInternalServerError(text='Database error occurred while attempting to get service details.')
+    # try:
+    # Database query
+    query = ''
+    if list_format == 'short':
+        # Minimal query
+        query = f"""SELECT id AS ser_id, name AS ser_name, service_type AS ser_service_type,
+                    service_url AS ser_service_url, open AS ser_open
+                    FROM services
+                    WHERE
+                    {"id='" + id + "'" if id else 'TRUE'} AND
+                    {"service_type='" + service_type + "'" if service_type else 'TRUE'} AND
+                    {"api_version='" + api_version + "'" if api_version else 'TRUE'}"""
+    else:
+        # Full query (default)
+        query = f"""SELECT s.id AS ser_id, s.name AS ser_name, s.service_type AS ser_service_type, s.api_version AS ser_api_version,
+                    s.service_url AS ser_service_url, s.host_org AS ser_host_org, s.description AS ser_description,
+                    s.service_version AS ser_service_version, s.public_key AS ser_public_key, s.open AS ser_open,
+                    s.welcome_url AS ser_welcome_url, s.alt_url AS ser_alt_url, s.create_datetime AS ser_createtime,
+                    s.update_datetime AS ser_updatetime, o.id AS org_id, o.name AS org_name, o.description AS org_description,
+                    o.address AS org_address, o.welcome_url AS org_welcome_url, o.contact_url AS org_contact_url,
+                    o.logo_url AS org_logo_url, o.info AS org_info
+                    FROM services s, organisations o
+                    WHERE
+                    {"s.id='" + id + "'" if id else 'TRUE'} AND
+                    {"s.service_type='" + service_type + "'" if service_type else 'TRUE'} AND
+                    {"s.api_version='" + api_version + "'" if api_version else 'TRUE'} AND
+                    s.host_org=o.id"""
+    statement = await connection.prepare(query)
+    response = await statement.fetch()
+    if len(response) > 0:
+        for record in response:
+            # Build JSON response
+            service = await construct_json(record, list_format=list_format)
+            if id:
+                # If user specified ID, database gave a single response -> return it
+                return service
+            else:
+                # If user didn't specify ID, get all services -> combine all and return
+                services.append(service)
+        return services
+    # except Exception as e:
+    #     LOG.debug(f'DB error: {e}')
+    #     raise web.HTTPInternalServerError(text='Database error occurred while attempting to get service details.')
 
     # Didn't enter len(response)>0 block
     raise web.HTTPNotFound(text='Service(s) not found.')
