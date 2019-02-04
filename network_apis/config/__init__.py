@@ -30,4 +30,4 @@ def parse_config_file(path):
     return namedtuple("Config", config_vars.keys())(*config_vars.values())
 
 
-CONFIG = parse_config_file(os.environ.get('CONFIG_FILE', os.path.join(os.path.dirname(__file__), 'config.ini')))
+CONFIG = parse_config_file(os.environ.get('CONFIG_FILE', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.ini')))
