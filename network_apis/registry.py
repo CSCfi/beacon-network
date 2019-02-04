@@ -34,7 +34,7 @@ async def info(request):
     db_pool = request.app['pool']
 
     # Send request for processing
-    response = await get_info(CONFIG.registry['host_id'], db_pool)
+    response = await get_info(os.environ.get('HOST_ID', CONFIG.registry['host_id']), db_pool)
 
     # Return results
     return web.json_response(response)
