@@ -119,11 +119,11 @@ async def services_delete(request):
 async def init_db(app):
     """Initialise a database connection pool."""
     LOG.info('Creating database connection pool.')
-    app['pool'] = await init_db_pool(host=CONFIG.registry['db_host'],
-                                     port=CONFIG.registry['db_port'],
-                                     user=CONFIG.registry['db_user'],
-                                     passwd=CONFIG.registry['db_pass'],
-                                     db=CONFIG.registry['db_name'])
+    app['pool'] = await init_db_pool(host=os.environ.get('DB_HOST', CONFIG.registry.get('db_host', 'localhost')),
+                                     port=os.environ.get('DB_PORT', CONFIG.registry.get('db_port', '5432')),
+                                     user=os.environ.get('DB_USER', CONFIG.registry.get('db_user', 'user')),
+                                     passwd=os.environ.get('DB_PASS', CONFIG.registry.get('db_pass', 'pass')),
+                                     db=os.environ.get('DB_NAME', CONFIG.registry.get('db_name', 'db')))
 
 
 async def close_db(app):
@@ -163,8 +163,8 @@ def main():
     """Run the web server."""
     LOG.info('Starting server build.')
     web.run_app(init_app(),
-                host=CONFIG.registry.get('app_host', os.environ.get('REG_APP_HOST', '0.0.0.0')),
-                port=CONFIG.registry.get('app_port', os.environ.get('REG_APP_PORT', '3000')),
+                host=os.environ.get('APP_HOST', CONFIG.registry.get('app_host', '0.0.0.0')),
+                port=os.environ.get('APP_PORT', CONFIG.registry.get('app_port', '8080')),
                 shutdown_timeout=0)
 
 
