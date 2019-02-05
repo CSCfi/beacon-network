@@ -34,7 +34,7 @@ async def query(request):
     # Tap into the database pool
     db_pool = request.app['pool']
 
-    if request.headers.get('Connection').lower() == 'upgrade' and request.headers.get('Upgrade').lower() == 'websocket':
+    if request.headers.get('Connection', 'def').lower() == 'upgrade' and request.headers.get('Upgrade', 'def').lower() == 'websocket':
         # Use asynchronous websocket connection
         # Send request for processing
         websocket = await send_beacon_query_websocket(request, db_pool)
