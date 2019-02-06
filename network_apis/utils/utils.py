@@ -104,7 +104,8 @@ async def db_get_service_urls(connection):
     service_urls = []
     try:
         # Database query
-        query = f"""SELECT service_url FROM services WHERE service_type='GA4GHBeacon' OR service_type='GA4GHBeaconAggregator'"""
+        # Limit search to Beacons for now, add <OR service_type='GA4GHBeaconAggregator'> later if necessary
+        query = f"""SELECT service_url FROM services WHERE service_type='GA4GHBeacon'"""
         statement = await connection.prepare(query)
         response = await statement.fetch()
         if len(response) > 0:
