@@ -49,7 +49,7 @@ async def construct_json(data, model=None, list_format='full'):
                 "updateDateTime": str(data.get('ser_updatetime', ''))
             }
         )
-        if 'info' in data:
+        if 'org_info' in data:
             # Load the jsonb string into a dict and update the info-key
             response['organization']['info'].update(json.loads(data.get('org_info', '')))
 
