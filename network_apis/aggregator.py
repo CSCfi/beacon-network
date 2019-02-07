@@ -24,7 +24,7 @@ routes = web.RouteTableDef()
 async def index(request):
     """Greeting endpoint."""
     LOG.debug('Greeting endpoint.')
-    return web.Response(text='GA4GH Beacon Registry API')
+    return web.Response(text='GA4GH Beacon Aggregator API')
 
 
 @routes.get('/query')
