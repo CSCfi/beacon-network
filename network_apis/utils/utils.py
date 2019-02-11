@@ -137,7 +137,7 @@ async def query_service(service, params, access_token, ws=None):
     headers = {}
 
     if access_token:
-        headers.update({f'Authorization: Bearer {access_token}'})
+        headers.update({'Authorization': f'Bearer {access_token}'})
 
     # Query service in a session
     async with aiohttp.ClientSession() as session:
