@@ -33,7 +33,7 @@
         <table class="about-table">
           <tr class="about-table-head"><th colspan="2">Organisation</th><th>Beacon Name</th><th>Beacon ID</th><th>Version</th><th>Info</th><th>Query</th></tr>
           <tr class="about-table-row" ng-repeat="beacon in beacons">
-            <td class="about-table-cell"><img style="max-height:30px;max-width:50px;" src="{{ beacon.organization.logoUrl }}"></td>
+            <td class="about-table-cell"><img class="about-table-logo" ng-src="{{ beacon.organization.logoUrl }}"></td>
             <td class="about-table-cell"><a href="{{ beacon.organization.welcomeUrl }}">{{ beacon.organization.name }}</a></td>
             <td class="about-table-cell">{{ beacon.name }}</td>
             <td class="about-table-cell">{{ beacon.id }}</td>

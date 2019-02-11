@@ -561,3 +561,8 @@ md-autocomplete#custom-template {
 .about-table-cell {
 	padding: 5px;
 }
+
+.about-table-logo {
+	max-height: 30px;
+	max-width: 50px;
+}
