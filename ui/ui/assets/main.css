@@ -537,3 +537,27 @@ md-autocomplete#custom-template {
 	font-weight: bold;
 	font-size: 0.8em;
 }
+
+.about-table {
+	width: 100%;
+	margin: auto;
+	margin-top: 20px;
+	font-size: 0.9em;
+}
+
+.about-table-row {
+	border-top: 1px solid #CCE5FF;
+}
+
+.about-table-head {
+	background-color: #E6F2FF;
+	border-bottom: 2px solid #003166;
+}
+
+.about-table-head > th {
+	padding: 10px 5px 0 5px;
+}
+
+.about-table-cell {
+	padding: 5px;
+}

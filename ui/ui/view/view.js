@@ -26,7 +26,7 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
   // Read from config file
   $http.get('view/config.json').success(function (data){
     // url for beacon aggregator service
-    $scope.aggregatorUrl = data.aggregatorUrl;
+    $scope.aggregatorUrl = data.aggregatorUrl; // query endpoint
     // url for elixir aai client
     that.aaiUrl = data.aaiUrl;
   });
