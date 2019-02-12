@@ -40,7 +40,14 @@ beacon_registry    # starts registry
 beacon_aggregator  # starts aggregator
 ```
 #### Containerised
-To be done: container deploy script for both services.
+```
+s2i build git@github.com:CSCfi/beacon-network.git \
+    centos/python-36-centos7 \
+    beacon_network
+
+docker run -d -e BEACON_RUN_APP=registry -p 8080:8080 beacon_network      # starts registry
+docker run -d -e BEACON_RUN_APP=aggregator -p 8080:8080 beacon_network    # starts aggregator
+```
 
 ### After set-up examples
 <details><summary>View examples</summary>
