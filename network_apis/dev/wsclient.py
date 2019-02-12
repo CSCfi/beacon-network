@@ -5,8 +5,8 @@ import os
 
 import aiohttp
 
-HOST = os.getenv('AGG_APP_HOST', 'localhost')
-PORT = int(os.getenv('AGG_APP_PORT', 3001))
+HOST = os.getenv('APP_HOST', 'localhost')
+PORT = int(os.getenv('APP_PORT', 8080))
 
 URL = f'ws://{HOST}:{PORT}/query'
 
