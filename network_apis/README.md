@@ -49,6 +49,23 @@ docker run -d -e BEACON_RUN_APP=registry -p 8080:8080 beacon_network      # star
 docker run -d -e BEACON_RUN_APP=aggregator -p 8080:8080 beacon_network    # starts aggregator
 ```
 
+#### Environment Variables
+| ENV            | Default                                    | Description                                                                                                                          |
+|----------------|--------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| CONFIG_FILE    | `config.ini`                               | Location of configuration file, ablosute path.                                                                                       |
+| BEACON_RUN_APP | ``                                         | Specify which app to run inside a container. Possible values: `registry` and `aggregator`.                                           |
+| DB_SCHEMA      | ``                                         | Optional variable that is prepended to database tables.                                                                              |
+| DEBUG          | ``                                         | If set to any value (takes truthy string), enables more debugging logs from functions.                                               |
+| HTTPS_ONLY     | `False`                                    | Determine which HTTP schemas are allowed when contacting Beacons from an Aggregator. Set to `True` to enforce required HTTPS-schema. |
+| HOST_ID        | `CONFIG.{registry/aggregator}['host_id']`  | Unique service ID of this service, defaults to the value given in `config.ini`.                                                      |
+| DB_HOST        | `CONFIG.{registry/aggregator}['db_host']`  | Database address, defaults to value given in `config.ini` or `localhost`.                                                            |
+| DB_PORT        | `CONFIG.{registry/aggregator}['db_port']`  | Database port, defaults to value given in `config.ini` or `5432`.                                                                    |
+| DB_USER        | `CONFIG.{registry/aggregator}['db_user']`  | Database user, defaults to value given in `config.ini` or `user`.                                                                    |
+| DB_PASS        | `CONFIG.{registry/aggregator}['db_pass']`  | Database password for user, defaults to value given in `config.ini` or `pass`.                                                       |
+| DB_NAME        | `CONFIG.{registry/aggregator}['db_name']`  | Database name, defaults to value given in `config.ini` or `db`.                                                                      |
+| APP_HOST       | `CONFIG.{registry/aggregator}['app_host']` | Web app service IP, defaults to value given in `config.ini` or `0.0.0.0`.                                                            |
+| APP_PORT       | `CONFIG.{registry/aggregator}['app_port']` | Web app port, defaults to value given in `config.ini` or `8080`.                                                                     |
+
 ### After set-up examples
 <details><summary>View examples</summary>
 Register a service, on this case, register self at Registry (host's own details).
