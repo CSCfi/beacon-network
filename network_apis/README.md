@@ -50,6 +50,8 @@ docker run -d -e BEACON_RUN_APP=aggregator -p 8080:8080 beacon_network    # star
 ```
 
 #### Environment Variables
+Configuration priority is ENV > CONFIG > DEFAULT. Typically no ENV are set, so values are read from `config.ini`, which can be overridden with ENV.
+
 | ENV            | Default                                    | Description                                                                                                                          |
 |----------------|--------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
 | CONFIG_FILE    | `config.ini`                               | Location of configuration file, ablosute path.                                                                                       |
