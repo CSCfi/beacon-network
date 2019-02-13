@@ -174,3 +174,16 @@ async def generate_service_key():
     """Generate a service key."""
     LOG.debug('Generate service key.')
     return secrets.token_urlsafe(64)
+
+
+# This is currently not used, but is kept for possible future implementation
+# The idea is, that the user doesn't give the id, but it is generated from the
+# Given service url, so that the id is always unique as it is tied to the registered url
+def generate_service_id(url):
+    """Generate service ID from given URL."""
+    LOG.debug('Generate service ID.')
+    address = url.split('://')  # strip http schema if it exists
+    domain = (0,1)[len(address)>1]  # index of domain in schemaless address
+    domain = address[domain].split('/')  # distinguish endpoints
+    service_id = '.'.join(reversed(domain[0].split('.')))  # reverse domain to create id
+    return service_id
