@@ -144,7 +144,7 @@ async def query_service(service, params, access_token, ws=None):
         try:
             async with session.get(service,
                                    params=params,
-                                   ssl=os.environ.get('HTTPS_ONLY', False),
+                                   ssl=handle_bool(os.environ.get('HTTPS_ONLY', False)),
                                    headers=headers) as response:
                 # On successful response, forward response
                 if response.status == 200:
@@ -176,14 +176,36 @@ async def generate_service_key():
     return secrets.token_urlsafe(64)
 
 
+def handle_bool(value):
+    """Determine which boolean value parameter should be."""
+    LOG.debug('Determine boolean value of parameter.')
+    # Allowed values
+    truthy = [True, 'true', 't', 'yes', 'y', '1', 1]
+    falsy = [False, 'false', 'f', 'no', 'n', '0', 0]
+    if isinstance(value, bool):
+        # value is already boolean
+        return value
+    elif isinstance(value, int):
+        # value is numerical, e.g. 1 or 0
+        return True if value else False
+    else:
+        # value is a string
+        if value.lower() in truthy:
+            return True
+        elif value.lower() in falsy:
+            return False
+        else:
+            raise ValueError(f'Value should be one of {truthy+falsy}')
+
+
 # This is currently not used, but is kept for possible future implementation
 # The idea is, that the user doesn't give the id, but it is generated from the
 # Given service url, so that the id is always unique as it is tied to the registered url
-def generate_service_id(url):
-    """Generate service ID from given URL."""
-    LOG.debug('Generate service ID.')
-    address = url.split('://')  # strip http schema if it exists
-    domain = (0,1)[len(address)>1]  # index of domain in schemaless address
-    domain = address[domain].split('/')  # distinguish endpoints
-    service_id = '.'.join(reversed(domain[0].split('.')))  # reverse domain to create id
-    return service_id
+# def generate_service_id(url):
+#     """Generate service ID from given URL."""
+#     LOG.debug('Generate service ID.')
+#     address = url.split('://')  # strip http schema if it exists
+#     domain = (0,1)[len(address)>1]  # index of domain in schemaless address
+#     domain = address[domain].split('/')  # distinguish endpoints
+#     service_id = '.'.join(reversed(domain[0].split('.')))  # reverse domain to create id
+#     return service_id
