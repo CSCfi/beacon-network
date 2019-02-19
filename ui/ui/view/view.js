@@ -24,6 +24,22 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
   $scope.aggregatorUrl = '';
   that.aaiUrl = '';
 
+  // Advanced search options
+  $scope.adv = {assembly: 'GRCh38',
+                chr: '1',
+                start: '',
+                startMin: '',
+                startMax: '',
+                end: '',
+                endMin: '',
+                endMax: '',
+                ref: '',
+                alt: '',
+                vt: '',
+                ds: 'ALL',
+                resp: 'ALL'
+              };
+
   // Read from config file
   $http.get('view/config.json').success(function (data){
     // url for beacon aggregator service
@@ -99,32 +115,91 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
   }
 
   // GET request to Beacon(s)
-  $scope.submit = function() {
+  $scope.submit = function(searchType) {
     that.loading = true; // spinner animation
     that.message = []; // put websocket responses here
     that.searchClick = true;
-    $scope.itemsPerPage = 10;
-    if (that.regexp2.test(that.searchText)) {
-      that.selectedItem = {type: 'variant', name: that.searchText}
-    }
-    if (that.selectedItem && that.selectedItem.type == 'variant') {
-      that.triggerCredentials = true;
-      var params = that.searchText.match(that.regexp2)
-      var searchType = '';
-      // Check if we are dealing with bases or variant types
-      if (that.varTypes.indexOf(params[4]) >= 0) {
-        // Variant type
-        searchType = `&variantType=${params[4]}`;
-      } else {
-        // Alternate base
-        searchType = `&alternateBases=${params[4]}`;
+    if (searchType == 'basic') {
+      if (that.regexp2.test(that.searchText)) {
+        that.selectedItem = {type: 'variant', name: that.searchText}
       }
-      var startMin = Number(params[2]) - 1;
-      var startMax = Number(params[2]);
-      $scope.url = `${$scope.aggregatorUrl}assemblyId=${$scope.assembly.selected}&referenceName=${params[1]}&startMin=${startMin}&startMax=${startMax}&referenceBases=${params[3]}${searchType}&includeDatasetResponses=HIT`;
+      if (that.selectedItem && that.selectedItem.type == 'variant') {
+        that.triggerCredentials = true;
+        var params = that.searchText.match(that.regexp2)
+        var searchType = '';
+        // Check if we are dealing with bases or variant types
+        if (that.varTypes.indexOf(params[4]) >= 0) {
+          // Variant type
+          searchType = `&variantType=${params[4]}`;
+        } else {
+          // Alternate base
+          searchType = `&alternateBases=${params[4]}`;
+        }
+        var startMin = Number(params[2]) - 1;
+        var startMax = Number(params[2]);
+        $scope.url = `${$scope.aggregatorUrl}assemblyId=${$scope.assembly.selected}&referenceName=${params[1]}&startMin=${startMin}&startMax=${startMax}&referenceBases=${params[3]}${searchType}&includeDatasetResponses=HIT`;
+      } else {
+        console.log('search type unselected');
+      }
     } else {
-      console.log('search type unselected');
+      // Remnant..
+      that.selectedItem = {type: 'variant'}
+      that.searchText = '';
+      // Advanced variable placeholders
+      var start = '';
+      var end = '';
+      var alt = '';
+      var ds = '';
+      // Construct query URL from advanced search form
+      // Base URL, these variables we will always use
+      $scope.url = `${$scope.aggregatorUrl}assemblyId=${$scope.adv.assembly}&referenceName=${$scope.adv.chr}&referenceBases=${$scope.adv.ref}&includeDatasetResponses=${$scope.adv.resp}`;
+      // Handle variables which have options
+      // Handle coords
+      if ($scope.adv.start) {
+        console.log('1');
+        var start = `&start=${$scope.adv.start.toString()}`;
+      } else {
+        console.log('2');
+        var start = `&startMin=${$scope.adv.startMin.toString()}&startMax=${$scope.adv.startMax.toString()}`;
+      }
+      if ($scope.adv.end) {
+        var end = `&end=${$scope.adv.end.toString()}`;
+      } else if ($scope.adv.endMin && $scope.adv.endMax) {
+        var end = `&endMin=${$scope.adv.endMin.toString()}&endMax=${$scope.adv.endMax.toString()}`;
+      } else {
+        // end will not be used
+      }
+      // Handle variant transformation
+      if ($scope.adv.alt.length) {
+        var alt = `&alternateBases=${$scope.adv.alt}`;
+      } else {
+        var alt = `&variantType=${$scope.adv.vt}`;
+      }
+      // Handle requested datasets
+      if ($scope.adv.ds != 'ALL') {
+        var ds = `&datasetIds=${$scope.adv.ds}`;
+      }
+      // Assemble URL
+      $scope.url = `${$scope.url}${start}${end}${alt}${ds}`;
     }
+
+    console.log($scope.url);
+
+    $scope.adv = {assembly: 'GRCh38',
+    chr: '1',
+    start: '',
+    startMin: '',
+    startMax: '',
+    end: '',
+    endMin: '',
+    endMax: '',
+    ref: '',
+    alt: '',
+    vt: '',
+    ds: 'ALL',
+    resp: 'ALL'
+  };
+
 
     // Prepend aggregator url with secure websocket protocol
     $scope.wsUrl = 'wss://' + $scope.url;
@@ -158,6 +233,7 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
   }
 
   $scope.searchExample = function(searchtype) {
+    that.toggleSearchOptions('default');  // set to basic search if user is in advanced search
     that.searchClick = false;
     if (searchtype == 'variant') {
       var variants = ['MT : 10 T > C', 'MT : 7600 G > A', 'MT : 195 TTACTAAAGT > CCACTAAAGT', 'MT : 14037 A > G',

@@ -26,7 +26,7 @@
     <div class="card-body">
       <div class="searchForm" layout="column">
         <md-content class="md-padding">
-          <form name="searchForm" ng-submit="submit()" class="form-inline">
+          <form name="searchForm" ng-submit="submit('basic')" class="form-inline">
             <div layout-gt-sm="row" class="searchRow" id="basicSearch">
               <md-input-container>
                 <md-select ng-model="assembly.selected" aria-label="Gene/Variant Select">
@@ -46,8 +46,8 @@
                 </md-button>
               </md-input-container>
             </div>
-          <!-- </form>
-          <form name="searchForm" ng-submit="submit()" class="form-inline"> -->
+          </form>
+          <form name="advancedSearchForm" ng-submit="submit('advanced')" class="form-inline">
             <div id="advancedSearch" style="margin:auto">
               <h4 style="width:100%">Assembly and Chromosome</h4>
               <div layout-gt-sm="row" class="searchRow">
@@ -61,7 +61,7 @@
                 </md-input-container>
                 <md-input-container style="width:45%">
                   <label>Chromosome</label>
-                  <md-select ng-model="adv.chromosome" aria-label="Chromosome Select">
+                  <md-select ng-model="adv.chr" aria-label="Chromosome Select">
                     <md-option value="1" ng-selected="true">1</md-option>
                     <md-option value="2">2</md-option>
                     <md-option value="3">3</md-option>
@@ -90,53 +90,53 @@
                   </md-select>
                 </md-input-container>
               </div>
-              <hr><h4 style="width:100%">Coordinates</h4>
+              <h4 style="width:100%">Coordinates</h4>
               <div layout-gt-sm="row" class="searchRow">
                 <md-input-container style="width:30%">
                   <label>Start</label>
-                  <input name="advStart" ng-model="adv.start" title="Exact start position of variant">
+                  <input type="number" name="advStart" ng-model="adv.start" title="Exact start position of variant">
                 </md-input-container>
                 <span style="margin:auto">or</span>
                 <md-input-container style="width:30%">
                   <label>Min. Start</label>
-                  <input name="advStartMin" ng-model="adv.startMin" title="Minimum start position of variant (fuzzy boundaries)">
+                  <input type="number" name="advStartMin" ng-model="adv.startMin" title="Minimum start position of variant (fuzzy boundaries)">
                 </md-input-container>
                 <md-input-container style="width:30%">
                   <label>Max. Start</label>
-                  <input name="advStartMax" ng-model="adv.startMax" title="Maximum start position of variant (fuzzy boundaries)">
+                  <input type="number" name="advStartMax" ng-model="adv.startMax" title="Maximum start position of variant (fuzzy boundaries)">
                 </md-input-container>
               </div>
               <div layout-gt-sm="row" class="searchRow">
                 <md-input-container style="width:30%">
                   <label>End</label>
-                  <input name="advEnd" ng-model="adv.end" title="Exact start position of variant">
+                  <input type="number" name="advEnd" ng-model="adv.end" title="Exact start position of variant">
                 </md-input-container>
                 <span style="margin:auto">or</span>
                 <md-input-container style="width:30%">
                   <label>Min. End</label>
-                  <input name="advEndMin" ng-model="adv.endMin" title="Minimum end position of variant (fuzzy boundaries)">
+                  <input type="number" name="advEndMin" ng-model="adv.endMin" title="Minimum end position of variant (fuzzy boundaries)">
                 </md-input-container>
                 <md-input-container style="width:30%">
                   <label>Max. End</label>
-                  <input name="advEndMax" ng-model="adv.endMax" title="Maximum end position of variant (fuzzy boundaries)">
+                  <input type="number" name="advEndMax" ng-model="adv.endMax" title="Maximum end position of variant (fuzzy boundaries)">
                 </md-input-container>
               </div>
-              <hr>
               <h4 style="width:100%">Variant Transformation</h4>
               <div layout-gt-sm="row" class="searchRow">
                 <md-input-container style="width:30%">
                   <label>Reference Bases</label>
-                  <input name="advRef" ng-model="adv.ref" title="Can be any combination of ACTGN">
+                  <input required pattern="[ATCGN]+" name="advRef" ng-model="adv.ref" title="Can be any combination of ACTGN">
                 </md-input-container>
                 <md-input-container style="width:30%">
                   <label>Alternate Bases</label>
-                  <input name="advAlt" ng-model="adv.alt" title="Can be any combination of ACTGN">
+                  <input pattern="[ATCGN]+" name="advAlt" ng-model="adv.alt" title="Can be any combination of ACTGN">
                 </md-input-container>
                 <span style="margin:auto">or</span>
                 <md-input-container style="width:30%">
                   <label>Variant Type</label>
                   <md-select ng-model="adv.vt" aria-label="Variant Type Select">
-                    <md-option value="SNP" ng-selected="true">SNP</md-option>
+                    <md-option value="Default" ng-selected="true" disabled>Unspecified</md-option>
+                    <md-option value="SNP">SNP</md-option>
                     <md-option value="MNP">MNP</md-option>
                     <md-option value="INS">INS</md-option>
                     <md-option value="DEL">DEL</md-option>
@@ -149,12 +149,11 @@
                   </md-select>
                 </md-input-container>
               </div>
-              <hr>
               <h4 style="width:100%">Dataset and Response Options</h4>
               <div layout-gt-sm="row" class="searchRow">
                 <md-input-container style="width:45%">
-                  <label>Datasets</label>
-                  <md-select ng-model="adv.vt" aria-label="Dataset Select">
+                  <label>Datasets</label><!-- This is hardcoded, fetch it from some API instead (aggregate individual beacon info-endpoints..) -->
+                  <md-select ng-model="adv.ds" aria-label="Dataset Select">
                     <md-option value="ALL" ng-selected="true">All</md-option>
                     <md-option value="urn:hg:1000genome">urn:hg:1000genome</md-option>
                     <md-option value="urn:hg:example-registered">urn:hg:example-registered</md-option>
@@ -163,7 +162,7 @@
                 </md-input-container>
                 <md-input-container style="width:45%">
                   <label>Include Dataset Responses</label>
-                  <md-select ng-model="adv.vt" aria-label="Response Select">
+                  <md-select ng-model="adv.resp" aria-label="Response Select">
                     <md-option value="ALL" ng-selected="true">All</md-option>
                     <md-option value="HIT">Only hits</md-option>
                     <md-option value="MISS">Only misses</md-option>
@@ -171,8 +170,8 @@
                   </md-select>
                 </md-input-container>
               </div>
-              <md-input-container>
-                <md-button type="submit" name="submit" id="submit" value="Submit" class="md-raised md-primary" aria-label="Search">
+              <md-input-container style="float:right">
+                <md-button type="submit" name="advSubmit" id="advSubmit" value="advSubmit" class="md-raised md-primary" aria-label="Search">
                   <i class="fas fa-search"></i>
                   Search
                 </md-button>
