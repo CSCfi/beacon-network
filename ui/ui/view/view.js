@@ -25,8 +25,8 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
   that.aaiUrl = '';
 
   // Advanced search options
-  $scope.adv = {assembly: 'GRCh38',
-                chr: '1',
+  $scope.adv = {assembly: '',
+                chr: '',
                 start: '',
                 startMin: '',
                 startMax: '',
@@ -35,9 +35,9 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
                 endMax: '',
                 ref: '',
                 alt: '',
-                vt: '',
-                ds: 'ALL',
-                resp: 'ALL'
+                vt: 'Unspecified',
+                ds: '',
+                resp: ''
               };
 
   // Read from config file
@@ -101,6 +101,50 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
     }
   }
 
+  // Exlusive or (XOR) manager for coordinates and variant transformation
+  that.manageAdvancedSearchOptions = function() {
+    // If using exact start, disable startMin and startMax
+    if (document.getElementById('advStart').value > 0) {
+      document.getElementById('advStartMin').disabled = true;
+      document.getElementById('advStartMax').disabled = true;
+    } else {
+      document.getElementById('advStartMin').disabled = false;
+      document.getElementById('advStartMax').disabled = false;
+    }
+    // If using exact end, disable endMin and endMax
+    if (document.getElementById('advEnd').value > 0) {
+      document.getElementById('advEndMin').disabled = true;
+      document.getElementById('advEndMax').disabled = true;
+    } else {
+      document.getElementById('advEndMin').disabled = false;
+      document.getElementById('advEndMax').disabled = false;
+    }
+    // If using startMin or startMax, disable start
+    if (document.getElementById('advStartMin').value > 0 || document.getElementById('advStartMin').value > 0) {
+      document.getElementById('advStart').disabled = true;
+    } else {
+      document.getElementById('advStart').disabled = false;
+    }
+    // If using endMin or endMax, disable end
+    if (document.getElementById('advEndMin').value > 0 || document.getElementById('advEndMin').value > 0) {
+      document.getElementById('advEnd').disabled = true;
+    } else {
+      document.getElementById('advEnd').disabled = false;
+    }
+    // If using altBases, disable variantType -------- WHY DOESN'T THIS WORK?
+    if ($scope.adv.alt != null && $scope.adv.alt.length > 0) {
+      document.getElementById('advVt').disabled = true;
+    } else {
+      document.getElementById('advVt').disabled = false;
+    }
+    // If using variantType, disable altBases
+    if ($scope.adv.vt == 'Unspecified') {
+      document.getElementById('advAlt').disabled = false;
+    } else {
+      document.getElementById('advAlt').disabled = true;
+    }
+  }
+
   // Toggle between basic search and advanced search
   that.toggleSearchOptions = function(value){
     if (value == 'Advanced Search') {
@@ -152,7 +196,7 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
       var ds = '';
       // Construct query URL from advanced search form
       // Base URL, these variables we will always use
-      $scope.url = `${$scope.aggregatorUrl}assemblyId=${$scope.adv.assembly}&referenceName=${$scope.adv.chr}&referenceBases=${$scope.adv.ref}&includeDatasetResponses=${$scope.adv.resp}`;
+      $scope.url = `${$scope.aggregatorUrl}assemblyId=${$scope.adv.assembly}&referenceName=${$scope.adv.chr}&referenceBases=${$scope.adv.ref}&includeDatasetResponses=HIT`;
       // Handle variables which have options
       // Handle coords
       if ($scope.adv.start) {
@@ -175,31 +219,16 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
       } else {
         var alt = `&variantType=${$scope.adv.vt}`;
       }
-      // Handle requested datasets
-      if ($scope.adv.ds != 'ALL') {
-        var ds = `&datasetIds=${$scope.adv.ds}`;
-      }
+      // Handle requested datasets -- CAN'T HANDLE THIS RIGHT NOW..
+      // if ($scope.adv.ds != 'ALL') {
+      //   var ds = `&datasetIds=${$scope.adv.ds}`;
+      // }
       // Assemble URL
-      $scope.url = `${$scope.url}${start}${end}${alt}${ds}`;
+      // $scope.url = `${$scope.url}${start}${end}${alt}${ds}`;
+      $scope.url = `${$scope.url}${start}${end}${alt}`;
     }
 
     console.log($scope.url);
-
-    $scope.adv = {assembly: 'GRCh38',
-    chr: '1',
-    start: '',
-    startMin: '',
-    startMax: '',
-    end: '',
-    endMin: '',
-    endMax: '',
-    ref: '',
-    alt: '',
-    vt: '',
-    ds: 'ALL',
-    resp: 'ALL'
-  };
-
 
     // Prepend aggregator url with secure websocket protocol
     $scope.wsUrl = 'wss://' + $scope.url;
