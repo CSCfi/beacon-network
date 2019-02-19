@@ -164,7 +164,7 @@ def main():
     LOG.info('Starting server build.')
     web.run_app(init_app(),
                 host=os.environ.get('APP_HOST', CONFIG.registry.get('app_host', '0.0.0.0')),
-                port=os.environ.get('APP_PORT', CONFIG.registry.get('app_port', '8080')),
+                port=int(os.environ.get('APP_PORT', CONFIG.registry.get('app_port', 8080))),
                 shutdown_timeout=0)
 
 
