@@ -10,6 +10,14 @@
 	padding:0;
 }
 
+#basicSearch {
+	display: inherit;
+}
+
+#advancedSearch {
+	display: none;
+}
+
 #searchExample {
 	margin: 0;
 	padding: 0;

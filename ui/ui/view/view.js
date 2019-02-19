@@ -15,6 +15,7 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
   that.selectedItem = '';
   that.message = "";
   that.searchClick = false;
+  that.searchOptions = 'Advanced Search';
 
   that.triggerCredentials = false;
 
@@ -81,6 +82,19 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
       return {};
     } else {
       return {};
+    }
+  }
+
+  // Toggle between basic search and advanced search
+  that.toggleSearchOptions = function(value){
+    if (value == 'Advanced Search') {
+      document.getElementById("basicSearch").style.display = "none";
+      document.getElementById("advancedSearch").style.display = "block";
+      that.searchOptions = 'Basic Search';
+    } else {
+      document.getElementById("advancedSearch").style.display = "none";
+      document.getElementById("basicSearch").style.display = "inherit";
+      that.searchOptions = 'Advanced Search';
     }
   }
 
