@@ -53,7 +53,7 @@
               <div layout-gt-sm="row" class="searchRow">
                 <md-input-container style="width:45%">
                   <label>Assembly</label>
-                  <md-select ng-model="adv.assembly" aria-label="Gene/Variant Select">
+                  <md-select ng-model="adv.assembly" aria-label="Gene/Variant Select" required>
                     <md-option value="GRCh38">GRCh38</md-option>
                     <md-option value="GRCh37">GRCh37</md-option>
                     <md-option value="hg19">hg19</md-option>
@@ -61,7 +61,7 @@
                 </md-input-container>
                 <md-input-container style="width:45%">
                   <label>Chromosome</label>
-                  <md-select ng-model="adv.chr" aria-label="Chromosome Select">
+                  <md-select ng-model="adv.chr" aria-label="Chromosome Select" required>
                     <md-option value="1">1</md-option>
                     <md-option value="2">2</md-option>
                     <md-option value="3">3</md-option>
@@ -183,7 +183,7 @@
                   <i class="fas fa-search"></i>
                   Search
                 </md-button>
-              </md-input-container>
+            </md-input-container>
             </div>
           </form>
         </md-content>
