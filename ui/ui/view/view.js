@@ -27,6 +27,7 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
   // Advanced search options
   $scope.adv = {assembly: '',
                 chr: '',
+                coordBase: 0,
                 start: '',
                 startMin: '',
                 startMax: '',
@@ -142,6 +143,7 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
       document.getElementById('advAlt').disabled = false;
     } else {
       document.getElementById('advAlt').disabled = true;
+      $scope.adv.alt = '';  // empty the altBases field if it was filled
     }
   }
 
@@ -199,11 +201,20 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
       $scope.url = `${$scope.aggregatorUrl}assemblyId=${$scope.adv.assembly}&referenceName=${$scope.adv.chr}&referenceBases=${$scope.adv.ref}&includeDatasetResponses=HIT`;
       // Handle variables which have options
       // Handle coords
+      // Handle coordinate base-system
+      if ($scope.adv.coordBase == 1) {
+        console.log($scope.adv);
+        if ($scope.adv.start != '' && $scope.adv.start > 0) {$scope.adv.start--;}
+        if ($scope.adv.startMin != '' && $scope.adv.startMin > 0) {$scope.adv.startMin--;}
+        if ($scope.adv.startMax != '' && $scope.adv.startMax > 0) {$scope.adv.startMax--;}
+        if ($scope.adv.end != '' && $scope.adv.end > 0) {$scope.adv.end--;}
+        if ($scope.adv.endMin != '' && $scope.adv.endMin > 0) {$scope.adv.endMin--;}
+        if ($scope.adv.endMax != '' && $scope.adv.endMax > 0) {$scope.adv.endMax--;}
+        console.log($scope.adv);
+      }
       if ($scope.adv.start) {
-        console.log('1');
         var start = `&start=${$scope.adv.start.toString()}`;
       } else {
-        console.log('2');
         var start = `&startMin=${$scope.adv.startMin.toString()}&startMax=${$scope.adv.startMax.toString()}`;
       }
       if ($scope.adv.end) {

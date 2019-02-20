@@ -91,6 +91,10 @@
                 </md-input-container>
               </div>
               <h4 style="width:100%">Coordinates</h4>
+              <md-radio-group ng-model="adv.coordBase" layout="row">
+                <md-radio-button value="0" class="md-primary" ng-selected="true" title="Beacons typically expect 0-based">0-based</md-radio-button>
+                <md-radio-button value="1" class="md-primary" title="Basic search in UI uses this, human-friendly case">1-based</md-radio-button>
+              </md-radio-group>
               <div layout-gt-sm="row" class="searchRow">
                 <md-input-container style="width:30%">
                   <label>Start</label>
