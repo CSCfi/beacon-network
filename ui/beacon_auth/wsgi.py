@@ -8,6 +8,7 @@ import logging
 import requests
 import requests.auth
 import urllib.parse
+from distutils.util import strtobool
 
 # ELIXIR AAI configuration
 CLIENT_ID = os.environ.get('CLIENT_ID', None)
@@ -91,14 +92,14 @@ def elixir_callback():
         response.set_cookie('access_token',
                             access_token,
                             max_age=int(os.environ.get('COOKIE_AGE', 3600)),
-                            secure=os.environ.get('COOKIE_SECURE', True),
+                            secure=bool(strtobool(os.environ.get('COOKIE_SECURE', True))),
                             domain=os.environ.get('COOKIE_DOMAIN', None))
         if get_bona_fide_status(access_token):
             # If user has bona fide status, add a cookie for this
             response.set_cookie('bona_fide_status',
                                 BONA_FIDE_URL,
                                 max_age=int(os.environ.get('COOKIE_AGE', 3600)),
-                                secure=os.environ.get('COOKIE_SECURE', True),
+                                secure=bool(strtobool(os.environ.get('COOKIE_SECURE', True))),
                                 domain=os.environ.get('COOKIE_DOMAIN', None))
     except Exception as e:
         LOG.error(str(e))
@@ -138,10 +139,10 @@ def get_bona_fide_status(access_token):
 def main():
     """Start the web server."""
     application.secret_key = os.environ.get('COOKIE_SECRET', None)
-    application.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', True)
+    application.config['SESSION_COOKIE_SECURE'] = bool(strtobool(os.environ.get('SESSION_COOKIE_SECURE', True)))
     application.run(host=os.environ.get('APP_HOST', 'localhost'),
-                    port=os.environ.get('APP_PORT', 8080),
-                    debug=os.environ.get('APP_DEBUG', True))
+                    port=int(os.environ.get('APP_PORT', 8080)),
+                    debug=bool(strtobool(os.environ.get('APP_DEBUG', True))))
 
 
 if __name__ == '__main__':

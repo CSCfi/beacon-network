@@ -26,8 +26,8 @@
     <div class="card-body">
       <div class="searchForm" layout="column">
         <md-content class="md-padding">
-          <form name="searchForm" ng-submit="submit()" class="form-inline">
-            <div layout-gt-sm="row" class="searchRow">
+          <form name="searchForm" ng-submit="submit('basic')" class="form-inline">
+            <div layout-gt-sm="row" class="searchRow" id="basicSearch">
               <md-input-container>
                 <md-select ng-model="assembly.selected" aria-label="Gene/Variant Select">
                   <md-option value="GRCh38" ng-selected="true">GRCh38</md-option>
@@ -47,13 +47,158 @@
               </md-input-container>
             </div>
           </form>
+          <form name="advancedSearchForm" ng-submit="submit('advanced')" class="form-inline">
+            <div id="advancedSearch" style="margin:auto">
+              <h4 style="width:100%">Assembly and Chromosome</h4>
+              <div layout-gt-sm="row" class="searchRow">
+                <md-input-container style="width:45%">
+                  <label>Assembly</label>
+                  <md-select ng-model="adv.assembly" aria-label="Gene/Variant Select" required>
+                    <md-option value="GRCh38">GRCh38</md-option>
+                    <md-option value="GRCh37">GRCh37</md-option>
+                    <md-option value="hg19">hg19</md-option>
+                  </md-select>
+                </md-input-container>
+                <md-input-container style="width:45%">
+                  <label>Chromosome</label>
+                  <md-select ng-model="adv.chr" aria-label="Chromosome Select" required>
+                    <md-option value="1">1</md-option>
+                    <md-option value="2">2</md-option>
+                    <md-option value="3">3</md-option>
+                    <md-option value="4">4</md-option>
+                    <md-option value="5">3</md-option>
+                    <md-option value="6">2</md-option>
+                    <md-option value="7">3</md-option>
+                    <md-option value="8">2</md-option>
+                    <md-option value="9">3</md-option>
+                    <md-option value="10">10</md-option>
+                    <md-option value="11">11</md-option>
+                    <md-option value="12">12</md-option>
+                    <md-option value="13">13</md-option>
+                    <md-option value="14">14</md-option>
+                    <md-option value="15">15</md-option>
+                    <md-option value="16">16</md-option>
+                    <md-option value="17">17</md-option>
+                    <md-option value="18">18</md-option>
+                    <md-option value="19">19</md-option>
+                    <md-option value="20">20</md-option>
+                    <md-option value="21">21</md-option>
+                    <md-option value="22">22</md-option>
+                    <md-option value="X">X</md-option>
+                    <md-option value="Y">Y</md-option>
+                    <md-option value="MT">MT</md-option>
+                  </md-select>
+                </md-input-container>
+              </div>
+              <h4 style="width:100%">Coordinates</h4>
+              <md-radio-group ng-model="adv.coordBase" layout="row">
+                <md-radio-button value="0" class="md-primary" ng-selected="true" title="Beacons typically expect 0-based">0-based</md-radio-button>
+                <md-radio-button value="1" class="md-primary" title="Basic search in UI uses this, human-friendly case">1-based</md-radio-button>
+              </md-radio-group>
+              <div layout-gt-sm="row" class="searchRow">
+                <md-input-container style="width:30%">
+                  <label>Start</label>
+                  <input type="number" name="advStart" id="advStart" ng-model="adv.start" ng-blur="ctrl.manageAdvancedSearchOptions()" title="Exact start position of variant">
+                </md-input-container>
+                <span style="margin:auto">or</span>
+                <md-input-container style="width:30%">
+                  <label>Min. Start</label>
+                  <input type="number" name="advStartMin" id="advStartMin" ng-model="adv.startMin" ng-blur="ctrl.manageAdvancedSearchOptions()" title="Minimum start position of variant (fuzzy boundaries)">
+                </md-input-container>
+                <span style="margin:auto">..</span>
+                <md-input-container style="width:30%">
+                  <label>Max. Start</label>
+                  <input type="number" name="advStartMax" id="advStartMax" ng-model="adv.startMax" ng-blur="ctrl.manageAdvancedSearchOptions()" title="Maximum start position of variant (fuzzy boundaries)">
+                </md-input-container>
+              </div>
+              <div layout-gt-sm="row" class="searchRow">
+                <md-input-container style="width:30%">
+                  <label>End</label>
+                  <input type="number" name="advEnd" id="advEnd" ng-model="adv.end" ng-blur="ctrl.manageAdvancedSearchOptions()" title="Exact start position of variant">
+                </md-input-container>
+                <span style="margin:auto">or</span>
+                <md-input-container style="width:30%">
+                  <label>Min. End</label>
+                  <input type="number" name="advEndMin" id="advEndMin" ng-model="adv.endMin" ng-blur="ctrl.manageAdvancedSearchOptions()" title="Minimum end position of variant (fuzzy boundaries)">
+                </md-input-container>
+                <span style="margin:auto">..</span>
+                <md-input-container style="width:30%">
+                  <label>Max. End</label>
+                  <input type="number" name="advEndMax" id="advEndMax" ng-model="adv.endMax" ng-blur="ctrl.manageAdvancedSearchOptions()" title="Maximum end position of variant (fuzzy boundaries)">
+                </md-input-container>
+              </div>
+              <h4 style="width:100%">Variant Transformation</h4>
+              <div layout-gt-sm="row" class="searchRow">
+                <md-input-container style="width:30%">
+                  <label>Reference Bases</label>
+                  <input required pattern="[ATCGN]+" name="advRef" ng-model="adv.ref" title="Can be any combination of ACTGN">
+                </md-input-container>
+                <span style="margin:auto"> > </span>
+                <md-input-container style="width:30%">
+                  <label>Alternate Bases</label>
+                  <input pattern="[ATCGN]+" name="advAlt" id="advAlt" ng-model="adv.alt" ng-blur="ctrl.manageAdvancedSearchOptions()" title="Can be any combination of ACTGN">
+                </md-input-container>
+                <span style="margin:auto">or</span>
+                <md-input-container style="width:30%">
+                  <label>Variant Type</label>
+                  <md-select ng-model="adv.vt" name="advVt" id="advVt" ng-blur="ctrl.manageAdvancedSearchOptions()" aria-label="Variant Type Select">
+                    <md-option value="Unspecified">Unspecified</md-option>
+                    <md-option value="SNP">SNP</md-option>
+                    <md-option value="MNP">MNP</md-option>
+                    <md-option value="INS">INS</md-option>
+                    <md-option value="DEL">DEL</md-option>
+                    <md-option value="INV">INV</md-option>
+                    <md-option value="DUP">DUP</md-option>
+                    <md-option value="CNV">CNV</md-option>
+                    <md-option value="DUP:TANDEM">DUP:TANDEM</md-option>
+                    <md-option value="DEL:ME">DEL:ME</md-option>
+                    <md-option value="INS:ME">INS:ME</md-option>
+                  </md-select>
+                </md-input-container>
+              </div>
+              <!-- Need an API to populate datasets menu, also the includeDatasetResponses is kinda useless -->
+              <h4 style="width:100%;color:#8C8C8C;">Dataset Options</h4>
+              <div layout-gt-sm="row" class="searchRow">
+                <md-input-container style="width:45%">
+                  <label>Datasets</label>
+                  <md-select ng-model="adv.ds" aria-label="Dataset Select" disabled>
+                    <md-option value="ALL">All</md-option>
+                    <md-option value="urn:hg:1000genome">urn:hg:1000genome</md-option>
+                    <md-option value="urn:hg:example-registered">urn:hg:example-registered</md-option>
+                    <md-option value="urn:hg:example-controlled">urn:hg:example-controlled</md-option>
+                  </md-select>
+                </md-input-container>
+                <md-input-container style="width:45%">
+                  <label>Dataset Responses</label>
+                  <md-select ng-model="adv.resp" aria-label="Response Select" disabled>
+                    <md-option value="ALL">All</md-option>
+                    <md-option value="HIT">Only hits</md-option>
+                    <md-option value="MISS">Only misses</md-option>
+                    <md-option value="NONE">None (tells only if dataset exists)</md-option>
+                  </md-select>
+                </md-input-container>
+              </div>
+              <md-input-container style="float:right">
+                <md-button type="button" name="advReset" id="advReset" value="advReset" class="md-raised md-warn" ng-click="advResetForm()" aria-label="Reset">
+                  <i class="fas fa-trash-alt"></i>
+                  Reset
+                </md-button>
+                <md-button type="submit" name="advSubmit" id="advSubmit" value="advSubmit" class="md-raised md-primary" aria-label="Search">
+                  <i class="fas fa-search"></i>
+                  Search
+                </md-button>
+            </md-input-container>
+            </div>
+          </form>
         </md-content>
       </div>
       <div id="searchExample">
           <md-checkbox class="md-primary filter-hits" ng-model="hitsOnly" ng-true-value="{exists:true}" ng-false-value="">
               Show hits only
           </md-checkbox>
-          <a href="" ng-click="searchExample('variant')">Show example search</a>
+          <a href="" ng-click="ctrl.toggleSearchOptions(ctrl.searchOptions)">{{ ctrl.searchOptions }}</a>
+          |
+          <a href="" ng-click="searchExample('variant')">Show Example</a>
       </div>
     </div>
     <hr />

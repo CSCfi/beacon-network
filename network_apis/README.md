@@ -57,7 +57,7 @@ Configuration priority is ENV > CONFIG > DEFAULT. Typically no ENV are set, so v
 | CONFIG_FILE    | `config.ini`                               | Location of configuration file, ablosute path.                                                                                       |
 | BEACON_RUN_APP | ` `                                         | Specify which app to run inside a container. Possible values: `registry` and `aggregator`.                                           |
 | DB_SCHEMA      | ` `                                         | Optional variable that is prepended to database tables.                                                                              |
-| DEBUG          | ` `                                         | If set to any value (takes truthy string), enables more debugging logs from functions.                                               |
+| DEBUG          | `False`                                    | Set to `True` to enable more debugging logs from functions.                                               |
 | HTTPS_ONLY     | `False`                                    | Determine which HTTP schemas are allowed when contacting Beacons from an Aggregator. Set to `True` to enforce required HTTPS-schema. |
 | HOST_ID        | ` `  | Unique service ID of this service, defaults to the value given in `config.ini`.                                                      |
 | DB_HOST        | `localhost`  | Database address, defaults to value given in `config.ini` or `localhost`.                                                            |

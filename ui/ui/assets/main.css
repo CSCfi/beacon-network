@@ -10,6 +10,19 @@
 	padding:0;
 }
 
+#basicSearch {
+	display: inherit;
+}
+
+#advancedSearch {
+	display: none;
+}
+
+input:disabled {
+	background-color: #FFE6E6;
+	border-radius: 10px;
+}
+
 #searchExample {
 	margin: 0;
 	padding: 0;

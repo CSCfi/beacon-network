@@ -7,6 +7,7 @@ import secrets
 import aiohttp
 
 from aiohttp import web
+from distutils.util import strtobool
 
 from .logging import LOG
 # from .db_ops import db_get_service_urls
@@ -144,7 +145,7 @@ async def query_service(service, params, access_token, ws=None):
         try:
             async with session.get(service,
                                    params=params,
-                                   ssl=handle_bool(os.environ.get('HTTPS_ONLY', False)),
+                                   ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', False))),
                                    headers=headers) as response:
                 # On successful response, forward response
                 if response.status == 200:
@@ -174,28 +175,6 @@ async def generate_service_key():
     """Generate a service key."""
     LOG.debug('Generate service key.')
     return secrets.token_urlsafe(64)
-
-
-def handle_bool(value):
-    """Determine which boolean value parameter should be."""
-    LOG.debug('Determine boolean value of parameter.')
-    # Allowed values
-    truthy = [True, 'true', 't', 'yes', 'y', '1', 1]
-    falsy = [False, 'false', 'f', 'no', 'n', '0', 0]
-    if isinstance(value, bool):
-        # value is already boolean
-        return value
-    elif isinstance(value, int):
-        # value is numerical, e.g. 1 or 0
-        return True if value else False
-    else:
-        # value is a string
-        if value.lower() in truthy:
-            return True
-        elif value.lower() in falsy:
-            return False
-        else:
-            raise ValueError(f'Value should be one of {truthy+falsy}')
 
 
 # This is currently not used, but is kept for possible future implementation

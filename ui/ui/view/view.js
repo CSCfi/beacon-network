@@ -15,6 +15,7 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
   that.selectedItem = '';
   that.message = "";
   that.searchClick = false;
+  that.searchOptions = 'Advanced Search';
 
   that.triggerCredentials = false;
 
@@ -22,6 +23,24 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
   $scope.url = '';
   $scope.aggregatorUrl = '';
   that.aaiUrl = '';
+
+  // Advanced search options
+  $scope.adv = {
+    assembly: 'GRCh38',
+    chr: '1',
+    coordBase: 0,
+    start: '',
+    startMin: '',
+    startMax: '',
+    end: '',
+    endMin: '',
+    endMax: '',
+    ref: '',
+    alt: '',
+    vt: 'Unspecified',
+    ds: '',
+    resp: ''
+  };
 
   // Read from config file
   $http.get('view/config.json').success(function (data){
@@ -84,32 +103,175 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
     }
   }
 
+  // Exlusive or (XOR) manager for coordinates and variant transformation
+  that.manageAdvancedSearchOptions = function() {
+    // If using exact start, disable startMin and startMax
+    if (document.getElementById('advStart').value > 0) {
+      document.getElementById('advStartMin').disabled = true;
+      document.getElementById('advStartMax').disabled = true;
+    } else {
+      document.getElementById('advStartMin').disabled = false;
+      document.getElementById('advStartMax').disabled = false;
+    }
+    // If using exact end, disable endMin and endMax
+    if (document.getElementById('advEnd').value > 0) {
+      document.getElementById('advEndMin').disabled = true;
+      document.getElementById('advEndMax').disabled = true;
+    } else {
+      document.getElementById('advEndMin').disabled = false;
+      document.getElementById('advEndMax').disabled = false;
+    }
+    // If using startMin or startMax, disable start
+    if (document.getElementById('advStartMin').value > 0 || document.getElementById('advStartMax').value > 0) {
+      document.getElementById('advStart').disabled = true;
+      document.getElementById('advStart').required = false;
+      document.getElementById('advStartMin').required = true;
+      document.getElementById('advStartMax').required = true;
+    } else {
+      document.getElementById('advStart').disabled = false;
+      document.getElementById('advStart').required = true;
+      document.getElementById('advStartMin').required = false;
+      document.getElementById('advStartMax').required = false;
+    }
+    // If using endMin or endMax, disable end
+    if (document.getElementById('advEndMin').value > 0 || document.getElementById('advEndMax').value > 0) {
+      document.getElementById('advEnd').disabled = true;
+      document.getElementById('advStart').required = false;
+      document.getElementById('advEndMin').required = true;
+      document.getElementById('advEndMax').required = true;
+    } else {
+      document.getElementById('advEnd').disabled = false;
+      document.getElementById('advEnd').required = false;
+      document.getElementById('advEndMin').required = false;
+      document.getElementById('advEndMax').required = false;
+    }
+    // If using altBases, disable variantType -------- WHY DOESN'T THIS WORK?
+    if (document.getElementById('advAlt').value != '' && document.getElementById('advAlt').value.length > 0) {
+      document.getElementById('advVt').disabled = true;
+    } else {
+      document.getElementById('advVt').disabled = false;
+    }
+    // If using variantType, disable altBases
+    if ($scope.adv.vt == 'Unspecified') {
+      document.getElementById('advAlt').disabled = false;
+      document.getElementById('advAlt').required = true;
+    } else {
+      document.getElementById('advAlt').disabled = true;
+      document.getElementById('advAlt').required = false;
+      $scope.adv.alt = '';  // empty the altBases field if it was filled
+    }
+  }
+
+  // Toggle between basic search and advanced search
+  that.toggleSearchOptions = function(value){
+    if (value == 'Advanced Search') {
+      document.getElementById('advStart').required = true;
+      document.getElementById("basicSearch").style.display = "none";
+      document.getElementById("advancedSearch").style.display = "block";
+      that.searchOptions = 'Basic Search';
+    } else {
+      document.getElementById("advancedSearch").style.display = "none";
+      document.getElementById("basicSearch").style.display = "inherit";
+      that.searchOptions = 'Advanced Search';
+      that.searchText = '';
+    }
+  }
+
+  $scope.advResetForm = function() {
+    $scope.adv = {
+      assembly: 'GRCh38',
+      chr: '1',
+      coordBase: 0,
+      start: '',
+      startMin: '',
+      startMax: '',
+      end: '',
+      endMin: '',
+      endMax: '',
+      ref: '',
+      alt: '',
+      vt: 'Unspecified',
+      ds: '',
+      resp: ''
+    };
+  }
+
   // GET request to Beacon(s)
-  $scope.submit = function() {
+  $scope.submit = function(searchType) {
     that.loading = true; // spinner animation
     that.message = []; // put websocket responses here
     that.searchClick = true;
-    $scope.itemsPerPage = 10;
-    if (that.regexp2.test(that.searchText)) {
-      that.selectedItem = {type: 'variant', name: that.searchText}
-    }
-    if (that.selectedItem && that.selectedItem.type == 'variant') {
-      that.triggerCredentials = true;
-      var params = that.searchText.match(that.regexp2)
-      var searchType = '';
-      // Check if we are dealing with bases or variant types
-      if (that.varTypes.indexOf(params[4]) >= 0) {
-        // Variant type
-        searchType = `&variantType=${params[4]}`;
-      } else {
-        // Alternate base
-        searchType = `&alternateBases=${params[4]}`;
+    if (searchType == 'basic') {
+      if (that.regexp2.test(that.searchText)) {
+        that.selectedItem = {type: 'variant', name: that.searchText}
       }
-      var startMin = Number(params[2]) - 1;
-      var startMax = Number(params[2]);
-      $scope.url = `${$scope.aggregatorUrl}assemblyId=${$scope.assembly.selected}&referenceName=${params[1]}&startMin=${startMin}&startMax=${startMax}&referenceBases=${params[3]}${searchType}&includeDatasetResponses=HIT`;
+      if (that.selectedItem && that.selectedItem.type == 'variant') {
+        that.triggerCredentials = true;
+        var params = that.searchText.match(that.regexp2)
+        var searchType = '';
+        // Check if we are dealing with bases or variant types
+        if (that.varTypes.indexOf(params[4]) >= 0) {
+          // Variant type
+          searchType = `&variantType=${params[4]}`;
+        } else {
+          // Alternate base
+          searchType = `&alternateBases=${params[4]}`;
+        }
+        var startMin = Number(params[2]) - 1;
+        var startMax = Number(params[2]);
+        $scope.url = `${$scope.aggregatorUrl}assemblyId=${$scope.assembly.selected}&referenceName=${params[1]}&startMin=${startMin}&startMax=${startMax}&referenceBases=${params[3]}${searchType}&includeDatasetResponses=HIT`;
+      } else {
+        console.log('search type unselected');
+      }
     } else {
-      console.log('search type unselected');
+      // Remnant..
+      that.selectedItem = {type: 'variant'}
+      that.searchText = '';
+      // Advanced variable placeholders
+      var start = '';
+      var end = '';
+      var alt = '';
+      var ds = '';
+      // Construct query URL from advanced search form
+      // Base URL, these variables we will always use
+      $scope.url = `${$scope.aggregatorUrl}assemblyId=${$scope.adv.assembly}&referenceName=${$scope.adv.chr}&referenceBases=${$scope.adv.ref}&includeDatasetResponses=HIT`;
+      // Handle variables which have options
+      // Handle coords
+      // Handle coordinate base-system
+      if ($scope.adv.coordBase == 1) {
+        if ($scope.adv.start != '' && $scope.adv.start > 0) {$scope.adv.start--;}
+        if ($scope.adv.startMin != '' && $scope.adv.startMin > 0) {$scope.adv.startMin--;}
+        if ($scope.adv.startMax != '' && $scope.adv.startMax > 0) {$scope.adv.startMax--;}
+        if ($scope.adv.end != '' && $scope.adv.end > 0) {$scope.adv.end--;}
+        if ($scope.adv.endMin != '' && $scope.adv.endMin > 0) {$scope.adv.endMin--;}
+        if ($scope.adv.endMax != '' && $scope.adv.endMax > 0) {$scope.adv.endMax--;}
+      }
+      if ($scope.adv.start) {
+        var start = `&start=${$scope.adv.start.toString()}`;
+      } else {
+        var start = `&startMin=${$scope.adv.startMin.toString()}&startMax=${$scope.adv.startMax.toString()}`;
+      }
+      if ($scope.adv.end) {
+        var end = `&end=${$scope.adv.end.toString()}`;
+      } else if ($scope.adv.endMin && $scope.adv.endMax) {
+        var end = `&endMin=${$scope.adv.endMin.toString()}&endMax=${$scope.adv.endMax.toString()}`;
+      } else {
+        // end will not be used
+      }
+      // Handle variant transformation
+      if ($scope.adv.alt.length) {
+        var alt = `&alternateBases=${$scope.adv.alt}`;
+      } else {
+        var alt = `&variantType=${$scope.adv.vt}`;
+      }
+      // Handle requested datasets -- CAN'T HANDLE THIS RIGHT NOW..
+      // if ($scope.adv.ds != 'ALL') {
+      //   var ds = `&datasetIds=${$scope.adv.ds}`;
+      // }
+      // Assemble URL
+      // $scope.url = `${$scope.url}${start}${end}${alt}${ds}`;
+      $scope.url = `${$scope.url}${start}${end}${alt}`;
+      // that.searchText = '';
     }
 
     // Prepend aggregator url with secure websocket protocol
@@ -144,9 +306,10 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
   }
 
   $scope.searchExample = function(searchtype) {
+    that.toggleSearchOptions('default');  // set to basic search if user is in advanced search
     that.searchClick = false;
     if (searchtype == 'variant') {
-      var variants = ['MT : 10 T > C', 'MT : 7600 G > A', 'MT : 195 TTACTAAAGT > CCACTAAAGT', 'MT : 14037 A > G',
+      var variants = ['MT : 10 T > C', 'MT : 7600 G > A', 'MT : 195 TTACTAAAGT > MNP', 'MT : 14037 A > G',
                       '1 : 104431390 C > INS', '19 : 36585458 A > INS', '19 : 36909437 C > DUP', '1 : 2847963 G > DUP',
                       '1 : 1393861 T > CNV', '1 : 85910910 C > CNV', '1 : 218144328 A > INV']
       // Select example variant from list at random
