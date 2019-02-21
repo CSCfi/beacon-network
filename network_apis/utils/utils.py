@@ -177,29 +177,6 @@ async def generate_service_key():
     return secrets.token_urlsafe(64)
 
 
-# Superceded by from 'distutils.util import strtobool'
-# def handle_bool(value):
-#     """Determine which boolean value parameter should be."""
-#     LOG.debug('Determine boolean value of parameter.')
-#     # Allowed values
-#     truthy = [True, 'true', 't', 'yes', 'y', '1', 1]
-#     falsy = [False, 'false', 'f', 'no', 'n', '0', 0]
-#     if isinstance(value, bool):
-#         # value is already boolean
-#         return value
-#     elif isinstance(value, int):
-#         # value is numerical, e.g. 1 or 0
-#         return True if value else False
-#     else:
-#         # value is a string
-#         if value.lower() in truthy:
-#             return True
-#         elif value.lower() in falsy:
-#             return False
-#         else:
-#             raise ValueError(f'Value should be one of {truthy+falsy}')
-
-
 # This is currently not used, but is kept for possible future implementation
 # The idea is, that the user doesn't give the id, but it is generated from the
 # Given service url, so that the id is always unique as it is tied to the registered url
