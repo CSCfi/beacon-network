@@ -25,21 +25,22 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
   that.aaiUrl = '';
 
   // Advanced search options
-  $scope.adv = {assembly: '',
-                chr: '',
-                coordBase: 0,
-                start: '',
-                startMin: '',
-                startMax: '',
-                end: '',
-                endMin: '',
-                endMax: '',
-                ref: '',
-                alt: '',
-                vt: 'Unspecified',
-                ds: '',
-                resp: ''
-              };
+  $scope.adv = {
+    assembly: 'GRCh38',
+    chr: '1',
+    coordBase: 0,
+    start: '',
+    startMin: '',
+    startMax: '',
+    end: '',
+    endMin: '',
+    endMax: '',
+    ref: '',
+    alt: '',
+    vt: 'Unspecified',
+    ds: '',
+    resp: ''
+  };
 
   // Read from config file
   $http.get('view/config.json').success(function (data){
@@ -121,19 +122,31 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
       document.getElementById('advEndMax').disabled = false;
     }
     // If using startMin or startMax, disable start
-    if (document.getElementById('advStartMin').value > 0 || document.getElementById('advStartMin').value > 0) {
+    if (document.getElementById('advStartMin').value > 0 || document.getElementById('advStartMax').value > 0) {
       document.getElementById('advStart').disabled = true;
+      document.getElementById('advStart').required = false;
+      document.getElementById('advStartMin').required = true;
+      document.getElementById('advStartMax').required = true;
     } else {
       document.getElementById('advStart').disabled = false;
+      document.getElementById('advStart').required = true;
+      document.getElementById('advStartMin').required = false;
+      document.getElementById('advStartMax').required = false;
     }
     // If using endMin or endMax, disable end
-    if (document.getElementById('advEndMin').value > 0 || document.getElementById('advEndMin').value > 0) {
+    if (document.getElementById('advEndMin').value > 0 || document.getElementById('advEndMax').value > 0) {
       document.getElementById('advEnd').disabled = true;
+      document.getElementById('advStart').required = false;
+      document.getElementById('advEndMin').required = true;
+      document.getElementById('advEndMax').required = true;
     } else {
       document.getElementById('advEnd').disabled = false;
+      document.getElementById('advEnd').required = false;
+      document.getElementById('advEndMin').required = false;
+      document.getElementById('advEndMax').required = false;
     }
     // If using altBases, disable variantType -------- WHY DOESN'T THIS WORK?
-    if ($scope.adv.alt != null && $scope.adv.alt.length > 0) {
+    if (document.getElementById('advAlt').value != '' && document.getElementById('advAlt').value.length > 0) {
       document.getElementById('advVt').disabled = true;
     } else {
       document.getElementById('advVt').disabled = false;
@@ -141,8 +154,10 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
     // If using variantType, disable altBases
     if ($scope.adv.vt == 'Unspecified') {
       document.getElementById('advAlt').disabled = false;
+      document.getElementById('advAlt').required = true;
     } else {
       document.getElementById('advAlt').disabled = true;
+      document.getElementById('advAlt').required = false;
       $scope.adv.alt = '';  // empty the altBases field if it was filled
     }
   }
@@ -150,6 +165,7 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
   // Toggle between basic search and advanced search
   that.toggleSearchOptions = function(value){
     if (value == 'Advanced Search') {
+      document.getElementById('advStart').required = true;
       document.getElementById("basicSearch").style.display = "none";
       document.getElementById("advancedSearch").style.display = "block";
       that.searchOptions = 'Basic Search';
@@ -157,7 +173,27 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
       document.getElementById("advancedSearch").style.display = "none";
       document.getElementById("basicSearch").style.display = "inherit";
       that.searchOptions = 'Advanced Search';
+      that.searchText = '';
     }
+  }
+
+  $scope.advResetForm = function() {
+    $scope.adv = {
+      assembly: 'GRCh38',
+      chr: '1',
+      coordBase: 0,
+      start: '',
+      startMin: '',
+      startMax: '',
+      end: '',
+      endMin: '',
+      endMax: '',
+      ref: '',
+      alt: '',
+      vt: 'Unspecified',
+      ds: '',
+      resp: ''
+    };
   }
 
   // GET request to Beacon(s)
@@ -203,14 +239,12 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
       // Handle coords
       // Handle coordinate base-system
       if ($scope.adv.coordBase == 1) {
-        console.log($scope.adv);
         if ($scope.adv.start != '' && $scope.adv.start > 0) {$scope.adv.start--;}
         if ($scope.adv.startMin != '' && $scope.adv.startMin > 0) {$scope.adv.startMin--;}
         if ($scope.adv.startMax != '' && $scope.adv.startMax > 0) {$scope.adv.startMax--;}
         if ($scope.adv.end != '' && $scope.adv.end > 0) {$scope.adv.end--;}
         if ($scope.adv.endMin != '' && $scope.adv.endMin > 0) {$scope.adv.endMin--;}
         if ($scope.adv.endMax != '' && $scope.adv.endMax > 0) {$scope.adv.endMax--;}
-        console.log($scope.adv);
       }
       if ($scope.adv.start) {
         var start = `&start=${$scope.adv.start.toString()}`;
@@ -237,9 +271,8 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
       // Assemble URL
       // $scope.url = `${$scope.url}${start}${end}${alt}${ds}`;
       $scope.url = `${$scope.url}${start}${end}${alt}`;
+      // that.searchText = '';
     }
-
-    console.log($scope.url);
 
     // Prepend aggregator url with secure websocket protocol
     $scope.wsUrl = 'wss://' + $scope.url;
