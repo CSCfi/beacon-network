@@ -144,9 +144,9 @@ async def query_service(service, params, access_token, ws=None):
     async with aiohttp.ClientSession() as session:
         try:
             async with session.get(service,
-                                   params=params,
-                                   ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', False))),
-                                   headers=headers) as response:
+                                    params=params,
+                                    ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False'))),
+                                    headers=headers) as response:
                 # On successful response, forward response
                 if response.status == 200:
                     result = await response.json()
@@ -159,8 +159,8 @@ async def query_service(service, params, access_token, ws=None):
                 else:
                     # HTTP errors
                     error = {"service": service,
-                             "queryParams": params,
-                             "responseStatus": response.status}
+                                "queryParams": params,
+                                "responseStatus": response.status}
                     if ws:
                         return await ws.send_str(json.dumps(str(error)))
                     else:
