@@ -4,10 +4,13 @@ import os
 import json
 import secrets
 
+from distutils.util import strtobool
+
 import aiohttp
 
 from aiohttp import web
-from distutils.util import strtobool
+from aiocache import cached
+from aiocache.serializers import JsonSerializer
 
 from .logging import LOG
 # from .db_ops import db_get_service_urls
@@ -120,6 +123,8 @@ async def db_get_service_urls(connection, service_type=None):
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to fetch service urls.')
 
 
+# Cache Beacon URLs for faster re-usability
+@cached(ttl=604800, key="beacon_urls", serializer=JsonSerializer())
 async def get_services(db_pool):
     """Return service urls."""
     LOG.debug('Fetch service urls.')
@@ -145,15 +150,20 @@ async def get_service_urls(services):
     async with aiohttp.ClientSession() as session:
         for service in services:
             try:
-                async with session.get(f'http://{service}',
-                                        params=params,
-                                        ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
+                # session.get() requires schema to be used, if testing connection in localhost, see help below:
+                # instead of service use f'http://{service}'
+                # e.g.
+                # async with session.get(f'http://{service}',
+                async with session.get(service,
+                                       params=params,
+                                       ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
                     if response.status == 200:
                         result = await response.json()
                         for r in result:
                             service_urls.append(r['serviceUrl'])
             except Exception as e:
                 LOG.debug(f'Query error {e}.')
+                LOG.debug('If you are testing the application with localhost addresses, see the comments of this function.')
                 web.HTTPInternalServerError(text=f'An error occurred while attempting to query services: {e}')
 
     return service_urls
