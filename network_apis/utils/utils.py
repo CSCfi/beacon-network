@@ -150,10 +150,6 @@ async def get_service_urls(services):
     async with aiohttp.ClientSession() as session:
         for service in services:
             try:
-                # session.get() requires schema to be used, if testing connection in localhost, see help below:
-                # instead of service use f'http://{service}'
-                # e.g.
-                # async with session.get(f'http://{service}',
                 async with session.get(service,
                                        params=params,
                                        ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
@@ -163,7 +159,6 @@ async def get_service_urls(services):
                             service_urls.append(r['serviceUrl'])
             except Exception as e:
                 LOG.debug(f'Query error {e}.')
-                LOG.debug('If you are testing the application with localhost addresses, see the comments of this function.')
                 web.HTTPInternalServerError(text=f'An error occurred while attempting to query services: {e}')
 
     return service_urls
