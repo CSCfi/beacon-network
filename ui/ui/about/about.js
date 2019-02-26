@@ -15,7 +15,7 @@ angular.module('beaconApp.about', ['ngRoute'])
 
   $http({
     method: 'GET',
-    url: "https://aggregator-beacon.rahtiapp.fi/services?serviceType=GA4GHBeacon"
+    url: "https://registry-beacon.rahtiapp.fi/services?serviceType=GA4GHBeacon"
   }).then(function successCallback(response) {
       $scope.beacons = response.data;
     }, function errorCallback(response) {
