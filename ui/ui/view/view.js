@@ -289,7 +289,6 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
       // $scope.url = `${$scope.url}${start}${end}${alt}${ds}`;
       $scope.url = `${$scope.url}${start}${end}${alt}`;
       // that.searchText = '';
-      console.log($scope.url);
     }
 
     // Prepend aggregator url with secure websocket protocol
