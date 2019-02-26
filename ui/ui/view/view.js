@@ -238,40 +238,23 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
       // Handle variables which have options
       // Handle coords
       // Handle coordinate base-system
-      // Kind of awkward solution for now.. Advanced search is in beta anyway
-      var cb = {
-        s: 0,
-        smi: 0,
-        sma: 0,
-        e: 0,
-        emi: 0,
-        ema: 0
-      }
       if ($scope.adv.coordBase == 1) {
-        if ($scope.adv.start != '' && $scope.adv.start > 0) {cb.s = $scope.adv.start - 1;}
-        if ($scope.adv.startMin != '' && $scope.adv.startMin > 0) {cb.smi = $scope.adv.startMin - 1;}
-        if ($scope.adv.startMax != '' && $scope.adv.startMax > 0) {cb.sma = $scope.adv.startMax - 1;}
-        if ($scope.adv.end != '' && $scope.adv.end > 0) {cb.e = $scope.adv.end - 1;}
-        if ($scope.adv.endMin != '' && $scope.adv.endMin > 0) {c.emi = $scope.adv.endMin - 1;}
-        if ($scope.adv.endMax != '' && $scope.adv.endMax > 0) {c.ema = $scope.adv.endMax - 1;}
-      } else {
-        cb.s = $scope.adv.start;
-        cb.smi = $scope.adv.startMin;
-        cb.sma = $scope.adv.startMax;
-        cb.e = $scope.adv.end;
-        cb.emi = $scope.adv.endMin;
-        cb.ema = $scope.adv.endMax;
+        if ($scope.adv.start != '' && $scope.adv.start > 0) {$scope.adv.start--;}
+        if ($scope.adv.startMin != '' && $scope.adv.startMin > 0) {$scope.adv.startMin--;}
+        if ($scope.adv.startMax != '' && $scope.adv.startMax > 0) {$scope.adv.startMax--;}
+        if ($scope.adv.end != '' && $scope.adv.end > 0) {$scope.adv.end--;}
+        if ($scope.adv.endMin != '' && $scope.adv.endMin > 0) {$scope.adv.endMin--;}
+        if ($scope.adv.endMax != '' && $scope.adv.endMax > 0) {$scope.adv.endMax--;}
       }
-      // ---
       if ($scope.adv.start) {
-        var start = `&start=${cb.s.toString()}`;
+        var start = `&start=${$scope.adv.start.toString()}`;
       } else {
-        var start = `&startMin=${cb.smi.toString()}&startMax=${cb.sma.toString()}`;
+        var start = `&startMin=${$scope.adv.startMin.toString()}&startMax=${$scope.adv.startMax.toString()}`;
       }
       if ($scope.adv.end) {
-        var end = `&end=${cb.e.toString()}`;
+        var end = `&end=${$scope.adv.end.toString()}`;
       } else if ($scope.adv.endMin && $scope.adv.endMax) {
-        var end = `&endMin=${cb.emi.toString()}&endMax=${cb.ema.toString()}`;
+        var end = `&endMin=${$scope.adv.endMin.toString()}&endMax=${$scope.adv.endMax.toString()}`;
       } else {
         // end will not be used
       }
