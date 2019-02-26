@@ -4,13 +4,10 @@ import os
 import json
 import secrets
 
-from distutils.util import strtobool
-
 import aiohttp
 
 from aiohttp import web
-from aiocache import cached
-from aiocache.serializers import JsonSerializer
+from distutils.util import strtobool
 
 from .logging import LOG
 # from .db_ops import db_get_service_urls
@@ -96,19 +93,20 @@ async def get_access_token(request):
     else:
         LOG.debug('No auth.')
         # Otherwise send nothing
-        # pass
+        pass
 
     return access_token
 
 
 # db function temporarily placed here due to import-loop issues
-async def db_get_service_urls(connection, service_type=None):
+async def db_get_service_urls(connection):
     """Return queryable service urls."""
-    LOG.debug(f'Querying database for service urls of type {service_type}.')
+    LOG.debug('Querying database for service urls.')
     service_urls = []
     try:
         # Database query
-        query = f"""SELECT service_url FROM services WHERE service_type='{service_type}'"""
+        # Limit search to Beacons for now, add <OR service_type='GA4GHBeaconAggregator'> later if necessary
+        query = f"""SELECT service_url FROM services WHERE service_type='GA4GHBeacon'"""
         statement = await connection.prepare(query)
         response = await statement.fetch()
         if len(response) > 0:
@@ -117,51 +115,21 @@ async def db_get_service_urls(connection, service_type=None):
                 service_urls.append(record['service_url'])
             return service_urls
         else:
-            raise web.HTTPNotFound(text=f'No queryable services found of service type {service_type}.')
+            raise web.HTTPNotFound(text='No queryable services found.')
     except Exception as e:
-        LOG.debug(f'DB error for service_type={service_type}: {e}')
+        LOG.debug(f'DB error: {e}')
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to fetch service urls.')
 
 
-# Cache Beacon URLs for faster re-usability
-@cached(ttl=604800, key="beacon_urls", serializer=JsonSerializer())
 async def get_services(db_pool):
     """Return service urls."""
     LOG.debug('Fetch service urls.')
 
     # Take connection from the database pool
     async with db_pool.acquire() as connection:
-        services = await db_get_service_urls(connection, service_type='GA4GHRegistry')  # service urls (in this case registries) to be queried
+        services = await db_get_service_urls(connection)  # service urls (beacons, aggregators) to be queried
 
-    # Query Registries for their known Beacon services, fetch only URLs
-    service_urls = await get_service_urls(services)
-
-    return service_urls
-
-
-async def get_service_urls(services):
-    """Query a an external service for known service urls."""
-    LOG.debug('Query external service for given service type.')
-    service_urls = []
-    # Here we want to find Beacons only and in short format for smaller payload
-    params = {'serviceType': 'GA4GHBeacon', 'listFormat': 'short'}
-
-    # Query service (typically a registry) in a session
-    async with aiohttp.ClientSession() as session:
-        for service in services:
-            try:
-                async with session.get(service,
-                                       params=params,
-                                       ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
-                    if response.status == 200:
-                        result = await response.json()
-                        for r in result:
-                            service_urls.append(r['serviceUrl'])
-            except Exception as e:
-                LOG.debug(f'Query error {e}.')
-                web.HTTPInternalServerError(text=f'An error occurred while attempting to query services: {e}')
-
-    return service_urls
+    return services
 
 
 async def query_service(service, params, access_token, ws=None):
@@ -176,9 +144,9 @@ async def query_service(service, params, access_token, ws=None):
     async with aiohttp.ClientSession() as session:
         try:
             async with session.get(service,
-                                   params=params,
-                                   ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False'))),
-                                   headers=headers) as response:
+                                    params=params,
+                                    ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False'))),
+                                    headers=headers) as response:
                 # On successful response, forward response
                 if response.status == 200:
                     result = await response.json()
@@ -191,8 +159,8 @@ async def query_service(service, params, access_token, ws=None):
                 else:
                     # HTTP errors
                     error = {"service": service,
-                             "queryParams": params,
-                             "responseStatus": response.status}
+                                "queryParams": params,
+                                "responseStatus": response.status}
                     if ws:
                         return await ws.send_str(json.dumps(str(error)))
                     else:

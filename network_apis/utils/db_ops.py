@@ -51,12 +51,12 @@ async def db_register_organisation(connection, organisation):
     LOG.debug('Register organisation if it doesn\'t exist.')
     try:
         await connection.execute(f"""INSERT INTO organisations (id, name, description, address, welcome_url, contact_url, logo_url, info)
-                                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                                 ON CONFLICT (id) DO NOTHING""",
-                                 organisation['id'], organisation['name'],
-                                 organisation.get('description', ''), organisation.get('address', ''),
-                                 organisation.get('welcomeUrl', ''), organisation.get('contactUrl', ''),
-                                 organisation.get('logoUrl', ''), json.dumps(organisation.get('info', '')))
+                                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                                     ON CONFLICT (id) DO NOTHING""",
+                                     organisation['id'], organisation['name'],
+                                     organisation.get('description', ''), organisation.get('address', ''),
+                                     organisation.get('welcomeUrl', ''), organisation.get('contactUrl', ''),
+                                     organisation.get('logoUrl', ''), json.dumps(organisation.get('info', '')))
         return True
 
     except Exception as e:
@@ -71,8 +71,8 @@ async def db_store_service_key(connection, id, service_key):
         # Database commit occurs on transaction closure
         async with connection.transaction():
             await connection.execute(f"""INSERT INTO service_keys (service_id, service_key)
-                                     VALUES ($1, $2)""",
-                                     id, service_key)
+                                         VALUES ($1, $2)""",
+                                         id, service_key)
     except Exception as e:
         LOG.debug(f'DB error: {e}')
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to store service key.')
@@ -108,11 +108,11 @@ async def db_register_service(connection, service):
             await db_register_organisation(connection, service['organization'])
             # Register service
             await connection.execute(f"""INSERT INTO services (id, name, service_type, api_version, service_url, host_org, description,
-                                     service_version, public_key, open, welcome_url, alt_url, create_datetime, update_datetime)
-                                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())""",
-                                     service['id'], service['name'], service['serviceType'], service['apiVersion'], service['serviceUrl'],
-                                     service['organization']['id'], service.get('description', ''), service.get('version', ''), service['publicKey'],
-                                     service['open'], service.get('welcomeUrl', ''), service.get('alternativeUrl', ''))
+                                         service_version, public_key, open, welcome_url, alt_url, create_datetime, update_datetime)
+                                         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())""",
+                                         service['id'], service['name'], service['serviceType'], service['apiVersion'], service['serviceUrl'],
+                                         service['organization']['id'], service.get('description', ''), service.get('version', ''), service['publicKey'],
+                                         service['open'], service.get('welcomeUrl', ''), service.get('alternativeUrl', ''))
             # If service registration was successful, generate and store a service key
             service_key = await generate_service_key()
             await db_store_service_key(connection, service['id'], service_key)

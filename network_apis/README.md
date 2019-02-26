@@ -70,7 +70,7 @@ Configuration priority is ENV > CONFIG > DEFAULT. Typically no ENV are set, so v
 
 ### After set-up examples
 <details><summary>View examples</summary>
-Register a service, on this case, register self at Registry (host's own details). Do the same for Aggregator, e.g. in testing/dev just change port from `3000` to `3001`. Aggregator will contact Registries that have been registered at its database.
+Register a service, on this case, register self at Registry (host's own details).
 
 ```
 curl -X POST \
@@ -146,10 +146,10 @@ curl -X GET \
   http://localhost:3000/info \
 ```
 
-Register a Beacon to Registry
+Register a Beacon to the Beacon Aggregator
 ```
 curl -X POST \
-  http://localhost:3000/services \
+  http://localhost:3001/services \
   -d '{
     "id": "org.ga4gh.beacon",
     "name": "ELIXIR Beacon",
@@ -178,13 +178,11 @@ curl -X POST \
 }'
 ```
 
-Get Aggregator's registered services information. This should return Registries that the Aggregator uses.
+Get Aggregator's registered services information.
 ```
 curl -X GET \
   http://localhost:3001/services \
 ```
-
-Querying an Aggregator makes the Aggregator query a Registry for Beacon services, which are returned to the Aggregator for querying.
 
 Make a synchronous http query to Aggregator's registered services.
 ```
