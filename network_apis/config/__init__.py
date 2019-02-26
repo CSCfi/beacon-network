@@ -16,7 +16,9 @@ def parse_config_file(path):
             'db_port': config.get('registry', 'db_port'),
             'db_user': config.get('registry', 'db_user'),
             'db_pass': config.get('registry', 'db_pass'),
-            'db_name': config.get('registry', 'db_name')
+            'db_name': config.get('registry', 'db_name'),
+            'app_host': config.get('registry', 'app_host'),
+            'app_port': config.get('registry', 'app_port')
         },
         'aggregator': {
             'host_id': config.get('aggregator', 'host_id'),
@@ -24,7 +26,9 @@ def parse_config_file(path):
             'db_port': config.get('aggregator', 'db_port'),
             'db_user': config.get('aggregator', 'db_user'),
             'db_pass': config.get('aggregator', 'db_pass'),
-            'db_name': config.get('aggregator', 'db_name')
+            'db_name': config.get('aggregator', 'db_name'),
+            'app_host': config.get('aggregator', 'app_host'),
+            'app_port': config.get('aggregator', 'app_port')
         }
     }
     return namedtuple("Config", config_vars.keys())(*config_vars.values())
