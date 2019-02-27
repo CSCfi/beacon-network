@@ -238,23 +238,40 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
       // Handle variables which have options
       // Handle coords
       // Handle coordinate base-system
-      if ($scope.adv.coordBase == 1) {
-        if ($scope.adv.start != '' && $scope.adv.start > 0) {$scope.adv.start--;}
-        if ($scope.adv.startMin != '' && $scope.adv.startMin > 0) {$scope.adv.startMin--;}
-        if ($scope.adv.startMax != '' && $scope.adv.startMax > 0) {$scope.adv.startMax--;}
-        if ($scope.adv.end != '' && $scope.adv.end > 0) {$scope.adv.end--;}
-        if ($scope.adv.endMin != '' && $scope.adv.endMin > 0) {$scope.adv.endMin--;}
-        if ($scope.adv.endMax != '' && $scope.adv.endMax > 0) {$scope.adv.endMax--;}
+      // Kind of awkward solution for now.. Advanced search is in beta anyway
+      var coordHandler = {
+        start: 0,
+        startMin: 0,
+        startMax: 0,
+        end: 0,
+        endMin: 0,
+        endMax: 0
       }
-      if ($scope.adv.start) {
-        var start = `&start=${$scope.adv.start.toString()}`;
+      if ($scope.adv.coordBase == 1) {
+        if ($scope.adv.start != '' && $scope.adv.start > 0) {coordHandler.start = $scope.adv.start - 1;}
+        if ($scope.adv.startMin != '' && $scope.adv.startMin > 0) {coordHandler.startMin = $scope.adv.startMin - 1;}
+        if ($scope.adv.startMax != '' && $scope.adv.startMax > 0) {coordHandler.startMax = $scope.adv.startMax - 1;}
+        if ($scope.adv.end != '' && $scope.adv.end > 0) {coordHandler.end = $scope.adv.end - 1;}
+        if ($scope.adv.endMin != '' && $scope.adv.endMin > 0) {coordHandler.endMin = $scope.adv.endMin - 1;}
+        if ($scope.adv.endMax != '' && $scope.adv.endMax > 0) {coordHandler.endMax = $scope.adv.endMax - 1;}
       } else {
-        var start = `&startMin=${$scope.adv.startMin.toString()}&startMax=${$scope.adv.startMax.toString()}`;
+        coordHandler.start = $scope.adv.start;
+        coordHandler.startMin = $scope.adv.startMin;
+        coordHandler.startMax = $scope.adv.startMax;
+        coordHandler.end = $scope.adv.end;
+        coordHandler.endMin = $scope.adv.endMin;
+        coordHandler.endMax = $scope.adv.endMax;
+      }
+      // ---
+      if ($scope.adv.start) {
+        var start = `&start=${coordHandler.start.toString()}`;
+      } else {
+        var start = `&startMin=${coordHandler.startMin.toString()}&startMax=${coordHandler.startMax.toString()}`;
       }
       if ($scope.adv.end) {
-        var end = `&end=${$scope.adv.end.toString()}`;
+        var end = `&end=${coordHandler.end.toString()}`;
       } else if ($scope.adv.endMin && $scope.adv.endMax) {
-        var end = `&endMin=${$scope.adv.endMin.toString()}&endMax=${$scope.adv.endMax.toString()}`;
+        var end = `&endMin=${coordHandler.endMin.toString()}&endMax=${coordHandler.endMax.toString()}`;
       } else {
         // end will not be used
       }
