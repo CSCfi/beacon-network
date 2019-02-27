@@ -8,7 +8,7 @@ Beacon Network UI has been developed using AngularJS, HTML5 and CSS3.
 The Beacon UI endpoints can be configured in `ui/app/view/config.json` file. Currently they will default to:
 ```json
 {
-  "aggregatorUrl": "beacon-aggregator-beacon.rahtiapp.fi/query",
+  "aggregatorUrl": "aggregator-beacon.rahtiapp.fi/query?",
   "aaiUrl": "https://beacon-auth-beacon.rahtiapp.fi/app"
 }
 ```
