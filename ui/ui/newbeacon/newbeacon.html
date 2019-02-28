@@ -1,0 +1,22 @@
+<div id="beaconLogin" id="popupContainer">
+  <a href="#!/about">
+    <md-button class="md-raised md-primary">
+      <i class="fas fa-hand-point-left"></i>
+      <span style="margin:auto">Go Back</span>
+    </md-button>
+  </a>
+  <span ng-if="checkLogin()">
+    <a ng-if="checkLogin() && !checkBonaFide()" href="https://www.elixir-europe.org/services/compute/aai/bonafide" class="btn btn-info" tabindex="-1" role="button" aria-disabled="true"><i class="fas fa-hand-point-right"></i> Discover more as Bona
+      Fide!</a>
+    <a ng-if="checkLogin() && checkBonaFide()" href="#" class="btn btn-success disabled" tabindex="-1" role="button" aria-disabled="true">Bona Fide</a>
+    <a ng-if="checkLogin()" href="#" class="btn btn-primary disabled" tabindex="-1" role="button" aria-disabled="true">User Authenticated</a>
+  </span>
+  <span ng-if="!checkLogin()">
+    <a href="https://beacon-auth-beacon.rahtiapp.fi/app">
+      <img width="150" src="assets/elixir-login-new.png" title="ELIXIR AAI" />
+    </a>
+  </span>
+</div>
+<div id="beaconLogo">
+  <a href="#"><img id="logo" src="assets/beacon-small-3.png" /></a>
+</div>
