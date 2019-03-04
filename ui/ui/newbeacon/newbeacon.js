@@ -74,8 +74,7 @@ angular.module('beaconApp.newbeacon', ['ngRoute'])
         description: data.description,
         version: data.version,
         welcomeUrl: data.welcomeUrl,
-        alternativeUrl: data.alternativeUrl,
-        publicKey: ''
+        alternativeUrl: data.alternativeUrl
       }
       // Register Beacon
       $http({

@@ -47,7 +47,8 @@
           </md-content>
           <div id="fetchedInfo">
             <code>
-              Information fetched from Beacon. In case of any discrepancies, please modify the information directly at your Beacon and then load the information again.<br>
+              <b>This feature is in testing phase.</b><br>
+              Information fetched from Beacon. In case of any discrepancies, please modify the information directly at your Beacon and then load the information again. In case of standalone Beacons, the serviceType, serviceUrl and open are given default values. Should the serviceUrl differ from the correct endpoint, use the PUT method later to fix the value manually.<br>
               <hr>
               <b>Beacon Info</b><br>
               id: {{ beaconInfo.id }}<br>
@@ -80,6 +81,9 @@
               Add New Beacon
             </md-button>
           </md-input-container>
+          <div style="margin:auto">
+            This feature is in testing phase.
+          </div>
         </div>
       </div>
     </div>
