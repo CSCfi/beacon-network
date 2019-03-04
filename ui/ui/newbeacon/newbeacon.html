@@ -36,7 +36,7 @@
                     <md-tooltip>URL of Beacon info endpoint</md-tooltip>
                   </md-input-container>
                   <md-input-container>
-                    <md-button type="button" name="submit" value="submit" class="md-icon-button fetchInfo" aria-label="Add">
+                    <md-button type="submit" name="submit" id="submit" value="Submit" class="md-icon-button fetchInfo" aria-label="Add">
                       <i class="fas fa-sync"></i>
                       <md-tooltip>Fetch Beacon service info</md-tooltip>
                     </md-button>
@@ -52,6 +52,9 @@
               <b>Beacon Info</b><br>
               id: {{ beaconInfo.id }}<br>
               name: {{ beaconInfo.name }}<br>
+              serviceType: {{ beaconInfo.serviceType }}<br>
+              serviceUrl: {{ beaconInfo.serviceUrl }}<br>
+              open: {{ beaconInfo.open }}<br>
               apiVersion: {{ beaconInfo.apiVersion }}<br>
               description: {{ beaconInfo.description }}<br>
               version: {{ beaconInfo.version }}<br>
@@ -69,8 +72,11 @@
               info: {{ beaconInfo.organization.info }}<br>
             </code>
           </div>
+          <div ng-show="addNewBeaconMessage" uib-alert class="alert alert-danger" style="margin:auto">
+            {{ addNewBeaconMessage }}
+          </div>
           <md-input-container style="margin:auto">
-            <md-button ng-disabled="true" type="button" name="addBeacon" value="addBeacon" class="md-raised md-primary" ng-click="addNewBeacon()" aria-label="Add" title="Disabled">
+            <md-button type="button" name="addBeacon" value="addBeacon" class="md-raised md-primary" ng-click="addNewBeacon()" aria-label="Add">
               Add New Beacon
             </md-button>
           </md-input-container>
