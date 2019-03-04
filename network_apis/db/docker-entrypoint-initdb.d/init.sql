@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS services (
     host_org VARCHAR(64),
     description VARCHAR(1024),
     service_version VARCHAR(8),
-    public_key VARCHAR(2048),
     open BOOLEAN,
     welcome_url VARCHAR(512),
     alt_url VARCHAR(512),

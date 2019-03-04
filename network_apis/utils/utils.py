@@ -46,7 +46,6 @@ async def construct_json(data, model=None, list_format='full'):
                 },
                 "description": data.get('ser_description', ''),
                 "version": data.get('ser_service_version', ''),
-                "publicKey": data.get('ser_public_key', ''),
                 "welcomeUrl": data.get('ser_welcome_url', ''),
                 "alternativeUrl": data.get('ser_alt_url', ''),
                 "createDateTime": str(data.get('ser_createtime', '')),

@@ -97,7 +97,6 @@ curl -X POST \
     },
     "description": "Beacon Registry service for ELIXIR node",
     "version": "1.0.0",
-    "publicKey": "string",
     "welcomeUrl": "https://example.org/home",
     "alternativeUrl": "https://example.org/internal"
 }'
