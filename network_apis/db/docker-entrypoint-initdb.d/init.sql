@@ -37,6 +37,11 @@ CREATE TABLE service_keys (
 
 CREATE UNIQUE INDEX unique_service ON service_keys (service_id);
 
+CREATE TABLE api_keys (
+    api_key VARCHAR(64),
+    comment VARCHAR(256)
+);
+
 /* NOT IMPLEMENTED */
 
 -- CREATE TABLE IF NOT EXISTS networks (

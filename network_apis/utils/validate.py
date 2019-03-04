@@ -59,3 +59,44 @@ def validate(schema):
             return await func(*args)
         return wrapped
     return wrapper
+
+
+def api_key():
+    """Check if API key is valid."""
+    LOG.debug('Validate API key.')
+
+    @web.middleware
+    async def api_key_middleware(request, handler):
+        LOG.debug('Start api key check')
+
+        assert isinstance(request, web.Request)
+        if '/services' in request.path and request.method == 'POST' and 'Post-Api-Key' in request.headers:
+            LOG.debug('In /services path using POST with api key.')
+            try:
+                post_api_key = request.headers.get('Post-Api-Key')
+                LOG.debug('API key received.')
+            except Exception as e:  # KeyError
+                LOG.error(f'ERROR: Something wrong with fetching api key from headers: {e}')
+                raise web.HTTPBadRequest(text=f'Missing header: {e}')
+
+            if post_api_key is not None:
+                # Take one connection from the active database connection pool
+                async with request.app['pool'].acquire() as connection:
+                    # Check if api key exists in database
+                    query = f"""SELECT comment FROM api_keys WHERE api_key='{post_api_key}'"""
+                    statement = await connection.prepare(query)
+                    db_response = await statement.fetch()
+                    LOG.debug(f'API key accessed: {dict(db_response[0])}')
+                    if not db_response:
+                        LOG.error(f'Provided API key is Unauthorized.')
+                        raise web.HTTPUnauthorized(text='Unauthorized api key')
+                    LOG.debug('Provided api key is authorized')
+            # Carry on with user request
+            return await handler(request)
+        elif '/services' not in request.path or request.method != 'POST':
+            LOG.debug('No api key required at this endpoint.')
+            return await handler(request)
+        else:
+            LOG.error('Missing api key header.')
+            raise web.HTTPBadRequest(text="Missing header: 'Post-Api-Key'")
+    return api_key_middleware
