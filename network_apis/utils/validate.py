@@ -86,7 +86,6 @@ def api_key():
                     query = f"""SELECT comment FROM api_keys WHERE api_key='{post_api_key}'"""
                     statement = await connection.prepare(query)
                     db_response = await statement.fetch()
-                    LOG.debug(f'API key accessed: {dict(db_response[0])}')
                     if not db_response:
                         LOG.error(f'Provided API key is Unauthorized.')
                         raise web.HTTPUnauthorized(text='Unauthorized api key')
