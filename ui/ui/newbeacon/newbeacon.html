@@ -1,22 +1,81 @@
-<div id="beaconLogin" id="popupContainer">
-  <a href="#!/about">
-    <md-button class="md-raised md-primary">
-      <i class="fas fa-hand-point-left"></i>
-      <span style="margin:auto">Go Back</span>
-    </md-button>
-  </a>
-  <span ng-if="checkLogin()">
-    <a ng-if="checkLogin() && !checkBonaFide()" href="https://www.elixir-europe.org/services/compute/aai/bonafide" class="btn btn-info" tabindex="-1" role="button" aria-disabled="true"><i class="fas fa-hand-point-right"></i> Discover more as Bona
-      Fide!</a>
-    <a ng-if="checkLogin() && checkBonaFide()" href="#" class="btn btn-success disabled" tabindex="-1" role="button" aria-disabled="true">Bona Fide</a>
-    <a ng-if="checkLogin()" href="#" class="btn btn-primary disabled" tabindex="-1" role="button" aria-disabled="true">User Authenticated</a>
-  </span>
-  <span ng-if="!checkLogin()">
-    <a href="https://beacon-auth-beacon.rahtiapp.fi/app">
-      <img width="150" src="assets/elixir-login-new.png" title="ELIXIR AAI" />
+<div ng-controller="NewBeaconCtrl as ctrl">
+  <div id="beaconLogin" id="popupContainer">
+    <a href="#!/about">
+      <md-button class="md-raised md-primary">
+        <i class="fas fa-hand-point-left"></i>
+        <span style="margin:auto">Go Back</span>
+      </md-button>
     </a>
-  </span>
-</div>
-<div id="beaconLogo">
-  <a href="#"><img id="logo" src="assets/beacon-small-3.png" /></a>
+    <span ng-if="checkLogin()">
+      <a ng-if="checkLogin() && !checkBonaFide()" href="https://www.elixir-europe.org/services/compute/aai/bonafide" class="btn btn-info" tabindex="-1" role="button" aria-disabled="true"><i class="fas fa-hand-point-right"></i> Discover more as Bona
+        Fide!</a>
+      <a ng-if="checkLogin() && checkBonaFide()" href="#" class="btn btn-success disabled" tabindex="-1" role="button" aria-disabled="true">Bona Fide</a>
+      <a ng-if="checkLogin()" href="#" class="btn btn-primary disabled" tabindex="-1" role="button" aria-disabled="true">User Authenticated</a>
+    </span>
+    <span ng-if="!checkLogin()">
+      <a href="https://beacon-auth-beacon.rahtiapp.fi/app">
+        <img width="150" src="assets/elixir-login-new.png" title="ELIXIR AAI" />
+      </a>
+    </span>
+  </div>
+  <div id="beaconLogo">
+    <a href="#"><img id="logo" src="assets/beacon-small-3.png" /></a>
+  </div>
+  <div class="col-sm-12" ng-cloak>
+    <div class="card search-card">
+      <div class="card-body">
+        <div class="searchForm" layout="column">
+          <md-content class="md-padding" style="margin:auto">
+
+            <form name="newBeaconForm" ng-submit="fetchBeaconInfo()" class="form-inline">
+
+                <div layout-gt-sm="row" class="searchRow">
+                  <md-input-container style="width:500px">
+                    <label>Beacon URL</label>
+                    <input type="text" name="beaconUrl" id="beaconUrl" ng-model="beaconURL">
+                    <md-tooltip>URL of Beacon info endpoint</md-tooltip>
+                  </md-input-container>
+                  <md-input-container>
+                    <md-button type="button" name="submit" value="submit" class="md-icon-button fetchInfo" aria-label="Add">
+                      <i class="fas fa-sync"></i>
+                      <md-tooltip>Fetch Beacon service info</md-tooltip>
+                    </md-button>
+                  </md-input-container>
+                </div>
+                
+            </form>
+          </md-content>
+          <div id="fetchedInfo">
+            <code>
+              Information fetched from Beacon. In case of any discrepancies, please modify the information directly at your Beacon and then load the information again.<br>
+              <hr>
+              <b>Beacon Info</b><br>
+              id: {{ beaconInfo.id }}<br>
+              name: {{ beaconInfo.name }}<br>
+              apiVersion: {{ beaconInfo.apiVersion }}<br>
+              description: {{ beaconInfo.description }}<br>
+              version: {{ beaconInfo.version }}<br>
+              welcomeUrl: {{ beaconInfo.welcomeUrl }}<br>
+              alternativeUrl: {{ beaconInfo.alternativeUrl }}<br>
+              <hr>
+              <b>Organisation Info</b><br>
+              id: {{ beaconInfo.organization.id }}<br>
+              name: {{ beaconInfo.organization.name }}<br>
+              description: {{ beaconInfo.organization.description }}<br>
+              address: {{ beaconInfo.organization.address }}<br>
+              welcomeUrl: {{ beaconInfo.organization.welcomeUrl }}<br>
+              contactUrl: {{ beaconInfo.organization.contactUrl }}<br>
+              logoUrl: {{ beaconInfo.organization.logoUrl }}<br>
+              info: {{ beaconInfo.organization.info }}<br>
+            </code>
+          </div>
+          <md-input-container style="margin:auto">
+            <md-button ng-disabled="true" type="button" name="addBeacon" value="addBeacon" class="md-raised md-primary" ng-click="addNewBeacon()" aria-label="Add" title="Disabled">
+              Add New Beacon
+            </md-button>
+          </md-input-container>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

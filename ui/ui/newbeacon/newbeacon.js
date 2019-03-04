@@ -11,15 +11,21 @@ angular.module('beaconApp.newbeacon', ['ngRoute'])
 
 .controller('NewBeaconCtrl', ['$scope', '$http', function($scope, $http) {
 
-  $scope.beacons = '';
+  $scope.beaconURL = '';
+  $scope.beaconInfo = {};
 
-  $http({
-    method: 'GET',
-    url: "https://registry-beacon.rahtiapp.fi/services?serviceType=GA4GHBeacon"
-  }).then(function successCallback(response) {
-      $scope.beacons = response.data;
-    }, function errorCallback(response) {
-      // console.log(response);
-  });
+  $scope.fetchBeaconInfo = function() {
+    $http({
+      method: 'GET',
+      url: $scope.beaconURL
+    }).then(function successCallback(response) {
+        $scope.beaconInfo = response.data;
+        // document.getElementById("fetchedInfo").style.display = "block";
+      }, function errorCallback(response) {
+        // console.log(response);
+    });
+  }
+
+  
 
 }]);
