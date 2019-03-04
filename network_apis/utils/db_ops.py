@@ -109,7 +109,7 @@ async def db_register_service(connection, service):
             # Register service
             await connection.execute(f"""INSERT INTO services (id, name, service_type, api_version, service_url, host_org, description,
                                      service_version, open, welcome_url, alt_url, create_datetime, update_datetime)
-                                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())""",
+                                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())""",
                                      service['id'], service['name'], service['serviceType'], service['apiVersion'], service['serviceUrl'],
                                      service['organization']['id'], service.get('description', ''), service.get('version', ''),
                                      service['open'], service.get('welcomeUrl', ''), service.get('alternativeUrl', ''))
