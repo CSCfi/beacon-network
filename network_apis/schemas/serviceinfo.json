@@ -9,7 +9,6 @@
     "apiVersion",
     "serviceUrl",
     "organization",
-    "publicKey",
     "open"
   ],
   "properties": {
@@ -79,9 +78,6 @@
     "version": {
       "type": "string",
       "default": ""
-    },
-    "publicKey": {
-      "type": "string"
     },
     "open": {
       "type": "boolean"
