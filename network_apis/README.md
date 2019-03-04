@@ -74,6 +74,7 @@ Register a service, on this case, register self at Registry (host's own details)
 
 ```
 curl -X POST \
+  -H 'Post-Api-Key: {SECRET_KEY}' \
   http://localhost:3000/services \
   -d '{
     "id": "org.ga4gh.registry",
@@ -133,7 +134,6 @@ curl -X PUT \
     },
     "description": "Beacon Registry service for ELIXIR node",
     "version": "1.0.0",
-    "publicKey": "string",
     "welcomeUrl": "https://example.org/home",
     "alternativeUrl": "https://example.org/internal"
 }'
@@ -148,6 +148,7 @@ curl -X GET \
 Register a Beacon to Registry
 ```
 curl -X POST \
+  -H 'Post-Api-Key: {SECRET_KEY}' \
   http://localhost:3000/services \
   -d '{
     "id": "org.ga4gh.beacon",
@@ -171,7 +172,6 @@ curl -X POST \
     },
     "description": "Beacon service for ELIXIR node",
     "version": "1.0.0",
-    "publicKey": "string",
     "welcomeUrl": "https://example.org/home",
     "alternativeUrl": "https://example.org/internal"
 }'
