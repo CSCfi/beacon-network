@@ -12,7 +12,7 @@ from endpoints.service_types import get_service_types
 from endpoints.services import register_service, get_services, update_service, delete_services
 from endpoints.query import send_beacon_query, send_beacon_query_websocket
 from schemas import load_schema
-from utils.validate import validate
+from utils.validate import validate, api_key
 from utils.db_pool import init_db_pool
 from utils.logging import LOG
 from config import CONFIG
@@ -179,7 +179,7 @@ def set_cors(app):
 def init_app():
     """Initialise the web server."""
     LOG.info('Initialising web server.')
-    app = web.Application()
+    app = web.Application(middlewares=[api_key()])
     app.router.add_routes(routes)
     set_cors(app)
     app.on_startup.append(init_db)
