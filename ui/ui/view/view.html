@@ -3,7 +3,7 @@
   <a href="#!/about">
     <md-button class="md-raised md-primary">
       <i class="fas fa-info-circle"></i>
-      About
+      <span style="margin:auto">About</span>
     </md-button>
   </a>
   <span ng-if="checkLogin()">
@@ -98,33 +98,33 @@
               <div layout-gt-sm="row" class="searchRow">
                 <md-input-container style="width:30%">
                   <label>Start</label>
-                  <input type="number" min="0" name="advStart" id="advStart" ng-model="adv.start" ng-blur="ctrl.manageAdvancedSearchOptions()" title="Exact start position of variant">
+                  <input type="number" min="0" name="advStart" id="advStart" ng-model="adv.start" ng-change="ctrl.manageAdvancedSearchOptions()" title="Exact start position of variant">
                 </md-input-container>
                 <span style="margin:auto">or</span>
                 <md-input-container style="width:30%">
                   <label>Min. Start</label>
-                  <input type="number" min="0" name="advStartMin" id="advStartMin" ng-model="adv.startMin" ng-blur="ctrl.manageAdvancedSearchOptions()" title="Minimum start position of variant (fuzzy boundaries)">
+                  <input type="number" min="0" name="advStartMin" id="advStartMin" ng-model="adv.startMin" ng-change="ctrl.manageAdvancedSearchOptions()" title="Minimum start position of variant (fuzzy boundaries)">
                 </md-input-container>
                 <span style="margin:auto">..</span>
                 <md-input-container style="width:30%">
                   <label>Max. Start</label>
-                  <input type="number" min="0" name="advStartMax" id="advStartMax" ng-model="adv.startMax" ng-blur="ctrl.manageAdvancedSearchOptions()" title="Maximum start position of variant (fuzzy boundaries)">
+                  <input type="number" min="0" name="advStartMax" id="advStartMax" ng-model="adv.startMax" ng-change="ctrl.manageAdvancedSearchOptions()" title="Maximum start position of variant (fuzzy boundaries)">
                 </md-input-container>
               </div>
               <div layout-gt-sm="row" class="searchRow">
                 <md-input-container style="width:30%">
                   <label>End</label>
-                  <input type="number" min="0" name="advEnd" id="advEnd" ng-model="adv.end" ng-blur="ctrl.manageAdvancedSearchOptions()" title="Exact start position of variant">
+                  <input type="number" min="0" name="advEnd" id="advEnd" ng-model="adv.end" ng-change="ctrl.manageAdvancedSearchOptions()" title="Exact start position of variant">
                 </md-input-container>
                 <span style="margin:auto">or</span>
                 <md-input-container style="width:30%">
                   <label>Min. End</label>
-                  <input type="number" min="0" name="advEndMin" id="advEndMin" ng-model="adv.endMin" ng-blur="ctrl.manageAdvancedSearchOptions()" title="Minimum end position of variant (fuzzy boundaries)">
+                  <input type="number" min="0" name="advEndMin" id="advEndMin" ng-model="adv.endMin" ng-change="ctrl.manageAdvancedSearchOptions()" title="Minimum end position of variant (fuzzy boundaries)">
                 </md-input-container>
                 <span style="margin:auto">..</span>
                 <md-input-container style="width:30%">
                   <label>Max. End</label>
-                  <input type="number" min="0" name="advEndMax" id="advEndMax" ng-model="adv.endMax" ng-blur="ctrl.manageAdvancedSearchOptions()" title="Maximum end position of variant (fuzzy boundaries)">
+                  <input type="number" min="0" name="advEndMax" id="advEndMax" ng-model="adv.endMax" ng-change="ctrl.manageAdvancedSearchOptions()" title="Maximum end position of variant (fuzzy boundaries)">
                 </md-input-container>
               </div>
               <h4 style="width:100%">Variant Transformation</h4>
@@ -136,12 +136,12 @@
                 <span style="margin:auto"> > </span>
                 <md-input-container style="width:30%">
                   <label>Alternate Bases</label>
-                  <input pattern="[ATCGN]+" name="advAlt" id="advAlt" ng-model="adv.alt" ng-blur="ctrl.manageAdvancedSearchOptions()" title="Can be any combination of ACTGN">
+                  <input pattern="[ATCGN]+" name="advAlt" id="advAlt" ng-model="adv.alt" ng-change="ctrl.manageAdvancedSearchOptions()" title="Can be any combination of ACTGN">
                 </md-input-container>
                 <span style="margin:auto">or</span>
                 <md-input-container style="width:30%">
                   <label>Variant Type</label>
-                  <md-select ng-model="adv.vt" name="advVt" id="advVt" ng-blur="ctrl.manageAdvancedSearchOptions()" aria-label="Variant Type Select">
+                  <md-select ng-model="adv.vt" name="advVt" id="advVt" ng-change="ctrl.manageAdvancedSearchOptions()" aria-label="Variant Type Select">
                     <md-option value="Unspecified">Unspecified</md-option>
                     <md-option value="SNP">SNP</md-option>
                     <md-option value="MNP">MNP</md-option>

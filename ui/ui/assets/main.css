@@ -6,6 +6,14 @@
 	border: none;
 }
 
+.fetchInfo:hover {
+	color: #79d279;
+}
+
+/* #fetchedInfo {
+	display: none;
+} */
+
 .search-card .card-body {
 	padding:0;
 }
