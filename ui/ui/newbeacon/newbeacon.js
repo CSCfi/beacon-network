@@ -14,6 +14,7 @@ angular.module('beaconApp.newbeacon', ['ngRoute'])
   $scope.beaconURL = '';
   $scope.beaconInfo = {};
   $scope.addNewBeaconMessage = '';
+  $scope.apiKey = '';
 
   $scope.fetchBeaconInfo = function() {
     $scope.addNewBeaconMessage = '';
@@ -80,7 +81,8 @@ angular.module('beaconApp.newbeacon', ['ngRoute'])
       $http({
         method: 'POST',
         url: 'https://registry-beacon.rahtiapp.fi/services',
-        data: payload
+        data: payload,
+        headers: {'Content-Type': 'application/json', 'Post-Api-Key': $scope.apiKey}
       }).then(function successCallback(response) {
           console.log('success');
           $scope.addNewBeaconMessage = response.data;

@@ -36,10 +36,10 @@
                     <md-tooltip>URL of Beacon info endpoint</md-tooltip>
                   </md-input-container>
                   <md-input-container>
-                    <md-button type="submit" name="submit" id="submit" value="Submit" class="md-icon-button fetchInfo" aria-label="Add">
-                      <i class="fas fa-sync"></i>
-                      <md-tooltip>Fetch Beacon service info</md-tooltip>
+                    <md-button type="submit" name="submit" id="submit" value="Submit" class="md-raised md-primary" aria-label="Fetch">
+                      Fetch
                     </md-button>
+                    <md-tooltip>Fetch Beacon service info</md-tooltip>
                   </md-input-container>
                 </div>
                 
@@ -76,11 +76,25 @@
           <div ng-show="addNewBeaconMessage" uib-alert class="alert alert-danger" style="margin:auto">
             {{ addNewBeaconMessage }}
           </div>
-          <md-input-container style="margin:auto">
-            <md-button type="button" name="addBeacon" value="addBeacon" class="md-raised md-primary" ng-click="addNewBeacon()" aria-label="Add">
-              Add New Beacon
-            </md-button>
-          </md-input-container>
+          <md-content class="md-padding" style="margin:auto">
+
+            <form name="newBeaconForm" ng-submit="addNewBeacon()" class="form-inline">
+
+                <div layout-gt-sm="row" class="searchRow">
+                  <md-input-container style="width:500px">
+                    <label>Api Key</label>
+                    <input required type="text" name="apiKey" id="apiKey" ng-model="apiKey">
+                    <md-tooltip>API to access Registry</md-tooltip>
+                  </md-input-container>
+                  <md-input-container>
+                    <md-button type="submit" name="submit" id="submit" value="Submit" class="md-raised md-primary" aria-label="Add">
+                      Add New Beacon
+                    </md-button>
+                  </md-input-container>
+                </div>
+                
+            </form>
+          </md-content>
           <div style="margin:auto">
             This feature is in testing phase.
           </div>
