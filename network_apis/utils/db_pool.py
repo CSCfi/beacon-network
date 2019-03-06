@@ -1,10 +1,6 @@
 """Database connection pool."""
 
-import os
 import asyncpg
-
-DB_SCHEMA = os.environ.get('DB_SCHEMA', '')  # optional variable for special cases
-DB_SCHEMA += '.' if DB_SCHEMA else ''
 
 
 async def init_db_pool(host, port, user, passwd, db):

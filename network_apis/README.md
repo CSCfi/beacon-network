@@ -1,12 +1,27 @@
 # Beacon Network APIs
 ### Prerequisites
+##### Minimal:
 * Python3.6+
-* PostgreSQL 9.6+ (one per service)
+* PostgreSQL 9.6+
 
+##### Recommended:
+* Docker
+* Docker Compose
 
+### Automatic Setup
+First build image and run both apps and databases simultaneously in their own networks. For reference, see [compose file](docker-compose.yml).
+```
+cd network_apis
+docker build -t cscfi/beacon-network .
+docker-compose up
+```
+By default, Registry will be available at `localhost:3000` and Aggregator at `localhost:3001` connected to their respective databases.
 
-#### Setting up a database
-It is recommended to set up a containerised database for services in case of multiple services running in the same environment.
+### Manual Setup
+<details><summary>Setting up a database manually</summary>
+
+#### Database
+It is recommended to set up a containerised database for services in case of multiple services running in the same environment. But one can also set up local SQL databases.
 
 Database connection credentials for both the Registry and Aggregator services can be changed at the [configuration file](/network_apis/config/config.ini). Using the example values, to set up a database for the Registry service:
 ```
@@ -21,8 +36,10 @@ docker run -d -e POSTGRES_USER=agg_user -e POSTGRES_PASSWORD=agg_pass -e POSTGRE
 ```
 
 Now Registry DB should be available at `localhost:5438` and Aggregator DB should be available at `localhost:5439`.
+</details>
 
-### Run
+<details><summary>Running web apps manually</summary>
+
 #### Run without installing
 ```
 git clone https://github.com/CSCfi/beacon-network/
@@ -39,24 +56,36 @@ pip install .
 beacon_registry    # starts registry
 beacon_aggregator  # starts aggregator
 ```
-#### Containerised
-```
-s2i build git@github.com:CSCfi/beacon-network.git \
-    centos/python-36-centos7 \
-    beacon_network
 
-docker run -d -e BEACON_RUN_APP=registry -p 8080:8080 beacon_network      # starts registry
-docker run -d -e BEACON_RUN_APP=aggregator -p 8080:8080 beacon_network    # starts aggregator
+#### Build containers and run
 ```
+# Using s2i
+cd network_apis
+s2i build . centos/python-36-centos7 cscfi/beacon-network
+
+# Or using docker
+cd network_apis
+docker build -t cscfi/beacon-network .
+
+docker run -d -e BEACON_RUN_APP=registry cscfi/beacon-network      # starts registry
+docker run -d -e BEACON_RUN_APP=aggregator cscfi/beacon-network    # starts aggregator
+```
+
+By default, Registry will be available at `localhost:3000` and Aggregator at `localhost:3001` connected to their respective databases.
+
+</details>
+
+
 
 #### Environment Variables
 Configuration priority is ENV > CONFIG > DEFAULT. Typically no ENV are set, so values are read from `config.ini`, which can be overridden with ENV.
+
+<details><summary>Display table</summary>
 
 | ENV            | Default                                    | Description                                                                                                                          |
 |----------------|--------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
 | CONFIG_FILE    | `config.ini`                               | Location of configuration file, ablosute path.                                                                                       |
 | BEACON_RUN_APP | ` `                                         | Specify which app to run inside a container. Possible values: `registry` and `aggregator`.                                           |
-| DB_SCHEMA      | ` `                                         | Optional variable that is prepended to database tables.                                                                              |
 | DEBUG          | `False`                                    | Set to `True` to enable more debugging logs from functions.                                               |
 | HTTPS_ONLY     | `False`                                    | Determine which HTTP schemas are allowed when contacting Beacons from an Aggregator. Set to `True` to enforce required HTTPS-schema. |
 | HOST_ID        | ` `  | Unique service ID of this service, defaults to the value given in `config.ini`.                                                      |
@@ -67,6 +96,8 @@ Configuration priority is ENV > CONFIG > DEFAULT. Typically no ENV are set, so v
 | DB_NAME        | `db`  | Database name, defaults to value given in `config.ini` or `db`.                                                                      |
 | APP_HOST       | `0.0.0.0` | Web app service IP, defaults to value given in `config.ini` or `0.0.0.0`.                                                            |
 | APP_PORT       | `8080` | Web app port, defaults to value given in `config.ini` or `8080`.                                                                     |
+
+</details>
 
 ### After set-up examples
 <details><summary>View examples</summary>
