@@ -12,13 +12,17 @@ setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
-        'Topic :: Internet :: Proxy Servers',
+        'Topic :: Internet :: WWW/HTTP :: HTTP Servers',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3.6',
     ],
     packages=['.', 'config', 'endpoints', 'schemas', 'utils'],
-    package_data={'': ['*.json']},
-    install_requires=['aiohttp', 'asyncpg', 'aiohttp_cors', 'uvloop', 'asyncpg'],
+    package_data={'': ['*.json', '*.ini']},
+    install_requires=[
+        'aiohttp', 'asyncpg', 'aiohttp_cors', 'uvloop',
+        'asyncio', 'aiocache', 'aiomcache', 'ujson',
+        'jsonschema==3.0.0a3'
+    ],
     entry_points={
         'console_scripts': [
             'beacon_registry=registry:main',

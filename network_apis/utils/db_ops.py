@@ -144,7 +144,7 @@ async def db_get_service_details(connection, id=None, service_type=None, api_ver
         # Full query (default)
         query = f"""SELECT s.id AS ser_id, s.name AS ser_name, s.service_type AS ser_service_type, s.api_version AS ser_api_version,
                     s.service_url AS ser_service_url, s.host_org AS ser_host_org, s.description AS ser_description,
-                    s.service_version AS ser_service_version, s.public_key AS ser_public_key, s.open AS ser_open,
+                    s.service_version AS ser_service_version, s.open AS ser_open,
                     s.welcome_url AS ser_welcome_url, s.alt_url AS ser_alt_url, s.create_datetime AS ser_createtime,
                     s.update_datetime AS ser_updatetime, o.id AS org_id, o.name AS org_name, o.description AS org_description,
                     o.address AS org_address, o.welcome_url AS org_welcome_url, o.contact_url AS org_contact_url,
@@ -228,9 +228,8 @@ async def db_update_service(connection, id, service):
                                      service_type='{service.get('serviceType')}', api_version='{service.get('apiVersion')}',
                                      service_url='{service.get('serviceUrl')}', host_org='{org_id}',
                                      description='{service.get('description')}', service_version='{service.get('version')}',
-                                     public_key='{service.get('publicKey')}', open='{service.get('open')}',
-                                     welcome_url='{service.get('welcomeUrl')}', alt_url='{service.get('alternativeUrl')}',
-                                     update_datetime=NOW()
+                                     open='{service.get('open')}', welcome_url='{service.get('welcomeUrl')}',
+                                     alt_url='{service.get('alternativeUrl')}', update_datetime=NOW()
                                      WHERE id='{id}'""")
     except Exception as e:
         LOG.debug(f'DB error: {e}')
