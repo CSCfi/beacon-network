@@ -77,7 +77,7 @@ By default, Registry will be available at `localhost:3000` and Aggregator at `lo
 
 
 
-#### Environment Variables
+### Environment Variables
 Configuration priority is ENV > CONFIG > DEFAULT. Typically no ENV are set, so values are read from `config.ini`, which can be overridden with ENV.
 
 <details><summary>Display table</summary>
@@ -101,6 +101,7 @@ Configuration priority is ENV > CONFIG > DEFAULT. Typically no ENV are set, so v
 
 ### After set-up examples
 <details><summary>View examples</summary>
+
 Register a service, on this case, register self at Registry (host's own details). Do the same for Aggregator, e.g. in testing/dev just change port from `3000` to `3001`. Aggregator will contact Registries that have been registered at its database.
 
 ```
