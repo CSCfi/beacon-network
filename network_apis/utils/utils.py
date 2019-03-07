@@ -107,9 +107,9 @@ async def db_get_service_urls(connection, service_type=None):
     service_urls = []
     try:
         # Database query
-        query = f"""SELECT service_url FROM services WHERE service_type='{service_type}'"""
+        query = f"""SELECT service_url FROM services WHERE service_type=$1"""
         statement = await connection.prepare(query)
-        response = await statement.fetch()
+        response = await statement.fetch(service_type)
         if len(response) > 0:
             # Parse urls from psql records and append to list
             for record in response:
