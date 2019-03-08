@@ -83,9 +83,9 @@ def api_key():
                 # Take one connection from the active database connection pool
                 async with request.app['pool'].acquire() as connection:
                     # Check if api key exists in database
-                    query = f"""SELECT comment FROM api_keys WHERE api_key='{post_api_key}'"""
+                    query = f"""SELECT comment FROM api_keys WHERE api_key=$1"""
                     statement = await connection.prepare(query)
-                    db_response = await statement.fetch()
+                    db_response = await statement.fetch(post_api_key)
                     if not db_response:
                         LOG.error(f'Provided API key is Unauthorized.')
                         raise web.HTTPUnauthorized(text='Unauthorized api key')
