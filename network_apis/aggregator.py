@@ -11,6 +11,7 @@ from endpoints.info import get_info
 from endpoints.service_types import get_service_types
 from endpoints.services import register_service, get_services, update_service, delete_services
 from endpoints.query import send_beacon_query, send_beacon_query_websocket
+from endpoints.recache import recache_beacons
 from schemas import load_schema
 from utils.validate import validate, api_key
 from utils.db_pool import init_db_pool
@@ -52,6 +53,20 @@ async def query(request):
 
         # Return results
         return web.json_response(response)
+
+
+@routes.put('/recache')
+async def recache(request):
+    """Update cached Beacons."""
+    LOG.debug('PUT /recache received.')
+    # Tap into the database pool
+    db_pool = request.app['pool']
+
+    # Send request for processing
+    await recache_beacons(request, db_pool)
+
+    # If the previous step didn't fail, let the user know that the re-caching has been accepted for processing
+    return web.HTTPOk(text='Re-caching completed.')
 
 
 @routes.get('/info')

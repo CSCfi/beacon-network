@@ -7,9 +7,10 @@ import secrets
 from distutils.util import strtobool
 
 import aiohttp
+import asyncio
 
 from aiohttp import web
-from aiocache import cached
+from aiocache import cached, SimpleMemoryCache
 from aiocache.serializers import JsonSerializer
 
 from .logging import LOG
@@ -120,6 +121,22 @@ async def db_get_service_urls(connection, service_type=None):
     except Exception as e:
         LOG.debug(f'DB error for service_type={service_type}: {e}')
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to fetch service urls.')
+
+
+async def clear_cache():
+    """Clear cache of Beacons."""
+    LOG.debug('Clear cached Beacons.')
+
+    try:
+        cache = SimpleMemoryCache()
+        if await cache.exists("beacon_urls"):
+            LOG.debug('Found old cache.')
+        else:
+            LOG.debug('No old cache found.')
+        await cache.delete("beacon_urls")
+        await cache.close()
+    except Exception as e:
+        LOG.error(f'Error at clearing cache: {e}.')
 
 
 # Cache Beacon URLs for faster re-usability
