@@ -180,6 +180,28 @@ async def http_get_service_urls(services, service_type=None):
     return service_urls
 
 
+async def notify_service(service):
+    """Contact given service and tell them to update their cache.
+
+    Aggregators are contacted to let them know that new Beacons have been added."""
+    LOG.debug('Notify service to update their cache.')
+
+    # Send notification (request) to service (aggregator)
+    async with aiohttp.ClientSession() as session:
+        try:
+            # Solution for prototype, figure out a better way later
+            # We expect that the serviceUrl in DB is of form http://.../query, so we replace "query" with "recache"
+            async with session.put(service.replace('query', 'recache'),
+                                    ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
+                if response.status == 200:
+                    LOG.debug('Service received notification.')
+                else:
+                    LOG.error('Service encountered a problem with notification.')
+        except Exception as e:
+            LOG.debug(f'Query error {e}.')
+            web.HTTPInternalServerError(text=f'An error occurred while attempting to query services: {e}')
+
+
 async def query_service(service, params, access_token, ws=None):
     """Query service with params."""
     LOG.debug('Querying service.')

@@ -65,7 +65,6 @@ async def recache(request):
     # Send request for processing
     await recache_beacons(request, db_pool)
 
-    # If the previous step didn't fail, let the user know that the re-caching has been accepted for processing
     return web.HTTPOk(text='Re-caching completed.')
 
 
