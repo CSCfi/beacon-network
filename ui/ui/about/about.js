@@ -25,7 +25,7 @@ angular.module('beaconApp.about', ['ngRoute'])
       var i = 0;
       // Ping Beacons to check their statuses
       for (i = 0; i < response.data.length; i++) {
-        $scope.statusList[response.data[i].id] = $http({method: 'GET', url: response.data[i].welcomeUrl});;
+        $scope.statusList[response.data[i].id] = $http({method: 'HEAD', url: response.data[i].welcomeUrl});;
       }
     }, function errorCallback(response) {
       // console.log(response);
