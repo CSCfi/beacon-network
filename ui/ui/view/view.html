@@ -7,10 +7,20 @@
     </md-button>
   </a>
   <span ng-if="checkLogin()">
-    <a ng-if="checkLogin() && !checkBonaFide()" href="https://www.elixir-europe.org/services/compute/aai/bonafide" class="btn btn-info" tabindex="-1" role="button" aria-disabled="true"><i class="fas fa-hand-point-right"></i> Discover more as Bona
-      Fide!</a>
-    <a ng-if="checkLogin() && checkBonaFide()" href="#" class="btn btn-success disabled" tabindex="-1" role="button" aria-disabled="true">Bona Fide</a>
-    <a ng-if="checkLogin()" href="#" class="btn btn-primary disabled" tabindex="-1" role="button" aria-disabled="true">User Authenticated</a>
+    <a ng-if="checkLogin() && !checkBonaFide()" href="https://www.elixir-europe.org/services/compute/aai/bonafide">
+      <md-button class="md-raised md-primary">
+          <i class="fas fa-hand-point-right"></i>
+          <span style="margin:auto">Discover more with Bona Fide</span>
+      </md-button>
+    </a>
+    <md-button ng-if="checkLogin() && checkBonaFide()" class="md-raised" style="background-color:#79d279;color:#FFF;">
+      <i class="fas fa-check"></i>
+      <span style="margin:auto">Bona Fide</span>
+    </md-button>
+    <md-button ng-if="checkLogin()" class="md-raised md-warn" ng-click="logOut()">
+      <span style="margin:auto">Log Out</span>
+      <i class="fas fa-sign-out-alt"></i>
+    </md-button>
   </span>
   <span ng-if="!checkLogin()">
     <a ng-href="{{ ctrl.aaiUrl }}">
