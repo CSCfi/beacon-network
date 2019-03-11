@@ -59,8 +59,12 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
 
   // Log out (delete cookie)
   $scope.logOut = function() {
-    if ($cookies.get('access_token')) $cookies.remove('access_token')
-    if ($cookies.get('bona_fide_status')) $cookies.remove('bona_fide_status')
+    if ($cookies.get('access_token')) {
+      $cookies.remove('access_token', {domain: '.rahtiapp.fi', path: '/'});
+    }
+    if ($cookies.get('bona_fide_status')) {
+      $cookies.remove('bona_fide_status', {domain: '.rahtiapp.fi', path: '/'});
+    }
   }
 
   // Disable notice for 2 months on acknowledgement
