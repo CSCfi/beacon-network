@@ -15,29 +15,37 @@ angular.module('beaconApp.newbeacon', ['ngRoute'])
   $scope.beaconInfo = {};
   $scope.addNewBeaconMessage = '';
   $scope.apiKey = '';
+  var registryURL = '';
+
+  // Read registry URL from config file
+  $http.get('newbeacon/config.json').success(function (data){
+    registryURL = data.registryUrl;
+  });
 
   $scope.fetchBeaconInfo = function() {
-    $scope.addNewBeaconMessage = '';
-    $http({
-      method: 'GET',
-      url: $scope.beaconURL
-    }).then(function successCallback(response) {
-        $scope.beaconInfo = response.data;
-        // Check if beacon info has Beacon Network items
-        // If not, aka "Standalone Beacon", give default values
-        if (!$scope.beaconInfo.hasOwnProperty('serviceType')) {
-          $scope.beaconInfo.serviceType = 'GA4GHBeacon';
-        }
-        if (!$scope.beaconInfo.hasOwnProperty('serviceUrl')) {
-          $scope.beaconInfo.serviceUrl = `${$scope.beaconURL}query`;
-        }
-        if (!$scope.beaconInfo.hasOwnProperty('open')) {
-          $scope.beaconInfo.open = true;
-        }
-        // document.getElementById("fetchedInfo").style.display = "block";
-      }, function errorCallback(response) {
-        // console.log(response);
-    });
+    if ($scope.beaconURL) {
+      $scope.addNewBeaconMessage = '';
+      $http({
+        method: 'GET',
+        url: $scope.beaconURL
+      }).then(function successCallback(response) {
+          $scope.beaconInfo = response.data;
+          // Check if beacon info has Beacon Network items
+          // If not, aka "Standalone Beacon", give default values
+          if (!$scope.beaconInfo.hasOwnProperty('serviceType')) {
+            $scope.beaconInfo.serviceType = 'GA4GHBeacon';
+          }
+          if (!$scope.beaconInfo.hasOwnProperty('serviceUrl')) {
+            $scope.beaconInfo.serviceUrl = `${$scope.beaconURL}query`;
+          }
+          if (!$scope.beaconInfo.hasOwnProperty('open')) {
+            $scope.beaconInfo.open = true;
+          }
+          // document.getElementById("fetchedInfo").style.display = "block";
+        }, function errorCallback(response) {
+          // console.log(response);
+      });
+    }
   }
 
   $scope.isEmpty = function(obj) {
@@ -80,17 +88,14 @@ angular.module('beaconApp.newbeacon', ['ngRoute'])
       // Register Beacon
       $http({
         method: 'POST',
-        url: 'https://registry-beacon.rahtiapp.fi/services',
+        url: registryURL,
         data: payload,
         headers: {'Content-Type': 'application/json', 'Post-Api-Key': $scope.apiKey}
       }).then(function successCallback(response) {
-          console.log('success');
           $scope.addNewBeaconMessage = response.data;
           // document.getElementById("fetchedInfo").style.display = "block";
         }, function errorCallback(response) {
           $scope.addNewBeaconMessage = response.data;
-          console.log('fail');
-          console.log(response);
       });
     } else {
       // console.log('dont have data');

@@ -57,6 +57,12 @@ angular.module('beaconApp.view', ['ngRoute', 'ngMaterial', 'ngMessages', 'ngCook
     $scope.alertType = true;
   }
 
+  // Log out (delete cookie)
+  $scope.logOut = function() {
+    if ($cookies.get('access_token')) $cookies.remove('access_token')
+    if ($cookies.get('bona_fide_status')) $cookies.remove('bona_fide_status')
+  }
+
   // Disable notice for 2 months on acknowledgement
   $scope.acknowledge = function() {
       var when = new Date();

@@ -1,4 +1,3 @@
 {
-  "aggregatorUrl": "aggregator-beacon.rahtiapp.fi/query?",
-  "aaiUrl": "https://beacon-auth-beacon.rahtiapp.fi/app"
+  "registryUrl": "https://registry-beacon.rahtiapp.fi/services"
 }
