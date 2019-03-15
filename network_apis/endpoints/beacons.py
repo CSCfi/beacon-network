@@ -4,10 +4,9 @@ import asyncio
 
 import uvloop
 
-from aiohttp import web
 
 from utils.logging import LOG
-from utils.utils import clear_cache, get_services, db_get_service_urls, notify_service, cache_from_registry
+from utils.utils import clear_cache, cache_from_registry
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -25,4 +24,3 @@ async def recache_beacons(request, db_pool):
     LOG.debug('Cache has been renewed.')
 
     return response
-
