@@ -231,7 +231,7 @@ An example websocket client is available at [dev/wsclient.py](dev/wsclient.py). 
 python wsclient.py
 ```
 
-Websocket connection can also be tested with a JS client, e.g. [snippet from Beacon UI](https://github.com/CSCfi/beacon-network/blob/master/ui/ui/view/view.js#L115-L144).
+Websocket connection can also be tested with a JS client, e.g. [snippet from Beacon UI](https://github.com/CSCfi/beacon-network/blob/master/ui/ui/view/view.js#L304-L333).
 
 For more examples and endpoints see the [API Specification](https://editor.swagger.io/?url=https://gist.githubusercontent.com/teemukataja/b583bd9c6c57afa9a04024f070c79a5b/raw/1b1eef9a8a538fd64f713a6ab3e562b382381ccd/beacon-network-specification-0_1.yml).
 </details>
