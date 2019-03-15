@@ -10,8 +10,8 @@ from aiohttp import web
 from endpoints.info import get_info
 from endpoints.service_types import get_service_types
 from endpoints.services import register_service, get_services, update_service, delete_services
-from endpoints.recache import remote_recache_aggregators
 from schemas import load_schema
+from utils.utils import remote_recache_aggregators
 from utils.validate import validate, api_key
 from utils.db_pool import init_db_pool
 from utils.logging import LOG
@@ -41,19 +41,6 @@ async def info(request):
     return web.json_response(response)
 
 
-@routes.put('/recache')
-async def recache(request):
-    """Make Aggregators update their caches."""
-    LOG.debug('PUT /recache received.')
-    # Tap into the database pool
-    db_pool = request.app['pool']
-
-    # Send request for processing
-    await remote_recache_aggregators(request, db_pool)
-
-    return web.HTTPOk(text='Remote re-caching request sent.')
-
-
 @routes.get('/servicetypes')
 async def service_types(request):
     """Return service types."""
@@ -75,12 +62,8 @@ async def services_post(request):
     # Send request for processing
     service_key = await register_service(request, db_pool)
 
-    # Notify Aggregators, that a new service has been registered
-    # Low priority, if try fails it's no big deal
-    try:
-        await remote_recache_aggregators(request, db_pool)
-    except Exception as e:
-        LOG.error(f'An error occurred while trying to notify Aggregators of a new service in POST /services: {e}.')
+    # Notify aggregators of changed service catalogue
+    await remote_recache_aggregators(request, db_pool)
 
     # Return confirmation and service key if no problems occurred during processing
     return web.HTTPCreated(text=f'Service has been registered. Service key for updating and deleting registration, keep it safe: {service_key}')
@@ -116,6 +99,9 @@ async def services_put(request):
     # Send request for processing
     await update_service(request, db_pool)
 
+    # Notify aggregators of changed service catalogue
+    await remote_recache_aggregators(request, db_pool)
+
     # Return confirmation
     return web.HTTPNoContent()
 
@@ -132,6 +118,9 @@ async def services_delete(request):
 
     # Send request for processing
     await delete_services(request, db_pool)
+
+    # Notify aggregators of changed service catalogue
+    await remote_recache_aggregators(request, db_pool)
 
     # Return confirmation
     return web.HTTPNoContent()

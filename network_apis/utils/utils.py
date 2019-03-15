@@ -126,21 +126,44 @@ async def db_get_service_urls(connection, service_type=None):
 async def clear_cache():
     """Clear cache of Beacons."""
     LOG.debug('Clear cached Beacons.')
+    # Defines response status by HTTP standards
+    # 201 if no cache pre-existed
+    # 204 is an existing cache was overwritten
+    response = 0
 
     try:
         cache = SimpleMemoryCache()
         if await cache.exists("beacon_urls"):
             LOG.debug('Found old cache.')
+            response = 204
         else:
             LOG.debug('No old cache found.')
+            response = 201
         await cache.delete("beacon_urls")
         await cache.close()
     except Exception as e:
         LOG.error(f'Error at clearing cache: {e}.')
 
+    return response
 
-# Cache Beacon URLs for faster re-usability
-@cached(ttl=604800, key="beacon_urls", serializer=JsonSerializer())
+
+async def cache_from_registry(beacons, response):
+    """Cache Beacon URLs that were received from Registry's update message."""
+    LOG.debug('Caching Beacons from Registry\'s update message.')
+
+    try:
+        cache = SimpleMemoryCache()
+        await cache.set('beacon_urls', beacons)
+        LOG.debug('Cache was set.')
+    except Exception as e:
+        response = 500
+        LOG.error(f'Couldn\'t set cache: {e}.')
+
+    return response
+
+
+# Cache Beacon URLs if they're not already cached
+@cached(ttl=86400, key="beacon_urls", serializer=JsonSerializer())
 async def get_services(db_pool):
     """Return service urls."""
     LOG.debug('Fetch service urls.')
@@ -180,26 +203,48 @@ async def http_get_service_urls(services, service_type=None):
     return service_urls
 
 
-async def notify_service(service):
+async def remote_recache_aggregators(request, db_pool):
+    """Send a request to Aggregators to renew their Beacon caches."""
+    LOG.debug('Starting remote re-caching of Aggregators.')
+
+    tasks = []  # requests to be done
+    # Take connection from the database pool
+    async with db_pool.acquire() as connection:
+        aggregators = await db_get_service_urls(connection, service_type='GA4GHBeaconAggregator')  # service urls (aggregators) to be queried
+        beacons = json.dumps(await db_get_service_urls(connection, service_type='GA4GHBeacon'))  # service urls (beacons) to be sent to aggregators
+
+    for aggregator in aggregators:
+        # Generate task queue
+        task = asyncio.ensure_future(notify_service(aggregator, beacons))
+        tasks.append(task)
+
+    # Prepare and initiate co-routines
+    await asyncio.gather(*tasks)
+
+
+async def notify_service(service, beacons):
     """Contact given service and tell them to update their cache.
 
-    Aggregators are contacted to let them know that new Beacons have been added."""
+    Send list of up-to-date Beacon URLs to Aggregator."""
     LOG.debug('Notify service to update their cache.')
 
     # Send notification (request) to service (aggregator)
     async with aiohttp.ClientSession() as session:
         try:
             # Solution for prototype, figure out a better way later
-            # We expect that the serviceUrl in DB is of form http://.../query, so we replace "query" with "recache"
-            async with session.put(service.replace('query', 'recache'),
-                                    ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
-                if response.status == 200:
-                    LOG.debug('Service received notification.')
+            # We expect that the serviceUrl in DB is of form http://.../query, so we replace "query" with "beacons"
+            async with session.put(service.replace('query', 'beacons'),
+                                   data=beacons,
+                                   ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
+                if response.status in [200, 201, 204]:
+                    # 201 - cache didn't exist, and was created
+                    # 200/204 - cache existed, and was overwritten
+                    LOG.debug(f'Service received notification and responded with {response.status}.')
                 else:
                     LOG.error('Service encountered a problem with notification.')
         except Exception as e:
             LOG.debug(f'Query error {e}.')
-            web.HTTPInternalServerError(text=f'An error occurred while attempting to query services: {e}')
+            web.HTTPInternalServerError(text=f'An error occurred while attempting to send request to Aggregator.')
 
 
 async def query_service(service, params, access_token, ws=None):
