@@ -56,6 +56,7 @@ async def query(request):
 
 
 @routes.put('/beacons')
+@validate(load_schema("beacons"))
 async def recache(request):
     """Update cached Beacons."""
     LOG.debug('PUT /beacons received.')
