@@ -255,15 +255,35 @@ async def db_update_sequence(connection, id, updates):
 
 async def db_verify_service_key(connection, service_id, service_key):
     """Check if service id exists."""
-    LOG.debug('Querying database to verify service key.')
+    LOG.debug('Querying database to verify Beacon-Service-Key.')
     try:
         # Database query
-        query = """SELECT * FROM service_keys WHERE service_id=$1 AND service_key=$2"""
+        query = """SELECT service_id FROM service_keys WHERE service_id=$1 AND service_key=$2"""
         statement = await connection.prepare(query)
         response = await statement.fetch(service_id, service_key)
     except Exception as e:
         LOG.debug(f'DB error: {e}')
-        raise web.HTTPInternalServerError(text='Database error occurred while attempting to verify availability of service ID.')
+        raise web.HTTPInternalServerError(text='Database error occurred while attempting to verify Beacon Service Key.')
     else:
         if len(response) == 0:
+            LOG.debug('Provided service key is unauthorised.')
             raise web.HTTPUnauthorized(text='Unauthorised service key.')
+        LOG.debug('Service key is authorised.')
+
+
+async def db_verify_post_api_key(connection, api_key):
+    """Check if provided api key for registration is authorised."""
+    LOG.debug('Querying database to verify Post-Api-Key.')
+    try:
+        # Database query
+        query = """SELECT comment FROM api_keys WHERE api_key=$1"""
+        statement = await connection.prepare(query)
+        response = await statement.fetch(api_key)
+    except Exception as e:
+        LOG.debug(f'DB error: {e}')
+        raise web.HTTPInternalServerError(text='Database error occurred while attempting to verify Post Api Key')
+    else:
+        if len(response) == 0:
+            LOG.debug('Provided api key is unauthorised.')
+            raise web.HTTPUnauthorized(text='Unauthorised api key.')
+        LOG.debug('Api key is authorised.')
