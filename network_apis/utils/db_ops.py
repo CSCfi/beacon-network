@@ -253,14 +253,21 @@ async def db_update_sequence(connection, id, updates):
         await db_update_service_key(connection, id, updates['id'])
 
 
-async def db_verify_service_key(connection, service_id, service_key):
+async def db_verify_service_key(connection, service_id=None, service_key=None, alt_use_case=False):
     """Check if service id exists."""
     LOG.debug('Querying database to verify Beacon-Service-Key.')
     try:
         # Database query
-        query = """SELECT service_id FROM service_keys WHERE service_id=$1 AND service_key=$2"""
-        statement = await connection.prepare(query)
-        response = await statement.fetch(service_id, service_key)
+        if service_id and not alt_use_case:
+            # Use case for updating and deleting self at PUT|DELETE /services
+            query = """SELECT service_id FROM service_keys WHERE service_id=$1 AND service_key=$2"""
+            statement = await connection.prepare(query)
+            response = await statement.fetch(service_id, service_key)
+        else:
+            # Use case for accessing remote Aggregator's PUT /beacons endpoint
+            query = """SELECT service_id FROM service_keys WHERE service_key=$1"""
+            statement = await connection.prepare(query)
+            response = await statement.fetch(service_key)
     except Exception as e:
         LOG.debug(f'DB error: {e}')
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to verify Beacon Service Key.')

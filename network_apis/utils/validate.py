@@ -83,12 +83,10 @@ def api_key():
                 except Exception:
                     LOG.debug('Missing "Post-Api-Key" from headers.')
                     raise web.HTTPBadRequest(text='Missing header "Post-Api-Key".')
-
                 # Take one connection from the active database pool
                 async with request.app['pool'].acquire() as connection:
                     # Check if provided api key is valid
                     await db_verify_post_api_key(connection, post_api_key)
-
                 # None of the checks failed
                 return await handler(request)
 
@@ -101,12 +99,10 @@ def api_key():
                 except Exception:
                     LOG.debug('Missing "Beacon-Service-Key" from headers.')
                     raise web.HTTPBadRequest(text='Missing header "Beacon-Service-Key".')
-
                 # Take one connection from the active database pool
                 async with request.app['pool'].acquire() as connection:
                     # Verify that provided service key is authorised
-                    await db_verify_service_key(connection, request.match_info.get('service_id'), beacon_service_key)
-
+                    await db_verify_service_key(connection, service_id=request.match_info.get('service_id'), service_key=beacon_service_key)
                 # None of the checks failed
                 return await handler(request)
 
@@ -118,6 +114,18 @@ def api_key():
         # Another endpoint which requires an api key
         elif '/beacons' in request.path:
             LOG.debug('In /beacons endpoint.')
+            try:
+                beacon_service_key = request.headers['Beacon-Service-Key']
+                LOG.debug('Beacon-Service-Key received.')
+            except Exception:
+                LOG.debug('Missing "Beacon-Service-Key" from headers.')
+                raise web.HTTPBadRequest(text='Missing header "Beacon-Service-Key".')
+            # Take one connection from the active database pool
+            async with request.app['pool'].acquire() as connection:
+                # Verify that provided service key is authorised
+                await db_verify_service_key(connection, service_key=beacon_service_key, alt_use_case=True)
+            # None of the checks failed
+            return await handler(request)
 
         # For all other endpoints
         else:
