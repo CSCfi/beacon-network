@@ -4,7 +4,7 @@ from aiohttp import web
 
 from utils.logging import LOG
 from utils.db_ops import db_check_service_id, db_register_service, db_get_service_details, db_delete_services, db_update_sequence
-from utils.utils import query_params
+from utils.utils import query_params, remote_registration
 
 
 async def register_service(request, db_pool):
@@ -13,15 +13,26 @@ async def register_service(request, db_pool):
     # Get POST request body JSON as python dict
     service = await request.json()
 
-    # Take connection from database pool, re-use connection for all tasks
-    async with db_pool.acquire() as connection:
-        # Check that the chosen service ID is not taken
-        id_taken = await db_check_service_id(connection, service['id'])
-        if id_taken:
-            raise web.HTTPConflict(text='Service ID is taken.')
-        # Register service to host
-        service_key = await db_register_service(connection, service)
+    # Parse query params from path, `_` denotes service_id from path param /services/{service_id}, which is not used here
+    _, params = await query_params(request)
+
+    if 'remote' in params:
+        # This option is used at Aggregators when they do a remote registration at a Registry
+        LOG.debug(f'Remote registration request to {params["remote"]}.')
+        # Register self (aggregator) at remote service (registry) via self, not manually
+        service_key = await remote_registration(db_pool, request)
         return service_key
+    else:
+        LOG.debug('Local registration at host.')
+        # Take connection from database pool, re-use connection for all tasks
+        async with db_pool.acquire() as connection:
+            # Check that the chosen service ID is not taken
+            id_taken = await db_check_service_id(connection, service['id'])
+            if id_taken:
+                raise web.HTTPConflict(text='Service ID is taken.')
+            # Register service to host
+            service_key = await db_register_service(connection, service)
+            return service_key
 
 
 async def get_services(request, db_pool):

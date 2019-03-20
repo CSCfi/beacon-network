@@ -64,7 +64,7 @@ async def query_params(request):
     """Parse query string params from path."""
     LOG.debug('Parse query params.')
     # Query string params
-    allowed_params = ['serviceType', 'model', 'listFormat', 'apiVersion']
+    allowed_params = ['serviceType', 'model', 'listFormat', 'apiVersion', 'remote']
     params = {k: v for k, v in request.rel_url.query.items() if k in allowed_params}
     # Path param
     service_id = request.match_info.get('service_id', None)
@@ -183,7 +183,8 @@ async def http_get_service_urls(services, service_type=None):
     async with aiohttp.ClientSession() as session:
         for service in services:
             try:
-                async with session.get(service,
+                # serviceUrl from DB: `https://../` append with `services`
+                async with session.get(f'{service}services',
                                        params=params,
                                        ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
                     if response.status == 200:
@@ -226,8 +227,8 @@ async def notify_service(service, beacons):
     async with aiohttp.ClientSession() as session:
         try:
             # Solution for prototype, figure out a better way later
-            # We expect that the serviceUrl in DB is of form http://.../query, so we replace "query" with "beacons"
-            async with session.put(service.replace('query', 'beacons'),
+            # serviceUrl from DB: `https://../` append with `beacons`
+            async with session.put(f'{service}beacons',
                                    data=beacons,
                                    ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
                 if response.status in [200, 201, 204]:
@@ -252,7 +253,8 @@ async def query_service(service, params, access_token, ws=None):
     # Query service in a session
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(service,
+            # serviceUrl from DB: `https://../` append with `query`
+            async with session.get(f'{service}query',
                                    params=params,
                                    ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False'))),
                                    headers=headers) as response:

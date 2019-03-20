@@ -42,6 +42,11 @@ CREATE TABLE api_keys (
     comment VARCHAR(256)
 );
 
+CREATE TABLE remote_keys (
+    remote_service VARCHAR(64),
+    service_key VARCHAR(64)
+);
+
 /* NOT IMPLEMENTED */
 
 -- CREATE TABLE IF NOT EXISTS networks (
