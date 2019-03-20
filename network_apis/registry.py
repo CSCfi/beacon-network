@@ -61,15 +61,13 @@ async def services_post(request):
     db_pool = request.app['pool']
 
     # Send request for processing
-    service_key = await register_service(request, db_pool)
+    response = await register_service(request, db_pool)
 
     # Notify aggregators of changed service catalogue
     await remote_recache_aggregators(request, db_pool)
 
     # Return confirmation and service key if no problems occurred during processing
-    response = {'message': 'Service has been registered. Service key for updating and deleting registration included in this response, keep it safe.',
-                'beaconServiceKey': service_key}
-    return web.HTTPCreated(body=json.dumps(response))
+    return web.HTTPCreated(body=json.dumps(response), content_type='application/json')
 
 
 @routes.get('/services')
