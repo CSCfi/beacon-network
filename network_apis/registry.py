@@ -2,6 +2,7 @@
 
 import os
 import sys
+import json
 
 import aiohttp_cors
 
@@ -66,7 +67,9 @@ async def services_post(request):
     await remote_recache_aggregators(request, db_pool)
 
     # Return confirmation and service key if no problems occurred during processing
-    return web.HTTPCreated(text=f'Service has been registered. Service key for updating and deleting registration, keep it safe: {service_key}')
+    response = {'message': 'Service has been registered. Service key for updating and deleting registration included in this response, keep it safe.',
+                'beaconServiceKey': service_key}
+    return web.HTTPCreated(body=json.dumps(response))
 
 
 @routes.get('/services')

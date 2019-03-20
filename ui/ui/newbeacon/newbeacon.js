@@ -92,7 +92,7 @@ angular.module('beaconApp.newbeacon', ['ngRoute'])
         data: payload,
         headers: {'Content-Type': 'application/json', 'Post-Api-Key': $scope.apiKey}
       }).then(function successCallback(response) {
-          $scope.addNewBeaconMessage = response.data;
+          $scope.addNewBeaconMessage = `${response.data.message} : ${response.data.beaconServiceKey}`;
           // document.getElementById("fetchedInfo").style.display = "block";
         }, function errorCallback(response) {
           $scope.addNewBeaconMessage = response.data;
