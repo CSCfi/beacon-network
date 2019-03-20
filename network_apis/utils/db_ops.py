@@ -265,7 +265,7 @@ async def db_verify_service_key(connection, service_id=None, service_key=None, a
             response = await statement.fetch(service_id, service_key)
         else:
             # Use case for accessing remote Aggregator's PUT /beacons endpoint
-            query = """SELECT service_id FROM service_keys WHERE service_key=$1"""
+            query = """SELECT remote_service FROM remote_keys WHERE service_key=$1"""
             statement = await connection.prepare(query)
             response = await statement.fetch(service_key)
     except Exception as e:

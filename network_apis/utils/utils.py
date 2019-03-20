@@ -121,6 +121,36 @@ async def db_get_service_urls(connection, service_type=None):
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to fetch service urls.')
 
 
+# db function temporarily placed here due to import-loop issues
+async def db_get_recaching_credentials(connection):
+    """Return queryable service urls and service keys."""
+    LOG.debug(f'Querying database for service urls and keys.')
+    credentials = []
+    try:
+        # Database query
+        query = f"""SELECT a.service_url AS service_url, b.service_key AS service_key
+                    FROM services a, service_keys b
+                    WHERE service_type='GA4GHBeaconAggregator'
+                    AND a.id=b.service_id"""
+        statement = await connection.prepare(query)
+        response = await statement.fetch()
+        if len(response) > 0:
+            # Parse urls from psql records and append to list
+            for record in response:
+                credentials.append({'service_url': record['service_url'],
+                                    'service_key': record['service_key']})
+            return credentials
+        else:
+            # raise web.HTTPNotFound(text=f'No queryable services found of service type {service_type}.')
+            # Why did we even have a 404 here
+            # pass
+            # Return empty iterable
+            return credentials
+    except Exception as e:
+        LOG.debug(f'DB error: {e}')
+        raise web.HTTPInternalServerError(text='Database error occurred while attempting to fetch service urls.')
+
+
 async def clear_cache():
     """Clear cache of Beacons."""
     LOG.debug('Clear cached Beacons.')
@@ -209,7 +239,7 @@ async def remote_recache_aggregators(request, db_pool):
     tasks = []  # requests to be done
     # Take connection from the database pool
     async with db_pool.acquire() as connection:
-        aggregators = await db_get_service_urls(connection, service_type='GA4GHBeaconAggregator')  # service urls (aggregators) to be queried
+        aggregators = await db_get_recaching_credentials(connection)  # service urls (aggregators) to be queried, with service keys
         beacons = json.dumps(await db_get_service_urls(connection, service_type='GA4GHBeacon'))  # service urls (beacons) to be sent to aggregators
 
     for aggregator in aggregators:
@@ -232,7 +262,8 @@ async def notify_service(service, beacons):
         # try:
         # Solution for prototype, figure out a better way later
         # serviceUrl from DB: `https://../` append with `beacons`
-        async with session.put(f'{service}beacons',
+        async with session.put(f'{service["service_url"]}beacons',
+                                headers={'Beacon-Service-Key': service['service_key']},
                                 data=beacons,
                                 ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
             if response.status in [200, 201, 204]:
