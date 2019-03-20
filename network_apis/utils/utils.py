@@ -299,3 +299,44 @@ async def generate_service_key():
 #     domain = address[domain].split('/')  # distinguish endpoints
 #     service_id = '.'.join(reversed(domain[0].split('.')))  # reverse domain to create id
 #     return service_id
+
+
+async def http_verify_remote(remote):
+    """Verify that provided address leads to a GA4GHRegistry."""
+    LOG.debug('Verify that remote is a Registry.')
+    # We don't need much information
+    params = {'listFormat': 'short'}
+
+    async with aiohttp.ClientSession() as session:
+        for service in services:
+            try:
+                async with session.get(f'{remote}/info',
+                                       params=params,
+                                       ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        if result['serviceType'] == 'GA4GHRegistry':
+                            LOG.debug('Remote verified to be a Registry.')
+                        else:
+                            LOG.debug('Remote is not a Registry, or could not retrieve serviceType.')
+                            raise web.HTTPBadRequest(text='Provided "remote" is not a GA4GHRegistry.')
+                    else:
+                        LOG.debug('Provided "remote" was not found.')
+                        raise web.HTTPNotFound(text='Provided "remote" not found.')
+            except Exception as e:
+                LOG.debug(f'Query error {e}.')
+                raise web.HTTPInternalServerError(text=f'An error occurred while attempting to query remote: {e}')
+
+
+async def remote_registration(db_pool, request, remote):
+    """Forward registration request to a remote service."""
+    LOG.debug('Remote registration.')
+    # Get POST request body JSON as python dict
+    service = await request.json()
+
+    # Verify that remote is of type GA4GHRegistry
+    await http_verify_remote(remote)
+    response = await http_register_at_remote(service, params['remote'], request.headers['Aggregator-Api-Key'])
+    await db_store_my_service_key(db_pool, service['id'], response['beaconServiceKey'])
+
+    return response

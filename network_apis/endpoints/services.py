@@ -20,7 +20,7 @@ async def register_service(request, db_pool):
         # This option is used at Aggregators when they do a remote registration at a Registry
         LOG.debug(f'Remote registration request to {params["remote"]}.')
         # Register self (aggregator) at remote service (registry) via self, not manually
-        service_key = await remote_registration(db_pool, request)
+        service_key = await remote_registration(db_pool, request, params['remote'])
         return service_key
     else:
         LOG.debug('Local registration at host.')
