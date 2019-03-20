@@ -310,6 +310,7 @@ async def http_verify_remote(remote):
     async with aiohttp.ClientSession() as session:
         for service in services:
             try:
+                # serviceUrl should be of form: `https://../` append with `info`
                 async with session.get(f'{remote}/info',
                                        params=params,
                                        ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
@@ -328,6 +329,31 @@ async def http_verify_remote(remote):
                 raise web.HTTPInternalServerError(text=f'An error occurred while attempting to query remote: {e}')
 
 
+async def http_register_at_remote(service, remote, remote_api_key):
+    """Register at provided remote Registry."""
+    LOG.debug('Register at remote.')
+    headers = {'Post-Api-Key': remote_api_key}
+
+    # Send POST request to remote Registry
+    async with aiohttp.ClientSession() as session:
+        try:
+            # serviceUrl should be of form: `https://../` append with `services`
+            async with session.post(f'{remote}/services',
+                                    headers=headers,
+                                    data=service,
+                                    ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
+                if response.status in [200, 201, 202]:
+                    LOG.debug('Service was successfully registered at remote.')
+                    return response
+                else:
+                    LOG.debug('Encountered problem with registration at remote.')
+                    # Terminate process here, forward the error
+                    return web.json_response(response)
+        except Exception as e:
+            LOG.debug(f'Remote error {e}.')
+            raise web.HTTPInternalServerError(text='An error occurred while attempting to perform remote registration.')
+
+
 async def remote_registration(db_pool, request, remote):
     """Forward registration request to a remote service."""
     LOG.debug('Remote registration.')
@@ -336,7 +362,7 @@ async def remote_registration(db_pool, request, remote):
 
     # Verify that remote is of type GA4GHRegistry
     await http_verify_remote(remote)
-    response = await http_register_at_remote(service, params['remote'], request.headers['Aggregator-Api-Key'])
+    response = await http_register_at_remote(service, remote, request.headers['Remote-Api-Key'])
     await db_store_my_service_key(db_pool, service['id'], response['beaconServiceKey'])
 
     return response
