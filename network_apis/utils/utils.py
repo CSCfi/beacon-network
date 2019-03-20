@@ -263,9 +263,9 @@ async def notify_service(service, beacons):
         # Solution for prototype, figure out a better way later
         # serviceUrl from DB: `https://../` append with `beacons`
         async with session.put(f'{service["service_url"]}beacons',
-                                headers={'Beacon-Service-Key': service['service_key']},
-                                data=beacons,
-                                ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
+                               headers={'Beacon-Service-Key': service['service_key']},
+                               data=beacons,
+                               ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
             if response.status in [200, 201, 204]:
                 # 201 - cache didn't exist, and was created
                 # 200/204 - cache existed, and was overwritten
@@ -347,8 +347,8 @@ async def http_verify_remote(remote):
         try:
             # serviceUrl should be of form: `https://../` append with `info`
             async with session.get(f'{remote}info',
-                                    params=params,
-                                    ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
+                                   params=params,
+                                   ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
                 if response.status == 200:
                     result = await response.json()
                     if result['serviceType'] == 'GA4GHRegistry':
@@ -408,8 +408,8 @@ async def db_store_my_service_key(db_pool, remote_service, service_key):
             # Database commit occurs on transaction closure
             async with connection.transaction():
                 await connection.execute("""INSERT INTO remote_keys (remote_service, service_key)
-                                        VALUES ($1, $2)""",
-                                        remote_service, service_key)
+                                         VALUES ($1, $2)""",
+                                         remote_service, service_key)
         except Exception as e:
             LOG.debug(f'DB error: {e}')
             raise web.HTTPInternalServerError(text='Database error occurred while attempting to store remote service key.')
