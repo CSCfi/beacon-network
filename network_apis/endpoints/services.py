@@ -16,12 +16,17 @@ async def register_service(request, db_pool):
     # Parse query params from path, `_` denotes service_id from path param /services/{service_id}, which is not used here
     _, params = await query_params(request)
 
+    # Response object
+    response = {'message': '',
+                'beaconServiceKey': ''}
+
     if 'remote' in params:
         # This option is used at Aggregators when they do a remote registration at a Registry
         LOG.debug(f'Remote registration request to {params["remote"]}.')
         # Register self (aggregator) at remote service (registry) via self, not manually
         service_key = await remote_registration(db_pool, request, params['remote'])
-        return service_key
+        response = {'message': f'Service has been registered remotely at {params["remote"]}. Service key for updating and deleting registration included in this response, keep it safe.',
+                    'beaconServiceKey': service_key}
     else:
         LOG.debug('Local registration at host.')
         # Take connection from database pool, re-use connection for all tasks
@@ -32,7 +37,10 @@ async def register_service(request, db_pool):
                 raise web.HTTPConflict(text='Service ID is taken.')
             # Register service to host
             service_key = await db_register_service(connection, service)
-            return service_key
+            response = {'message': 'Service has been registered. Service key for updating and deleting registration included in this response, keep it safe.',
+                        'beaconServiceKey': service_key}
+
+    return response
 
 
 async def get_services(request, db_pool):

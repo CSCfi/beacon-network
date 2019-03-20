@@ -77,7 +77,7 @@ def api_key():
             LOG.debug('In /services endpoint.')
             if request.method == 'POST':
                 LOG.debug('Using POST method.')
-                if 'remote' in request.rel_url.query.items():
+                if 'remote' in request.rel_url.query:
                     LOG.debug('Registering at remote, check that api key exists, but don\'t verify it.')
                     try:
                         post_api_key = request.headers['Remote-Api-Key']

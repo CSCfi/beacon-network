@@ -111,7 +111,11 @@ async def db_get_service_urls(connection, service_type=None):
                 service_urls.append(record['service_url'])
             return service_urls
         else:
-            raise web.HTTPNotFound(text=f'No queryable services found of service type {service_type}.')
+            # raise web.HTTPNotFound(text=f'No queryable services found of service type {service_type}.')
+            # Why did we even have a 404 here
+            # pass
+            # Return empty iterable
+            return service_urls
     except Exception as e:
         LOG.debug(f'DB error for service_type={service_type}: {e}')
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to fetch service urls.')
@@ -225,21 +229,22 @@ async def notify_service(service, beacons):
 
     # Send notification (request) to service (aggregator)
     async with aiohttp.ClientSession() as session:
-        try:
-            # Solution for prototype, figure out a better way later
-            # serviceUrl from DB: `https://../` append with `beacons`
-            async with session.put(f'{service}beacons',
-                                   data=beacons,
-                                   ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
-                if response.status in [200, 201, 204]:
-                    # 201 - cache didn't exist, and was created
-                    # 200/204 - cache existed, and was overwritten
-                    LOG.debug(f'Service received notification and responded with {response.status}.')
-                else:
-                    LOG.error('Service encountered a problem with notification.')
-        except Exception as e:
-            LOG.debug(f'Query error {e}.')
-            web.HTTPInternalServerError(text=f'An error occurred while attempting to send request to Aggregator.')
+        # try:
+        # Solution for prototype, figure out a better way later
+        # serviceUrl from DB: `https://../` append with `beacons`
+        async with session.put(f'{service}beacons',
+                                data=beacons,
+                                ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
+            if response.status in [200, 201, 204]:
+                # 201 - cache didn't exist, and was created
+                # 200/204 - cache existed, and was overwritten
+                LOG.debug(f'Service received notification and responded with {response.status}.')
+            else:
+                LOG.debug('Service encountered a problem with notification.')
+        # except Exception as e:
+        #     LOG.debug(f'Query error {e}.')
+        #     # web.HTTPInternalServerError(text=f'An error occurred while attempting to send request to Aggregator.')
+        #     pass  # We don't care if a notification failed
 
 
 async def query_service(service, params, access_token, ws=None):
@@ -308,25 +313,24 @@ async def http_verify_remote(remote):
     params = {'listFormat': 'short'}
 
     async with aiohttp.ClientSession() as session:
-        for service in services:
-            try:
-                # serviceUrl should be of form: `https://../` append with `info`
-                async with session.get(f'{remote}/info',
-                                       params=params,
-                                       ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
-                    if response.status == 200:
-                        result = await response.json()
-                        if result['serviceType'] == 'GA4GHRegistry':
-                            LOG.debug('Remote verified to be a Registry.')
-                        else:
-                            LOG.debug('Remote is not a Registry, or could not retrieve serviceType.')
-                            raise web.HTTPBadRequest(text='Provided "remote" is not a GA4GHRegistry.')
+        try:
+            # serviceUrl should be of form: `https://../` append with `info`
+            async with session.get(f'{remote}info',
+                                    params=params,
+                                    ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    if result['serviceType'] == 'GA4GHRegistry':
+                        LOG.debug('Remote verified to be a Registry.')
                     else:
-                        LOG.debug('Provided "remote" was not found.')
-                        raise web.HTTPNotFound(text='Provided "remote" not found.')
-            except Exception as e:
-                LOG.debug(f'Query error {e}.')
-                raise web.HTTPInternalServerError(text=f'An error occurred while attempting to query remote: {e}')
+                        LOG.debug('Remote is not a Registry, or could not retrieve serviceType.')
+                        raise web.HTTPBadRequest(text='Provided "remote" is not a GA4GHRegistry.')
+                else:
+                    LOG.debug('Provided "remote" was not found.')
+                    raise web.HTTPNotFound(text='Provided "remote" not found.')
+        except Exception as e:
+            LOG.debug(f'Query error {e}.')
+            raise web.HTTPInternalServerError(text=f'An error occurred while attempting to query remote: {e}')
 
 
 async def http_register_at_remote(service, remote, remote_api_key):
@@ -336,23 +340,30 @@ async def http_register_at_remote(service, remote, remote_api_key):
 
     # Send POST request to remote Registry
     async with aiohttp.ClientSession() as session:
-        try:
-            # serviceUrl should be of form: `https://../` append with `services`
-            async with session.post(f'{remote}/services',
-                                    headers=headers,
-                                    data=service,
-                                    ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
-                if response.status in [200, 201, 202]:
-                    LOG.debug('Service was successfully registered at remote.')
-                    return response
+        # serviceUrl should be of form: `https://../` append with `services`
+        async with session.post(f'{remote}services',
+                                headers=headers,
+                                data=json.dumps(service),
+                                ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
+            if response.status in [200, 201, 202]:
+                LOG.debug('Service was successfully registered at remote.')
+                result = await response.json()
+                return result['beaconServiceKey']
+            else:
+                message = await response.text()
+                LOG.debug('Encountered problem with registration at remote.')
+                # Terminate process here, forward the error
+                if response.status == 400:
+                    raise web.HTTPBadRequest(text=message)
+                elif response.status == 401:
+                    raise web.HTTPUnauthorized(text=message)
+                elif response.status == 404:
+                    raise web.HTTPNotFound(text=message)
+                elif response.status == 409:
+                    raise web.HTTPConflict(text=message)
                 else:
-                    LOG.debug('Encountered problem with registration at remote.')
-                    # Terminate process here, forward the error
-                    raise web.HTTPInternalServerError(body=response)
-                    # return web.json_response(response)
-        except Exception as e:
-            LOG.debug(f'Remote error {e}.')
-            raise web.HTTPInternalServerError(text='An error occurred while attempting to perform remote registration.')
+                    # 500
+                    raise web.HTTPInternalServerError(text=message)
 
 
 # DB function temporarily in /utils due to import-loop issue
@@ -383,6 +394,7 @@ async def remote_registration(db_pool, request, remote):
     await http_verify_remote(remote)
     # Register at remote, get the beaconServiceKey from response
     response = await http_register_at_remote(service, remote, request.headers['Remote-Api-Key'])
-    await db_store_my_service_key(db_pool, remote, response['beaconServiceKey'])
+    # Store the service key from response for later use via PUT /beacons from Registry
+    await db_store_my_service_key(db_pool, remote, response)
 
     return response
