@@ -348,10 +348,29 @@ async def http_register_at_remote(service, remote, remote_api_key):
                 else:
                     LOG.debug('Encountered problem with registration at remote.')
                     # Terminate process here, forward the error
-                    return web.json_response(response)
+                    raise web.HTTPInternalServerError(body=response)
+                    # return web.json_response(response)
         except Exception as e:
             LOG.debug(f'Remote error {e}.')
             raise web.HTTPInternalServerError(text='An error occurred while attempting to perform remote registration.')
+
+
+# DB function temporarily in /utils due to import-loop issue
+async def db_store_my_service_key(db_pool, remote_service, service_key):
+    """Store my service key which is used at remote Registry."""
+    LOG.debug('Store my remote service key.')
+
+    # Take connection from database pool, re-use connection for all tasks
+    async with db_pool.acquire() as connection:
+        try:
+            # Database commit occurs on transaction closure
+            async with connection.transaction():
+                await connection.execute("""INSERT INTO remote_keys (remote_service, service_key)
+                                        VALUES ($1, $2)""",
+                                        remote_service, service_key)
+        except Exception as e:
+            LOG.debug(f'DB error: {e}')
+            raise web.HTTPInternalServerError(text='Database error occurred while attempting to store remote service key.')
 
 
 async def remote_registration(db_pool, request, remote):
@@ -362,7 +381,8 @@ async def remote_registration(db_pool, request, remote):
 
     # Verify that remote is of type GA4GHRegistry
     await http_verify_remote(remote)
+    # Register at remote, get the beaconServiceKey from response
     response = await http_register_at_remote(service, remote, request.headers['Remote-Api-Key'])
-    await db_store_my_service_key(db_pool, service['id'], response['beaconServiceKey'])
+    await db_store_my_service_key(db_pool, remote, response['beaconServiceKey'])
 
     return response
