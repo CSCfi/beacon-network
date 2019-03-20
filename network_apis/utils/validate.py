@@ -77,16 +77,26 @@ def api_key():
             LOG.debug('In /services endpoint.')
             if request.method == 'POST':
                 LOG.debug('Using POST method.')
-                try:
-                    post_api_key = request.headers['Post-Api-Key']
-                    LOG.debug('Post-Api-Key received.')
-                except Exception:
-                    LOG.debug('Missing "Post-Api-Key" from headers.')
-                    raise web.HTTPBadRequest(text='Missing header "Post-Api-Key".')
-                # Take one connection from the active database pool
-                async with request.app['pool'].acquire() as connection:
-                    # Check if provided api key is valid
-                    await db_verify_post_api_key(connection, post_api_key)
+                if 'remote' in request.rel_url.query.items():
+                    LOG.debug('Registering at remote, check that api key exists, but don\'t verify it.')
+                    try:
+                        post_api_key = request.headers['Remote-Api-Key']
+                        LOG.debug('Remote-Api-Key received.')
+                    except Exception:
+                        LOG.debug('Missing "Remote-Api-Key" from headers.')
+                        raise web.HTTPBadRequest(text='Missing header "Remote-Api-Key".')
+                else:
+                    LOG.debug('Registering at local.')
+                    try:
+                        post_api_key = request.headers['Post-Api-Key']
+                        LOG.debug('Post-Api-Key received.')
+                    except Exception:
+                        LOG.debug('Missing "Post-Api-Key" from headers.')
+                        raise web.HTTPBadRequest(text='Missing header "Post-Api-Key".')
+                    # Take one connection from the active database pool
+                    async with request.app['pool'].acquire() as connection:
+                        # Check if provided api key is valid
+                        await db_verify_post_api_key(connection, post_api_key)
                 # None of the checks failed
                 return await handler(request)
 
