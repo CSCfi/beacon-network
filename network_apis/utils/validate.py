@@ -7,6 +7,7 @@ from jsonschema import Draft7Validator, validators
 from jsonschema.exceptions import ValidationError
 
 from .logging import LOG
+from .db_ops import db_verify_post_api_key, db_verify_service_key
 
 
 def extend_with_default(validator_class):
@@ -70,32 +71,65 @@ def api_key():
         LOG.debug('Start api key check')
 
         assert isinstance(request, web.Request)
-        if '/services' in request.path and request.method == 'POST' and 'Post-Api-Key' in request.headers:
-            LOG.debug('In /services path using POST with api key.')
-            try:
-                post_api_key = request.headers.get('Post-Api-Key')
-                LOG.debug('API key received.')
-            except Exception as e:  # KeyError
-                LOG.error(f'ERROR: Something wrong with fetching api key from headers: {e}')
-                raise web.HTTPBadRequest(text=f'Missing header: {e}')
 
-            if post_api_key is not None:
-                # Take one connection from the active database connection pool
+        # Check which endpoint user is requesting and sort according to method
+        if '/services' in request.path:
+            LOG.debug('In /services endpoint.')
+            if request.method == 'POST':
+                LOG.debug('Using POST method.')
+                try:
+                    post_api_key = request.headers['Post-Api-Key']
+                    LOG.debug('Post-Api-Key received.')
+                except Exception:
+                    LOG.debug('Missing "Post-Api-Key" from headers.')
+                    raise web.HTTPBadRequest(text='Missing header "Post-Api-Key".')
+                # Take one connection from the active database pool
                 async with request.app['pool'].acquire() as connection:
-                    # Check if api key exists in database
-                    query = f"""SELECT comment FROM api_keys WHERE api_key=$1"""
-                    statement = await connection.prepare(query)
-                    db_response = await statement.fetch(post_api_key)
-                    if not db_response:
-                        LOG.error(f'Provided API key is Unauthorized.')
-                        raise web.HTTPUnauthorized(text='Unauthorized api key')
-                    LOG.debug('Provided api key is authorized')
-            # Carry on with user request
+                    # Check if provided api key is valid
+                    await db_verify_post_api_key(connection, post_api_key)
+                # None of the checks failed
+                return await handler(request)
+
+            # Handle other methods
+            elif request.method in ['PUT', 'DELETE']:
+                LOG.debug(f'Using {request.method} method.')
+                try:
+                    beacon_service_key = request.headers['Beacon-Service-Key']
+                    LOG.debug('Beacon-Service-Key received.')
+                except Exception:
+                    LOG.debug('Missing "Beacon-Service-Key" from headers.')
+                    raise web.HTTPBadRequest(text='Missing header "Beacon-Service-Key".')
+                # Take one connection from the active database pool
+                async with request.app['pool'].acquire() as connection:
+                    # Verify that provided service key is authorised
+                    await db_verify_service_key(connection, service_id=request.match_info.get('service_id'), service_key=beacon_service_key)
+                # None of the checks failed
+                return await handler(request)
+
+            # Basically only GET /services goes here
+            else:
+                LOG.debug('No api key required at this endpoint.')
+                return await handler(request)
+
+        # Another endpoint which requires an api key
+        elif '/beacons' in request.path:
+            LOG.debug('In /beacons endpoint.')
+            try:
+                beacon_service_key = request.headers['Beacon-Service-Key']
+                LOG.debug('Beacon-Service-Key received.')
+            except Exception:
+                LOG.debug('Missing "Beacon-Service-Key" from headers.')
+                raise web.HTTPBadRequest(text='Missing header "Beacon-Service-Key".')
+            # Take one connection from the active database pool
+            async with request.app['pool'].acquire() as connection:
+                # Verify that provided service key is authorised
+                await db_verify_service_key(connection, service_key=beacon_service_key, alt_use_case=True)
+            # None of the checks failed
             return await handler(request)
-        elif '/services' not in request.path or request.method != 'POST':
+
+        # For all other endpoints
+        else:
             LOG.debug('No api key required at this endpoint.')
             return await handler(request)
-        else:
-            LOG.error('Missing api key header.')
-            raise web.HTTPBadRequest(text="Missing header: 'Post-Api-Key'")
+
     return api_key_middleware

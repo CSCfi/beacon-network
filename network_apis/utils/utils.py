@@ -71,12 +71,6 @@ async def query_params(request):
     return service_id, params
 
 
-async def fetch_service_key(request):
-    """Fetch service key from headers."""
-    LOG.debug('Fetch service key.')
-    return request.headers.get('Beacon-Service-Key')
-
-
 async def get_access_token(request):
     """Retrieve access token if it exists."""
     LOG.debug('Look for access token.')
