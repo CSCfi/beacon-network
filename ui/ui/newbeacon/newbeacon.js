@@ -36,7 +36,7 @@ angular.module('beaconApp.newbeacon', ['ngRoute'])
             $scope.beaconInfo.serviceType = 'GA4GHBeacon';
           }
           if (!$scope.beaconInfo.hasOwnProperty('serviceUrl')) {
-            $scope.beaconInfo.serviceUrl = `${$scope.beaconURL}query`;
+            $scope.beaconInfo.serviceUrl = $scope.beaconURL;
           }
           if (!$scope.beaconInfo.hasOwnProperty('open')) {
             $scope.beaconInfo.open = true;

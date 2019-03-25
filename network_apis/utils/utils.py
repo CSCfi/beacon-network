@@ -289,8 +289,8 @@ async def query_service(service, params, access_token, ws=None):
     # Query service in a session
     async with aiohttp.ClientSession() as session:
         try:
-            # serviceUrl from DB: `https://../query`, beacon serviceUrls should end with /query
-            async with session.get(service,
+            # serviceUrl from DB: `https://../` append with `query`
+            async with session.get(f'{service}query',
                                    params=params,
                                    ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False'))),
                                    headers=headers) as response:
