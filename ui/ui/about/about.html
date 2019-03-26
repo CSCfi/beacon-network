@@ -72,7 +72,7 @@
     </md-card-header>
     <div class="cardItem">
       <md-card-content>
-        These Beacon services are developed by <a href="https://www.csc.fi/">CSC - IT Center for Science Ltd.</a> in Finland. CSC is hosting ELIXIR Finland node as part of the European ELIXIR infrastructure. We would like to acknowledge the valuable feedback from the members of <a href="https://nbis.se/">NBIS</a> and <a href="https://www.ddbj.nig.ac.jp">DDBJ</a>, whose ideas and contributions have helped to make the Beacon services more robust.
+        These Beacon services are developed by <a href="https://www.csc.fi/">CSC - IT Center for Science Ltd.</a> in Finland. CSC is hosting ELIXIR Finland node as part of the European ELIXIR infrastructure.
       </md-card-content>
       <hr />
       <md-card-content>
@@ -84,8 +84,16 @@
       </md-card-content>
       <hr />
       <md-card-content>
+        <span class="md-title">Beacon Registry</span>
+        Beacon Registry is a central database service which governs Beacon Networks. Beacon Registries maintain a list of known Beacon services that may be queried to find genomic datasets. Beacon services can register themselves at Registries to be found.
+      </md-card-content>
+      <md-card-content>
+        Beacon Registry is developed as open source. The repository is available <a href="https://github.com/CSCfi/beacon-network/tree/master/network_apis">here</a>.
+      </md-card-content>
+      <hr />
+      <md-card-content>
         <span class="md-title">Beacon Aggregator</span>
-        Beacon Aggregator is a proxy service that broadens the user's search area. Beacon Aggregators maintain a list of known Beacon services that may be queried to find genomic datasets. The aggregator works in an asynchronous manner utilising websockets.
+        Beacon Aggregator is a proxy service that broadens the user's search area. Beacon Aggregators rely on Registries to provide a list of known Beacon services that may be queried to find genomic datasets. The aggregator works in an asynchronous manner with the UI, utilising websockets.
       </md-card-content>
       <md-card-content>
         Beacon Aggregator is developed as open source. The repository is available <a href="https://github.com/CSCfi/beacon-network/tree/master/network_apis">here</a>.
