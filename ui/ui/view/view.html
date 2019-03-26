@@ -247,6 +247,7 @@
                 <th>Variant Type</th>
                 <th>Reference Bases</th>
                 <th>Alternate Bases</th>
+                <th>Region</th>
                 <th>Allele Count</th>
                 <th>Frequency (approx.)</th>
               </tr>
@@ -257,6 +258,7 @@
                 <td>{{ dataset.variantType }}<span ng-if="!dataset.variantType">{{ datum.alleleRequest.variantType }}</span></td>
                 <td>{{ dataset.referenceBases }}<span ng-if="!dataset.referenceBases">{{ datum.alleleRequest.referenceBases }}</span></td>
                 <td>{{ dataset.alternateBases }}<span ng-if="!dataset.alternateBases">{{ datum.alleleRequest.alternateBases }}</span></td>
+                <td>{{ dataset.start }}-{{ dataset.end }}</td>
                 <td>{{ dataset.variantCount > 0 ? dataset.variantCount : "n/a" }}</td>
                 <td>{{ dataset.frequency > 0 ? dataset.frequency : "n/a" }}</td>
 
