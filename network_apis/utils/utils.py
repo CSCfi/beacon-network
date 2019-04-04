@@ -3,6 +3,7 @@
 import os
 import json
 import secrets
+import ssl
 
 from distutils.util import strtobool
 
@@ -429,3 +430,90 @@ async def remote_registration(db_pool, request, remote):
     await db_store_my_service_key(db_pool, remote, response)
 
     return response
+
+
+async def load_certs(ssl_context):
+    """Load certificates for SSLContext object."""
+    LOG.debug('Load certificates for SSLContext.')
+
+    ssl_context.load_cert_chain(os.environ.get('PATH_SSL_CERT_FILE'),
+                                keyfile=os.environ.get('PATH_SSL_KEY_FILE'))
+    ssl_context.load_verify_locations(cafile=os.environ.get('PATH_SSL_CA_FILE'))
+
+    return ssl_context
+
+
+async def application_security():
+    """Determine application's level of security.
+
+    Security levels:
+    Public
+    0   App HTTP
+    1   App HTTP, Ingress controller HTTPS (Openshift use case)
+    2   App HTTPS
+    Private
+    3   Closed network node (cert sharing)
+
+    Level of security is controlled with ENV `APPLICATION_SECURITY` which takes int value 0-3."""
+    LOG.debug('Check application level of security.')
+
+    # Convert ENV string to int
+    level = int(os.environ.get('APPLICATION_SECURITY', 0))
+
+    ssl_context = None
+
+    if level == 0:
+        LOG.debug(f'Application security level {level}.')
+    elif level == 1:
+        LOG.debug(f'Application security level {level}.')
+    elif level == 2:
+        LOG.debug(f'Application security level {level}.')
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        ssl_context = await load_certs(ssl_context)
+    elif level == 3:
+        LOG.debug(f'Application security level {level}.')
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = True
+        ssl_context.verify_mode = ssl.CERT_REQUIRED
+        ssl_context = await load_certs(ssl_context)
+    else:
+        LOG.debug(f'Could not determine application security level ({level}), setting to default (0).')
+
+    return ssl_context
+
+
+async def request_security():
+    """Determine requests' level of security.
+
+    Security levels:
+    Public
+    0   Unsecure, client can be HTTP
+    1   Secure, client must be HTTPS
+    Private
+    2   Client must be in the same closed trust network (possess same certs)
+
+    Level of security is controlled with ENV `REQUEST_SECURITY` which takes int value 0-2."""
+    LOG.debug('Check request level of security.')
+
+    # Convert ENV string to int
+    level = int(os.environ.get('APPLICATION_SECURITY', 0))
+
+    ssl_context = False
+
+    if level == 0:
+        LOG.debug(f'Request security level {level}.')
+    elif level == 1:
+        LOG.debug(f'Request security level {level}.')
+        ssl_context = True
+    elif level == 2:
+        LOG.debug(f'Request security level {level}.')
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = True
+        ssl_context.verify_mode = ssl.CERT_REQUIRED
+        ssl_context = await load_certs(ssl_context)
+    else:
+        LOG.debug(f'Could not determine request security level ({level}), setting to default (0).')
+
+    return ssl_context
