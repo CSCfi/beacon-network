@@ -449,12 +449,11 @@ async def application_security():
     Security levels:
     Public
     0   App HTTP
-    1   App HTTP, Ingress controller HTTPS (Openshift use case)
-    2   App HTTPS
+    1   App HTTPS
     Private
-    3   Closed network node (cert sharing)
+    2   Closed network node (cert sharing)
 
-    Level of security is controlled with ENV `APPLICATION_SECURITY` which takes int value 0-3."""
+    Level of security is controlled with ENV `APPLICATION_SECURITY` which takes int value 0-2."""
     LOG.debug('Check application level of security.')
 
     # Convert ENV string to int
@@ -466,13 +465,11 @@ async def application_security():
         LOG.debug(f'Application security level {level}.')
     elif level == 1:
         LOG.debug(f'Application security level {level}.')
-    elif level == 2:
-        LOG.debug(f'Application security level {level}.')
         ssl_context = ssl.create_default_context()
         ssl_context.check_hostname = False
         ssl_context.verify_mode = ssl.CERT_NONE
         ssl_context = await load_certs(ssl_context)
-    elif level == 3:
+    elif level == 2:
         LOG.debug(f'Application security level {level}.')
         ssl_context = ssl.create_default_context()
         ssl_context.check_hostname = True
@@ -489,16 +486,16 @@ async def request_security():
 
     Security levels:
     Public
-    0   Unsecure, client can be HTTP
-    1   Secure, client must be HTTPS
+    0   Unsecure, server can be HTTP
+    1   Secure, server must be HTTPS
     Private
-    2   Client must be in the same closed trust network (possess same certs)
+    2   Server must be in the same closed trust network (possess same certs)
 
     Level of security is controlled with ENV `REQUEST_SECURITY` which takes int value 0-2."""
     LOG.debug('Check request level of security.')
 
     # Convert ENV string to int
-    level = int(os.environ.get('APPLICATION_SECURITY', 0))
+    level = int(os.environ.get('REQUEST_SECURITY', 0))
 
     ssl_context = False
 
