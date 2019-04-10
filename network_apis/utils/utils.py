@@ -487,6 +487,8 @@ def application_security():
     return ssl_context
 
 
+# We expect this to be used frequently
+@cached(ttl=86400, key="request_security", serializer=JsonSerializer())
 async def request_security():
     """Determine requests' level of security.
 
