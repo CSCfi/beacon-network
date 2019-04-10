@@ -437,8 +437,8 @@ def load_certs(ssl_context):
 
     try:
         ssl_context.load_cert_chain(os.environ.get('PATH_SSL_CERT_FILE', '/etc/ssl/certs/cert.pem'),
-                                    keyfile=os.environ.get('PATH_SSL_KEY_FILE'), '/etc/ssl/certs/key.pem')
-        ssl_context.load_verify_locations(cafile=os.environ.get('PATH_SSL_CA_FILE'), '/etc/ssl/certs/ca.pem')
+                                    keyfile=os.environ.get('PATH_SSL_KEY_FILE', '/etc/ssl/certs/key.pem'))
+        ssl_context.load_verify_locations(cafile=os.environ.get('PATH_SSL_CA_FILE', '/etc/ssl/certs/ca.pem'))
     except Exception as e:
         LOG.error(f'Certificates not found {e}')
         sys.exit("""Could not find certificate files. Verify, that ENVs are set to point to correct .pem files!
