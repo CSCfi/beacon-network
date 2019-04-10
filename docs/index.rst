@@ -15,3 +15,12 @@ This ecosystem serves to provide wider access and GUI to third party Beacons. Fo
 * `ELIXIR Beacon Project <https://beacon-project.io/>`_
 * `Beacon API specification <https://app.swaggerhub.com/apis-docs/ELIXIR-Finland/ga-4_gh_beacon_api_specification/1.0.0-rc1>`_
 * `Example Beacon API implementation <https://github.com/CSCfi/beacon-python>`_
+
+Table of Contents
+-----------------
+
+.. toctree::
+   :maxdepth: 2
+
+   Setup          <setup>
+   API Examples   <examples>
