@@ -12,7 +12,7 @@ from endpoints.info import get_info
 from endpoints.service_types import get_service_types
 from endpoints.services import register_service, get_services, update_service, delete_services
 from schemas import load_schema
-from utils.utils import remote_recache_aggregators
+from utils.utils import remote_recache_aggregators, application_security
 from utils.validate import validate, api_key
 from utils.db_pool import init_db_pool
 from utils.logging import LOG
@@ -176,7 +176,8 @@ def main():
     web.run_app(init_app(),
                 host=os.environ.get('APP_HOST', CONFIG.registry.get('app_host', '0.0.0.0')),
                 port=int(os.environ.get('APP_PORT', CONFIG.registry.get('app_port', 8080))),
-                shutdown_timeout=0)
+                shutdown_timeout=0,
+                ssl_context=application_security())
 
 
 if __name__ == '__main__':

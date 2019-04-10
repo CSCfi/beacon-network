@@ -30,7 +30,8 @@
       "type": "string"
     },
     "serviceUrl": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^https://"
     },
     "organization": {
       "type": "object",

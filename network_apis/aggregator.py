@@ -14,6 +14,7 @@ from endpoints.services import register_service, get_services, update_service, d
 from endpoints.query import send_beacon_query, send_beacon_query_websocket
 from endpoints.beacons import recache_beacons
 from schemas import load_schema
+from utils.utils import application_security
 from utils.validate import validate, api_key
 from utils.db_pool import init_db_pool
 from utils.logging import LOG
@@ -215,7 +216,8 @@ def main():
     web.run_app(init_app(),
                 host=os.environ.get('APP_HOST', CONFIG.aggregator.get('app_host', '0.0.0.0')),
                 port=int(os.environ.get('APP_PORT', CONFIG.aggregator.get('app_port', 8080))),
-                shutdown_timeout=0)
+                shutdown_timeout=0,
+                ssl_context=application_security())
 
 
 if __name__ == '__main__':

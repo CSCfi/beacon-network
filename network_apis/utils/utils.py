@@ -1,10 +1,10 @@
 """Small General-Purpose Utility Functions."""
 
 import os
+import sys
 import json
 import secrets
-
-from distutils.util import strtobool
+import ssl
 
 import aiohttp
 import asyncio
@@ -220,7 +220,7 @@ async def http_get_service_urls(services, service_type=None):
                 # serviceUrl from DB: `https://../` append with `services`
                 async with session.get(f'{service}services',
                                        params=params,
-                                       ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
+                                       ssl=await request_security()) as response:
                     if response.status == 200:
                         result = await response.json()
                         for r in result:
@@ -265,7 +265,7 @@ async def notify_service(service, beacons):
         async with session.put(f'{service["service_url"]}beacons',
                                headers={'Beacon-Service-Key': service['service_key']},
                                data=beacons,
-                               ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
+                               ssl=await request_security()) as response:
             if response.status in [200, 201, 204]:
                 # 201 - cache didn't exist, and was created
                 # 200/204 - cache existed, and was overwritten
@@ -292,8 +292,8 @@ async def query_service(service, params, access_token, ws=None):
             # serviceUrl from DB: `https://../` append with `query`
             async with session.get(f'{service}query',
                                    params=params,
-                                   ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False'))),
-                                   headers=headers) as response:
+                                   headers=headers,
+                                   ssl=await request_security()) as response:
                 # On successful response, forward response
                 if response.status == 200:
                     result = await response.json()
@@ -348,7 +348,7 @@ async def http_verify_remote(remote):
             # serviceUrl should be of form: `https://../` append with `info`
             async with session.get(f'{remote}info',
                                    params=params,
-                                   ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
+                                   ssl=await request_security()) as response:
                 if response.status == 200:
                     result = await response.json()
                     if result['serviceType'] == 'GA4GHRegistry':
@@ -375,7 +375,7 @@ async def http_register_at_remote(service, remote, remote_api_key):
         async with session.post(f'{remote}services',
                                 headers=headers,
                                 data=json.dumps(service),
-                                ssl=bool(strtobool(os.environ.get('HTTPS_ONLY', 'False')))) as response:
+                                ssl=await request_security()) as response:
             if response.status in [200, 201, 202]:
                 LOG.debug('Service was successfully registered at remote.')
                 result = await response.json()
@@ -429,3 +429,96 @@ async def remote_registration(db_pool, request, remote):
     await db_store_my_service_key(db_pool, remote, response)
 
     return response
+
+
+def load_certs(ssl_context):
+    """Load certificates for SSLContext object."""
+    LOG.debug('Load certificates for SSLContext.')
+
+    try:
+        ssl_context.load_cert_chain(os.environ.get('PATH_SSL_CERT_FILE'),
+                                    keyfile=os.environ.get('PATH_SSL_KEY_FILE'))
+        ssl_context.load_verify_locations(cafile=os.environ.get('PATH_SSL_CA_FILE'))
+    except Exception as e:
+        LOG.error(f'Certificates not found {e}')
+        sys.exit("""Could not find certificate files. Verify, that ENVs are set to point to correct .pem files!
+                    export PATH_SSL_CERT_FILE=/location/of/certfile.pem
+                    export PATH_SSL_KEY_FILE=/location/of/keyfile.pem
+                    export PATH_SSL_CA_FILE=/location/of/cafile.pem""")
+
+    return ssl_context
+
+
+def application_security():
+    """Determine application's level of security.
+
+    Security levels:
+    Public
+    0   App HTTP
+    1   App HTTPS
+    Private
+    2   Closed network node (cert sharing)
+
+    Level of security is controlled with ENV `APPLICATION_SECURITY` which takes int value 0-2."""
+    LOG.debug('Check application level of security.')
+
+    # Convert ENV string to int
+    level = int(os.environ.get('APPLICATION_SECURITY', 0))
+
+    ssl_context = None
+
+    if level == 0:
+        LOG.debug(f'Application security level {level}.')
+    elif level == 1:
+        LOG.debug(f'Application security level {level}.')
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        ssl_context = load_certs(ssl_context)
+    elif level == 2:
+        LOG.debug(f'Application security level {level}.')
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = True
+        ssl_context.verify_mode = ssl.CERT_REQUIRED
+        ssl_context = load_certs(ssl_context)
+    else:
+        LOG.debug(f'Could not determine application security level ({level}), setting to default (0).')
+
+    return ssl_context
+
+
+# We expect this to be used frequently
+@cached(ttl=86400, key="request_security", serializer=JsonSerializer())
+async def request_security():
+    """Determine requests' level of security.
+
+    Security levels:
+    Public
+    0   Unsecure, server can be HTTP
+    1   Secure, server must be HTTPS
+    Private
+    2   Server must be in the same closed trust network (possess same certs)
+
+    Level of security is controlled with ENV `REQUEST_SECURITY` which takes int value 0-2."""
+    LOG.debug('Check request level of security.')
+
+    # Convert ENV string to int
+    level = int(os.environ.get('REQUEST_SECURITY', 0))
+
+    ssl_context = False
+
+    if level == 0:
+        LOG.debug(f'Request security level {level}.')
+    elif level == 1:
+        LOG.debug(f'Request security level {level}.')
+        ssl_context = True
+    elif level == 2:
+        LOG.debug(f'Request security level {level}.')
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = True
+        ssl_context.verify_mode = ssl.CERT_REQUIRED
+        ssl_context = load_certs(ssl_context)
+    else:
+        LOG.debug(f'Could not determine request security level ({level}), setting to default (0).')
+
+    return ssl_context
