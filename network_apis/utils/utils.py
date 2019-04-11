@@ -203,7 +203,11 @@ async def get_services(db_pool):
     # Query Registries for their known Beacon services, fetch only URLs
     service_urls = await http_get_service_urls(services, service_type='GA4GHBeacon')
 
-    return service_urls
+    # Remove duplicate Beacons
+    remove_duplicates = set(service_urls)
+    unique_beacons = list(remove_duplicates)
+
+    return unique_beacons
 
 
 async def http_get_service_urls(services, service_type=None):
