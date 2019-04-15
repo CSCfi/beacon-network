@@ -12,7 +12,7 @@ from endpoints.info import get_info
 from endpoints.service_types import get_service_types
 from endpoints.services import register_service, get_services, update_service, delete_services
 from endpoints.query import send_beacon_query, send_beacon_query_websocket
-from endpoints.beacons import recache_beacons
+from endpoints.beacons import invalidate_cache
 from schemas import load_schema
 from utils.utils import application_security
 from utils.validate import validate, api_key
@@ -57,24 +57,16 @@ async def query(request):
         return web.json_response(response)
 
 
-@routes.put('/beacons')
-@validate(load_schema("beacons"))
+@routes.delete('/beacons')
 async def recache(request):
-    """Update cached Beacons."""
-    LOG.debug('PUT /beacons received.')
-    # Tap into the database pool
-    db_pool = request.app['pool']
+    """Invalidate cached Beacons."""
+    LOG.debug('DELETE /beacons received.')
 
     # Send request for processing
-    response = await recache_beacons(request, db_pool)
+    await invalidate_cache()
 
-    if response == 201:
-        return web.HTTPCreated(text='New cache was created.')
-    elif response == 204:
-        # Overwriting existing cache gives 204
-        return web.HTTPNoContent()
-    else:
-        return web.HTTPInternalServerError(text='Could not set cache.')
+    # Return confirmation
+    return web.HTTPNoContent()
 
 
 @routes.get('/info')

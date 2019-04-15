@@ -153,26 +153,19 @@ async def db_get_recaching_credentials(connection):
 
 async def clear_cache():
     """Clear cache of Beacons."""
-    LOG.debug('Clear cached Beacons.')
-    # Defines response status by HTTP standards
-    # 201 if no cache pre-existed
-    # 204 is an existing cache was overwritten
-    response = 0
+    LOG.debug('Check if cache of Beacons exists.')
 
     try:
         cache = SimpleMemoryCache()
         if await cache.exists("beacon_urls"):
             LOG.debug('Found old cache.')
-            response = 204
+            await cache.delete("beacon_urls")
+            LOG.debug('Cache has been cleared.')
         else:
             LOG.debug('No old cache found.')
-            response = 201
-        await cache.delete("beacon_urls")
         await cache.close()
     except Exception as e:
         LOG.error(f'Error at clearing cache: {e}.')
-
-    return response
 
 
 async def cache_from_registry(beacons, response):
@@ -236,46 +229,41 @@ async def http_get_service_urls(services, service_type=None):
     return service_urls
 
 
-async def remote_recache_aggregators(request, db_pool):
-    """Send a request to Aggregators to renew their Beacon caches."""
-    LOG.debug('Starting remote re-caching of Aggregators.')
+async def invalidate_aggregator_caches(request, db_pool):
+    """Invalidate caches at Aggregators."""
+    LOG.debug('Invalidate cached Beacons at Aggregators.')
 
     tasks = []  # requests to be done
     # Take connection from the database pool
     async with db_pool.acquire() as connection:
         aggregators = await db_get_recaching_credentials(connection)  # service urls (aggregators) to be queried, with service keys
-        beacons = json.dumps(await db_get_service_urls(connection, service_type='GA4GHBeacon'))  # service urls (beacons) to be sent to aggregators
 
     for aggregator in aggregators:
         # Generate task queue
-        task = asyncio.ensure_future(notify_service(aggregator, beacons))
+        task = asyncio.ensure_future(invalidate_cache(aggregator))
         tasks.append(task)
 
     # Prepare and initiate co-routines
     await asyncio.gather(*tasks)
 
 
-async def notify_service(service, beacons):
-    """Contact given service and tell them to update their cache.
+async def invalidate_cache(service):
+    """Contact given service and tell them to delete their cache."""
+    LOG.debug('Notify service to delete their cache.')
 
-    Send list of up-to-date Beacon URLs to Aggregator."""
-    LOG.debug('Notify service to update their cache.')
-
-    # Send notification (request) to service (aggregator)
+    # Send invalidation notification (request) to service (aggregator)
     async with aiohttp.ClientSession() as session:
         # try:
         # Solution for prototype, figure out a better way later
         # serviceUrl from DB: `https://../` append with `beacons`
-        async with session.put(f'{service["service_url"]}beacons',
-                               headers={'Beacon-Service-Key': service['service_key']},
-                               data=beacons,
-                               ssl=await request_security()) as response:
-            if response.status in [200, 201, 204]:
-                # 201 - cache didn't exist, and was created
-                # 200/204 - cache existed, and was overwritten
+        async with session.delete(f'{service["service_url"]}beacons',
+                                  headers={'Beacon-Service-Key': service['service_key']},
+                                  ssl=await request_security()) as response:
+            if response.status in [200, 204]:
                 LOG.debug(f'Service received notification and responded with {response.status}.')
             else:
-                LOG.debug('Service encountered a problem with notification.')
+                # Low priority log, it doesn't matter if the invalidation was unsuccessful
+                LOG.debug(f'Service encountered a problem with notification: {response.status}.')
         # except Exception as e:
         #     LOG.debug(f'Query error {e}.')
         #     # web.HTTPInternalServerError(text=f'An error occurred while attempting to send request to Aggregator.')

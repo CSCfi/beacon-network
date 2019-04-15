@@ -12,7 +12,7 @@ from endpoints.info import get_info
 from endpoints.service_types import get_service_types
 from endpoints.services import register_service, get_services, update_service, delete_services
 from schemas import load_schema
-from utils.utils import remote_recache_aggregators, application_security
+from utils.utils import invalidate_aggregator_caches, application_security
 from utils.validate import validate, api_key
 from utils.db_pool import init_db_pool
 from utils.logging import LOG
@@ -64,7 +64,7 @@ async def services_post(request):
     response = await register_service(request, db_pool)
 
     # Notify aggregators of changed service catalogue
-    await remote_recache_aggregators(request, db_pool)
+    await invalidate_aggregator_caches(request, db_pool)
 
     # Return confirmation and service key if no problems occurred during processing
     return web.HTTPCreated(body=json.dumps(response), content_type='application/json')
@@ -101,7 +101,7 @@ async def services_put(request):
     await update_service(request, db_pool)
 
     # Notify aggregators of changed service catalogue
-    await remote_recache_aggregators(request, db_pool)
+    await invalidate_aggregator_caches(request, db_pool)
 
     # Return confirmation
     return web.HTTPNoContent()
@@ -121,7 +121,7 @@ async def services_delete(request):
     await delete_services(request, db_pool)
 
     # Notify aggregators of changed service catalogue
-    await remote_recache_aggregators(request, db_pool)
+    await invalidate_aggregator_caches(request, db_pool)
 
     # Return confirmation
     return web.HTTPNoContent()
