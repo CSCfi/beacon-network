@@ -58,7 +58,7 @@ async def query(request):
 
 
 @routes.delete('/beacons')
-async def recache(request):
+async def beacons(request):
     """Invalidate cached Beacons."""
     LOG.debug('DELETE /beacons received.')
 
