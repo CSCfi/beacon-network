@@ -480,7 +480,7 @@ def application_security():
 
 
 # We expect this to be used frequently
-@cached(ttl=86400, key="request_security", serializer=JsonSerializer())
+@cached(ttl=86400, key="request_security")
 async def request_security():
     """Determine requests' level of security.
 
