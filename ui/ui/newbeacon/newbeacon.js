@@ -78,7 +78,7 @@ angular.module('beaconApp.newbeacon', ['ngRoute'])
           welcomeUrl: data.organization.welcomeUrl,
           contactUrl: data.organization.contactUrl,
           logoUrl: data.organization.logoUrl,
-          info: data.organization.info
+          info: {} // disabled till overhaul
         },
         description: data.description,
         version: data.version,
