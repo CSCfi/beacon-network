@@ -133,6 +133,7 @@ def get_bona_fide_status(access_token):
                             headers=headers)
     try:
         resp = response.json()
+        LOG.info(resp)
         if 'AcceptedTermsAndPolicies' in resp:
             for accepted_terms in resp["AcceptedTermsAndPolicies"]:
                 if accepted_terms.get("value") == BONA_FIDE_URL:
