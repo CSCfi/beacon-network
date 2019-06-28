@@ -133,13 +133,13 @@ def get_bona_fide_status(access_token):
                             headers=headers)
     try:
         resp = response.json()
-        LOG.info(resp)
-        if 'AcceptedTermsAndPolicies' in resp:
-            for accepted_terms in resp["AcceptedTermsAndPolicies"]:
+        ga4gh = resp["ga4gh"]
+        if 'AcceptedTermsAndPolicies' in ga4gh:
+            for accepted_terms in ga4gh["AcceptedTermsAndPolicies"]:
                 if accepted_terms.get("value") == BONA_FIDE_URL:
                     terms = True
-        if 'ResearcherStatus' in resp:
-            for researcher_status in resp["ResearcherStatus"]:
+        if 'ResearcherStatus' in ga4gh:
+            for researcher_status in ga4gh["ResearcherStatus"]:
                 if researcher_status.get("value") == BONA_FIDE_URL:
                     status = True
         if terms and status:
