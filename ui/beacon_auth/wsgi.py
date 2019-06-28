@@ -14,7 +14,7 @@ from distutils.util import strtobool
 CLIENT_ID = os.environ.get('CLIENT_ID', None)
 CLIENT_SECRET = os.environ.get('CLIENT_SECRET', None)
 CALLBACK_URL = os.environ.get('CALLBACK_URL', None)
-BONA_FIDE_URL = os.environ.get('BONA_FIDE_URL', 'http://www.ga4gh.org/beacon/bonafide/ver1.0')
+BONA_FIDE_URL = os.environ.get('BONA_FIDE_URL', 'https://doi.org/10.1038/s41431-018-0219-y')
 
 # Logging
 FORMAT = '[%(asctime)s][%(name)s][%(process)d %(processName)s][%(levelname)-8s] (L:%(lineno)s) %(funcName)s: %(message)s'
@@ -124,13 +124,28 @@ def get_token(code):
 
 def get_bona_fide_status(access_token):
     """Request Bona Fide status for user from ELIXIR AAI."""
+    # User must have agreed to terms, and been recognized by a peer to be granted Bona Fide status
+    terms = False
+    status = False
     headers = base_headers()
     headers.update({"Authorization": "Bearer " + access_token})
     response = requests.get("https://login.elixir-czech.org/oidc/userinfo",
                             headers=headers)
     try:
-        if 'bona_fide_status' in response.json():
+        resp = response.json()
+        if 'AcceptedTermsAndPolicies' in resp:
+            for accepted_terms in resp["AcceptedTermsAndPolicies"]:
+                if accepted_terms.get("value") == BONA_FIDE_URL:
+                    terms = True
+        if 'ResearcherStatus' in resp:
+            for researcher_status in resp["ResearcherStatus"]:
+                if researcher_status.get("value") == BONA_FIDE_URL:
+                    status = True
+        if terms and status:
+            # User has agreed to terms and has been recognized by a peer, return True for Bona Fide status
             return True
+        else:
+            return False
     except KeyError as ke:
         LOG.error(ke)
         pass
