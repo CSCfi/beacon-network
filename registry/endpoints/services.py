@@ -5,8 +5,8 @@ from aiohttp import web
 from ..config import CONFIG
 from ..utils.logging import LOG
 # from ..utils.db_ops import db_check_service_id, db_register_service, db_get_service_details, db_delete_services, db_update_sequence
-from ..utils.db_ops import db_check_service_id, db_register_service  #, db_get_service_details
-from ..utils.utils import http_request_info, generate_service_id, parse_service_info  #, query_params
+from ..utils.db_ops import db_check_service_id, db_register_service, db_get_service_details
+from ..utils.utils import http_request_info, generate_service_id, parse_service_info, query_params
 
 
 async def register_service(request, db_pool):
@@ -14,6 +14,7 @@ async def register_service(request, db_pool):
     LOG.debug('Register new service.')
     # Get POST request body JSON as python dict
     r = await request.json()
+    url = r.get('url')
 
     # Response object
     response = {'message': '',
@@ -21,12 +22,12 @@ async def register_service(request, db_pool):
                 'help': CONFIG.documentation_url}
 
     # Request service info from given url
-    service_info = await http_request_info(r.get('url'))
+    service_info = await http_request_info(url)
 
     # Generate id from given url
     # Note that we don't use the ID provided by the service itself, but instead
     # generate a unique ID for them, based on their domain (in reverse notation)
-    service_id = await generate_service_id(r.get('url'))
+    service_id = await generate_service_id(url)
 
     # Take connection from database pool, re-use connection for all tasks
     async with db_pool.acquire() as connection:
@@ -35,7 +36,7 @@ async def register_service(request, db_pool):
         if id_taken:
             raise web.HTTPConflict(text=f'Service ID "{service_id}" is taken.')
         # Parse and validate service info object
-        service = await parse_service_info(service_id, service_info)
+        service = await parse_service_info(service_id, url, service_info)
         # Register service to host
         service_key = await db_register_service(connection, service)
         response['message'] = 'Service has been registered. Service key for updating and deleting registration included in this response, keep it safe.'
@@ -44,23 +45,22 @@ async def register_service(request, db_pool):
     return response
 
 
-# async def get_services(request, db_pool):
-#     """Return service details."""
-#     LOG.debug('Return services.')
+async def get_services(request, db_pool):
+    """Return service details."""
+    LOG.debug('Return services.')
 
-#     # Parse query params from path
-#     service_id, params = await query_params(request)
+    # Parse query params from path
+    service_id, params = await query_params(request)
 
-#     # Take connection from the database pool
-#     async with db_pool.acquire() as connection:
-#         # Fetch services from database
-#         response = await db_get_service_details(connection,
-#                                                 id=service_id,
-#                                                 service_type=params.get('serviceType', None),
-#                                                 api_version=params.get('apiVersion', None),
-#                                                 list_format=params.get('listFormat', 'full'))
+    # Take connection from the database pool
+    async with db_pool.acquire() as connection:
+        # Fetch services from database
+        response = await db_get_service_details(connection,
+                                                id=service_id,
+                                                service_type=params.get('serviceType', None),
+                                                api_version=params.get('apiVersion', None))
 
-#     return response
+    return response
 
 
 # async def update_service(request, db_pool):

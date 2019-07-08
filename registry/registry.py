@@ -11,7 +11,7 @@ from aiohttp import web
 from .endpoints.info import get_info
 from .endpoints.service_types import get_service_types
 # from .endpoints.services import register_service, get_services, update_service, delete_services
-from .endpoints.services import register_service  #, get_services
+from .endpoints.services import register_service, get_services
 # from .schemas import load_schema
 from .utils.utils import invalidate_aggregator_caches, application_security
 # from .utils.validate import validate, api_key
@@ -65,21 +65,21 @@ async def services_post(request):
     return web.HTTPCreated(body=json.dumps(response), content_type='application/json')
 
 
-# @routes.get('/services')
-# @routes.get('/services/{service_id}')
-# async def services_get(request):
-#     """GET request to the /services endpoint.
-#     Return services that are registered at host.
-#     """
-#     LOG.debug('GET /services received.')
-#     # Tap into the database pool
-#     db_pool = request.app['pool']
+@routes.get('/services')
+@routes.get('/services/{service_id}')
+async def services_get(request):
+    """GET request to the /services endpoint.
+    Return services that are registered at host.
+    """
+    LOG.debug('GET /services received.')
+    # Tap into the database pool
+    db_pool = request.app['pool']
 
-#     # Send request for processing
-#     response = await get_services(request, db_pool)
+    # Send request for processing
+    response = await get_services(request, db_pool)
 
-#     # Return results
-#     return web.json_response(response)
+    # Return results
+    return web.json_response(response)
 
 
 # @routes.put('/services/{service_id}')

@@ -47,74 +47,70 @@ async def http_request_info(url):
             raise web.HTTPInternalServerError(text=f'An error occurred while attempting to contact service: {e}')
 
 
-async def parse_service_info(id, service):
+async def parse_service_info(id, url, service):
     """Parse and validate service info.
 
-    Service infos may put the same keys in different places, for example the
+    Service infos may use the same keys in different places, for example the
     Beacon API specification differs slightly from GA4GH service-info specification.
     This issue should be fixed in a future product-approval-process (PAP) of Beacon API."""
     LOG.debug('Parsing service info.')
-    LOG.debug(service)
-    desired_format = {
-        'id': id,  # this has already been parsed
-        'name': service.get('name') or '',  # this is the same in both specs
-        'type': service.get('type') or 'urn:ga4gh:beacon',  # this exists only in ga4gh spec, default to beacon
-        'description': service.get('description') or '',  # this is the same in both specs
-        'documentation_url': service.get('documentationUrl') or '',  # this exists only in ga4gh spec, default to empty
-        'organization': service.get('organization') or service.get('organization').get('id') or '',  # former in ga4gh spec, latter in beacon api spec
-        'contact_url': service.get('contactUrl') or service.get('organization').get('contactUrl') or '',  # former in ga4gh spec, latter in beacon api spec
-        'api_version': service.get('apiVersion') or service.get('extension').get('apiVersion') or '',  # this exists in beacon spec, but not yet in ga4gh spec
-        'service_version': service.get('version') or '',  # this is the same in both specs
-        'extension': service.get('extension') or service.get('info') or '',  # former in ga4gh spec, latter in beacon api spec
-    }
 
-    return desired_format
+    service_info = {}
+
+    if url.endswith('/service-info'):
+        LOG.debug('Using GA4GH endpoint.')
+        # Use GA4GH service-info notation
+        service_info = {
+            'id': id,
+            'name': service.get('name', ''),
+            'type': service.get('type', 'urn:ga4gh:beacon'),
+            'description': service.get('description', ''),
+            'url': url,
+            'contact_url': service.get('contactUrl'),
+            'api_version': service.get('apiVersion'),
+            'service_version': service.get('version'),
+            'extension': service.get('extension')
+        }
+    else:
+        LOG.debug('Using Beacon API endpoint.')
+        # Use Beacon API spec notation
+        service_info = {
+            'id': id,
+            'name': service.get('name', ''),
+            'type': 'urn:ga4gh:beacon',
+            'description': service.get('description', ''),
+            'url': url,
+            'contact_url': service.get('organization', {}).get('contactUrl', ''),
+            'api_version': service.get('apiVersion', ''),
+            'service_version': service.get('version', ''),
+            'extension': service.get('info', {})
+        }
+        try:
+            # add organization.logoUrl to extension
+            service_info['extension'].update({'logoUrl': service.get('organization').get('logoUrl')})
+        except Exception as e:
+            LOG.debug(f'Failed to update extension: {e}.')
+            pass
+
+    return service_info
 
 
-
-
-
-
-async def construct_json(data, model=None, list_format='full'):
+async def construct_json(data):
     """Construct proper JSON response from dictionary data."""
     LOG.debug('Construct JSON response from DB record.')
-    # Minimal body when list_format='short'
     response = {
-        "id": data.get('ser_id', ''),
-        "name": data.get('ser_name', ''),
-        "serviceType": data.get('ser_service_type', ''),
-        "serviceUrl": data.get('ser_service_url', ''),
-        "open": data.get('ser_open', '')
+        'id': data.get('id', ''),
+        'name': data.get('name', ''),
+        'type': data.get('type', ''),
+        'description': data.get('description', ''),
+        'url': data.get('url', ''),
+        'createdAt': str(data.get('created_at', '')),
+        'updatedAt': str(data.get('updated_at', '')),
+        'contactUrl': data.get('contact_url', ''),
+        'apiVersion': data.get('api_version', ''),
+        'version': data.get('service_version', ''),
+        'extension': json.loads(data.get('extension', {}))
     }
-
-    if list_format == 'full':
-        # if list_format='full' or not specified -> defaults to full
-        # update response to include all keys
-        response.update(
-            {
-                "apiVersion": data.get('ser_api_version', ''),
-                "organization": {
-                    "id": data.get('org_id', ''),
-                    "name": data.get('org_name', ''),
-                    "description": data.get('org_description', ''),
-                    "address": data.get('org_address', ''),
-                    "welcomeUrl": data.get('org_welcome_url', ''),
-                    "contactUrl": data.get('org_contact_url', ''),
-                    "logoUrl": data.get('org_logo_url', ''),
-                    "info": {}
-                },
-                "description": data.get('ser_description', ''),
-                "version": data.get('ser_service_version', ''),
-                "welcomeUrl": data.get('ser_welcome_url', ''),
-                "alternativeUrl": data.get('ser_alt_url', ''),
-                "createDateTime": str(data.get('ser_createtime', '')),
-                "updateDateTime": str(data.get('ser_updatetime', ''))
-            }
-        )
-        if 'org_info' in data:
-            # Load the jsonb string into a dict and update the info-key
-            response['organization']['info'].update(json.loads(data.get('org_info', '')))
-
     return response
 
 
@@ -127,6 +123,18 @@ async def query_params(request):
     # Path param
     service_id = request.match_info.get('service_id', None)
     return service_id, params
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # db function temporarily placed here due to import-loop issues

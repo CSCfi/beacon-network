@@ -69,12 +69,11 @@ async def db_register_service(connection, service):
     try:
         # Database commit occurs on transaction closure
         async with connection.transaction():
-            await connection.execute("""INSERT INTO services (id, name, type, description,
-                                     documentation_url, organization, contact_url,
+            await connection.execute("""INSERT INTO services (id, name, type, description, url, contact_url,
                                      api_version, service_version, extension, created_at, updated_at)
-                                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())""",
-                                     service['id'], service['name'], service['type'], service['description'],
-                                     service['documentation_url'], service['organization'], service['contact_url'],
+                                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())""",
+                                     service['id'], service['name'], service['type'],
+                                     service['description'], service['url'], service['contact_url'],
                                      service['api_version'], service['service_version'], json.dumps(service['extension']))
             # If service registration was successful, generate and store a service key
             service_key = await generate_service_key()
@@ -86,7 +85,7 @@ async def db_register_service(connection, service):
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to register service.')
 
 
-async def db_get_service_details(connection, id=None, service_type=None, api_version=None, list_format='full'):
+async def db_get_service_details(connection, id=None, service_type=None, api_version=None):
     """Get all or selected service details."""
     LOG.debug('Get service details.')
     services = []
@@ -98,35 +97,18 @@ async def db_get_service_details(connection, id=None, service_type=None, api_ver
 
     try:
         # Database query
-        query = ''
-        if list_format == 'short':
-            # Minimal query
-            query = f"""SELECT id AS ser_id, name AS ser_name, service_type AS ser_service_type,
-                        service_url AS ser_service_url, open AS ser_open
-                        FROM services
-                        WHERE {'id=$1' if id is not None else '$1'}
-                        AND {'service_type=$2' if service_type is not None else '$2'}
-                        AND {'api_version=$3' if api_version is not None else '$3'}"""
-        else:
-            # Full query (default)
-            query = f"""SELECT s.id AS ser_id, s.name AS ser_name, s.service_type AS ser_service_type, s.api_version AS ser_api_version,
-                        s.service_url AS ser_service_url, s.host_org AS ser_host_org, s.description AS ser_description,
-                        s.service_version AS ser_service_version, s.open AS ser_open,
-                        s.welcome_url AS ser_welcome_url, s.alt_url AS ser_alt_url, s.create_datetime AS ser_createtime,
-                        s.update_datetime AS ser_updatetime, o.id AS org_id, o.name AS org_name, o.description AS org_description,
-                        o.address AS org_address, o.welcome_url AS org_welcome_url, o.contact_url AS org_contact_url,
-                        o.logo_url AS org_logo_url, o.info AS org_info
-                        FROM services s, organisations o
-                        WHERE (s.host_org=o.id)
-                        AND {'s.id=$1' if id is not None else '$1'}
-                        AND {'s.service_type=$2' if service_type is not None else '$2'}
-                        AND {'s.api_version=$3' if api_version is not None else '$3'}"""
+        query = f"""SELECT id, name, type, description, url, contact_url, api_version,
+                    service_version, extension, created_at, updated_at
+                    FROM services
+                    WHERE {'id=$1' if id is not None else '$1'}
+                    AND {'type=$2' if service_type is not None else '$2'}
+                    AND {'api_version=$3' if api_version is not None else '$3'}"""
         statement = await connection.prepare(query)
         response = await statement.fetch(sql_id, sql_service_type, sql_api_version)
         if len(response) > 0:
             for record in response:
                 # Build JSON response
-                service = await construct_json(record, list_format=list_format)
+                service = await construct_json(record)
                 if id:
                     # If user specified ID, database gave a single response -> return it
                     return service
