@@ -1,16 +1,26 @@
 """Common Info Endpoint."""
 
-from utils.logging import LOG
-from utils.db_ops import db_get_service_details
+from ..config import CONFIG
+from ..utils.logging import LOG
+from ..utils.utils import load_extension
 
 
-async def get_info(host_id, db_pool):
-    """Return service info of self."""
-    LOG.debug('Get service info of self.')
+async def get_info(host):
+    """Return service info of self.
 
-    # Take connection from the database pool
-    async with db_pool.acquire() as connection:
-        # Fetch service info from database
-        response = await db_get_service_details(connection, id=host_id)
+    Service ID is parsed from hostname to ensure that each service has a unique ID."""
+    LOG.debug('Return service info.')
 
-    return response
+    service_info = {
+        'id': '.'.join(reversed(host.split(','))),
+        'name': CONFIG.name,
+        'type': CONFIG.type,
+        'description': CONFIG.description,
+        'documentationUrl': CONFIG.documentation_url,
+        'organization': CONFIG.organization,
+        'contactUrl': CONFIG.contact_url,
+        'apiVersion': CONFIG.api_version,
+        'extension': await load_extension(CONFIG.extension)
+    }
+
+    return service_info

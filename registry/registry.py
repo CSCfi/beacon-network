@@ -8,35 +8,35 @@ import aiohttp_cors
 
 from aiohttp import web
 
-from endpoints.info import get_info
-from endpoints.service_types import get_service_types
-from endpoints.services import register_service, get_services, update_service, delete_services
-from schemas import load_schema
-from utils.utils import invalidate_aggregator_caches, application_security
-from utils.validate import validate, api_key
-from utils.db_pool import init_db_pool
-from utils.logging import LOG
-from config import CONFIG
+from .endpoints.info import get_info
+# from .endpoints.service_types import get_service_types
+# from .endpoints.services import register_service, get_services, update_service, delete_services
+# from .schemas import load_schema
+from .utils.utils import invalidate_aggregator_caches, application_security
+# from .utils.validate import validate, api_key
+# from .utils.db_pool import init_db_pool
+from .utils.logging import LOG
+from .config import CONFIG
 
 routes = web.RouteTableDef()
 
 
 @routes.get('/', name='index')
 async def index(request):
-    """Greeting endpoint."""
+    """Greeting endpoint.
+
+    Returns name of the service, doubles as a healthcheck utility."""
     LOG.debug('Greeting endpoint.')
-    return web.Response(text='GA4GH Beacon Registry API')
+    return web.Response(text=CONFIG.name)
 
 
-@routes.get('/info')
+@routes.get('/service-info')
 async def info(request):
     """Return service info."""
     LOG.debug('GET /info received.')
-    # Tap into the database pool
-    db_pool = request.app['pool']
 
     # Send request for processing
-    response = await get_info(os.environ.get('HOST_ID', CONFIG.registry['host_id']), db_pool)
+    response = await get_info(request.host)
 
     # Return results
     return web.json_response(response)
@@ -50,97 +50,97 @@ async def service_types(request):
     return web.json_response(response)
 
 
-@routes.post('/services')
-@validate(load_schema("serviceinfo"))
-async def services_post(request):
-    """POST request to the /services endpoint.
-    Register a new service at host.
-    """
-    LOG.debug('POST /services received.')
-    # Tap into the database pool
-    db_pool = request.app['pool']
+# @routes.post('/services')
+# @validate(load_schema("serviceinfo"))
+# async def services_post(request):
+#     """POST request to the /services endpoint.
+#     Register a new service at host.
+#     """
+#     LOG.debug('POST /services received.')
+#     # Tap into the database pool
+#     db_pool = request.app['pool']
 
-    # Send request for processing
-    response = await register_service(request, db_pool)
+#     # Send request for processing
+#     response = await register_service(request, db_pool)
 
-    # Notify aggregators of changed service catalogue
-    await invalidate_aggregator_caches(request, db_pool)
+#     # Notify aggregators of changed service catalogue
+#     await invalidate_aggregator_caches(request, db_pool)
 
-    # Return confirmation and service key if no problems occurred during processing
-    return web.HTTPCreated(body=json.dumps(response), content_type='application/json')
-
-
-@routes.get('/services')
-@routes.get('/services/{service_id}')
-async def services_get(request):
-    """GET request to the /services endpoint.
-    Return services that are registered at host.
-    """
-    LOG.debug('GET /services received.')
-    # Tap into the database pool
-    db_pool = request.app['pool']
-
-    # Send request for processing
-    response = await get_services(request, db_pool)
-
-    # Return results
-    return web.json_response(response)
+#     # Return confirmation and service key if no problems occurred during processing
+#     return web.HTTPCreated(body=json.dumps(response), content_type='application/json')
 
 
-@routes.put('/services/{service_id}')
-@validate(load_schema("serviceinfo"))
-async def services_put(request):
-    """PATCH request to the /user endpoint.
-    Update service details at host.
-    """
-    LOG.debug('PUT /services received.')
-    # Tap into the database pool
-    db_pool = request.app['pool']
+# @routes.get('/services')
+# @routes.get('/services/{service_id}')
+# async def services_get(request):
+#     """GET request to the /services endpoint.
+#     Return services that are registered at host.
+#     """
+#     LOG.debug('GET /services received.')
+#     # Tap into the database pool
+#     db_pool = request.app['pool']
 
-    # Send request for processing
-    await update_service(request, db_pool)
+#     # Send request for processing
+#     response = await get_services(request, db_pool)
 
-    # Notify aggregators of changed service catalogue
-    await invalidate_aggregator_caches(request, db_pool)
-
-    # Return confirmation
-    return web.HTTPNoContent()
+#     # Return results
+#     return web.json_response(response)
 
 
-@routes.delete('/services')
-@routes.delete('/services/{service_id}')
-async def services_delete(request):
-    """DELETE request to the /user endpoint.
-    Delete registered service from host.
-    """
-    LOG.debug('DELETE /services received.')
-    # Tap into the database pool
-    db_pool = request.app['pool']
+# @routes.put('/services/{service_id}')
+# @validate(load_schema("serviceinfo"))
+# async def services_put(request):
+#     """PATCH request to the /user endpoint.
+#     Update service details at host.
+#     """
+#     LOG.debug('PUT /services received.')
+#     # Tap into the database pool
+#     db_pool = request.app['pool']
 
-    # Send request for processing
-    await delete_services(request, db_pool)
+#     # Send request for processing
+#     await update_service(request, db_pool)
 
-    # Notify aggregators of changed service catalogue
-    await invalidate_aggregator_caches(request, db_pool)
+#     # Notify aggregators of changed service catalogue
+#     await invalidate_aggregator_caches(request, db_pool)
 
-    # Return confirmation
-    return web.HTTPNoContent()
-
-
-async def init_db(app):
-    """Initialise a database connection pool."""
-    LOG.info('Creating database connection pool.')
-    app['pool'] = await init_db_pool(host=os.environ.get('DB_HOST', CONFIG.registry.get('db_host', 'localhost')),
-                                     port=os.environ.get('DB_PORT', CONFIG.registry.get('db_port', '5432')),
-                                     user=os.environ.get('DB_USER', CONFIG.registry.get('db_user', 'user')),
-                                     passwd=os.environ.get('DB_PASS', CONFIG.registry.get('db_pass', 'pass')),
-                                     db=os.environ.get('DB_NAME', CONFIG.registry.get('db_name', 'db')))
+#     # Return confirmation
+#     return web.HTTPNoContent()
 
 
-async def close_db(app):
-    """Close the database connection pool."""
-    LOG.info('Closing database connection pool.')
-    await app['pool'].close()
+# @routes.delete('/services')
+# @routes.delete('/services/{service_id}')
+# async def services_delete(request):
+#     """DELETE request to the /user endpoint.
+#     Delete registered service from host.
+#     """
+#     LOG.debug('DELETE /services received.')
+#     # Tap into the database pool
+#     db_pool = request.app['pool']
+
+#     # Send request for processing
+#     await delete_services(request, db_pool)
+
+#     # Notify aggregators of changed service catalogue
+#     await invalidate_aggregator_caches(request, db_pool)
+
+#     # Return confirmation
+#     return web.HTTPNoContent()
+
+
+# async def init_db(app):
+#     """Initialise a database connection pool."""
+#     LOG.info('Creating database connection pool.')
+#     app['pool'] = await init_db_pool(host=os.environ.get('DB_HOST', CONFIG.registry.get('db_host', 'localhost')),
+#                                      port=os.environ.get('DB_PORT', CONFIG.registry.get('db_port', '5432')),
+#                                      user=os.environ.get('DB_USER', CONFIG.registry.get('db_user', 'user')),
+#                                      passwd=os.environ.get('DB_PASS', CONFIG.registry.get('db_pass', 'pass')),
+#                                      db=os.environ.get('DB_NAME', CONFIG.registry.get('db_name', 'db')))
+
+
+# async def close_db(app):
+#     """Close the database connection pool."""
+#     LOG.info('Closing database connection pool.')
+#     await app['pool'].close()
 
 
 def set_cors(app):
@@ -162,11 +162,12 @@ def set_cors(app):
 def init_app():
     """Initialise the web server."""
     LOG.info('Initialising web server.')
-    app = web.Application(middlewares=[api_key()])
+    # app = web.Application(middlewares=[api_key()])
+    app = web.Application()
     app.router.add_routes(routes)
     set_cors(app)
-    app.on_startup.append(init_db)
-    app.on_cleanup.append(close_db)
+    # app.on_startup.append(init_db)
+    # app.on_cleanup.append(close_db)
     return app
 
 
@@ -174,13 +175,14 @@ def main():
     """Run the web server."""
     LOG.info('Starting server build.')
     web.run_app(init_app(),
-                host=os.environ.get('APP_HOST', CONFIG.registry.get('app_host', '0.0.0.0')),
-                port=int(os.environ.get('APP_PORT', CONFIG.registry.get('app_port', 8080))),
+                host=CONFIG.host,
+                port=CONFIG.port,
                 shutdown_timeout=0,
                 ssl_context=application_security())
 
 
 if __name__ == '__main__':
-    assert sys.version_info >= (3, 6), "This service requires python3.6 or above"
-    LOG.info('Starting web server start-up routines.')
+    if sys.version_info < (3, 6):
+        LOG.error("beacon-network:registry requires python 3.6 or higher")
+        sys.exit(1)
     main()

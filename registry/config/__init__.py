@@ -1,4 +1,4 @@
-"""Application Configuration."""
+"""Registry Configuration."""
 
 import os
 from configparser import ConfigParser
@@ -10,26 +10,17 @@ def parse_config_file(path):
     config = ConfigParser()
     config.read(path)
     config_vars = {
-        'registry': {
-            'host_id': config.get('registry', 'host_id'),
-            'db_host': config.get('registry', 'db_host'),
-            'db_port': config.get('registry', 'db_port'),
-            'db_user': config.get('registry', 'db_user'),
-            'db_pass': config.get('registry', 'db_pass'),
-            'db_name': config.get('registry', 'db_name'),
-            'app_host': config.get('registry', 'app_host'),
-            'app_port': config.get('registry', 'app_port')
-        },
-        'aggregator': {
-            'host_id': config.get('aggregator', 'host_id'),
-            'db_host': config.get('aggregator', 'db_host'),
-            'db_port': config.get('aggregator', 'db_port'),
-            'db_user': config.get('aggregator', 'db_user'),
-            'db_pass': config.get('aggregator', 'db_pass'),
-            'db_name': config.get('aggregator', 'db_name'),
-            'app_host': config.get('aggregator', 'app_host'),
-            'app_port': config.get('aggregator', 'app_port')
-        }
+        'host': os.environ.get('HOST', config.get('app', 'host')) or '0.0.0.0',
+        'port': int(os.environ.get('PORT', config.get('app', 'port')) or 8080),
+        'name': config.get('info', 'name'),
+        'type': config.get('info', 'type'),
+        'description': config.get('info', 'description'),
+        'documentation_url': config.get('info', 'documentation_url'),
+        'organization': config.get('info', 'organization'),
+        'contact_url': config.get('info', 'contact_url'),
+        'api_version': config.get('info', 'api_version'),
+        'version': config.get('info', 'version'),
+        'extension': config.get('info', 'extension')
     }
     return namedtuple("Config", config_vars.keys())(*config_vars.values())
 

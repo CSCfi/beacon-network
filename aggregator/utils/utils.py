@@ -14,7 +14,17 @@ from aiocache import cached, SimpleMemoryCache
 from aiocache.serializers import JsonSerializer
 
 from .logging import LOG
-# from .db_ops import db_get_service_urls
+
+
+async def load_extension(extension_json):
+    """Load additional metadata in JSON."""
+    LOG.debug('Loading extension from file.')
+    extension = {}
+    LOG.debug(os.path.isfile(extension_json))
+    if os.path.isfile(extension_json):
+        with open(extension_json, 'r') as contents:
+            extension = json.loads(contents.read())
+    return extension
 
 
 async def construct_json(data, model=None, list_format='full'):
