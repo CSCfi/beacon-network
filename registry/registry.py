@@ -11,6 +11,7 @@ from aiohttp import web
 from .endpoints.info import get_info
 from .endpoints.service_types import get_service_types
 # from .endpoints.services import register_service, get_services, update_service, delete_services
+from .endpoints.services import register_service  #, get_services
 # from .schemas import load_schema
 from .utils.utils import invalidate_aggregator_caches, application_security
 # from .utils.validate import validate, api_key
@@ -40,29 +41,28 @@ async def info(request):
 @routes.get('/services/types')
 async def service_types(request):
     """Return service types."""
-    LOG.debug('GET /servicetypes received.')
-    response = await get_service_types()
-    return web.json_response(response)
+    LOG.debug('GET /services/types received.')
+    return web.json_response(await get_service_types())
 
 
-# @routes.post('/services')
+@routes.post('/services')
 # @validate(load_schema("serviceinfo"))
-# async def services_post(request):
-#     """POST request to the /services endpoint.
-#     Register a new service at host.
-#     """
-#     LOG.debug('POST /services received.')
-#     # Tap into the database pool
-#     db_pool = request.app['pool']
+async def services_post(request):
+    """POST request to the /services endpoint.
+    Register a new service at host.
+    """
+    LOG.debug('POST /services received.')
+    # Tap into the database pool
+    db_pool = request.app['pool']
 
-#     # Send request for processing
-#     response = await register_service(request, db_pool)
+    # Send request for processing
+    response = await register_service(request, db_pool)
 
-#     # Notify aggregators of changed service catalogue
-#     await invalidate_aggregator_caches(request, db_pool)
+    # Notify aggregators of changed service catalogue
+    # await invalidate_aggregator_caches(request, db_pool)
 
-#     # Return confirmation and service key if no problems occurred during processing
-#     return web.HTTPCreated(body=json.dumps(response), content_type='application/json')
+    # Return confirmation and service key if no problems occurred during processing
+    return web.HTTPCreated(body=json.dumps(response), content_type='application/json')
 
 
 # @routes.get('/services')

@@ -21,45 +21,11 @@ async def db_check_service_id(connection, id):
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to verify availability of service ID.')
     else:
         if len(response) > 0:
+            LOG.debug(f'Found service "{response}" for ID "{id}".')
             return True
         else:
+            LOG.debug(f'No conflicting services found for ID "{id}".')
             return False
-
-
-async def db_check_organisation_id(connection, id):
-    """Check if organisation id exists."""
-    LOG.debug('Querying database for organisation id.')
-    try:
-        # Database query
-        query = """SELECT name FROM organisations WHERE id=$1"""
-        statement = await connection.prepare(query)
-        response = await statement.fetch(id)
-    except Exception as e:
-        LOG.debug(f'DB error: {e}')
-        raise web.HTTPInternalServerError(text='Database error occurred while attempting to verify availability of organisation ID.')
-    else:
-        if len(response) > 0:
-            return True
-        else:
-            return False
-
-
-async def db_register_organisation(connection, organisation):
-    """Register new organisation at host."""
-    LOG.debug('Register organisation if it doesn\'t exist.')
-    try:
-        await connection.execute("""INSERT INTO organisations (id, name, description, address, welcome_url, contact_url, logo_url, info)
-                                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                                 ON CONFLICT (id) DO NOTHING""",
-                                 organisation['id'], organisation['name'],
-                                 organisation.get('description', ''), organisation.get('address', ''),
-                                 organisation.get('welcomeUrl', ''), organisation.get('contactUrl', ''),
-                                 organisation.get('logoUrl', ''), json.dumps(organisation.get('info', '')))
-        return True
-
-    except Exception as e:
-        LOG.debug(f'DB error: {e}')
-        raise web.HTTPInternalServerError(text='Database error occurred while attempting to register organisation.')
 
 
 async def db_store_service_key(connection, id, service_key):
@@ -103,15 +69,13 @@ async def db_register_service(connection, service):
     try:
         # Database commit occurs on transaction closure
         async with connection.transaction():
-            # Create new organisation if one doesn't yet exist
-            await db_register_organisation(connection, service['organization'])
-            # Register service
-            await connection.execute("""INSERT INTO services (id, name, service_type, api_version, service_url, host_org, description,
-                                     service_version, open, welcome_url, alt_url, create_datetime, update_datetime)
-                                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())""",
-                                     service['id'], service['name'], service['serviceType'], service['apiVersion'], service['serviceUrl'],
-                                     service['organization']['id'], service.get('description', ''), service.get('version', ''),
-                                     service['open'], service.get('welcomeUrl', ''), service.get('alternativeUrl', ''))
+            await connection.execute("""INSERT INTO services (id, name, type, description,
+                                     documentation_url, organization, contact_url,
+                                     api_version, service_version, extension, created_at, updated_at)
+                                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())""",
+                                     service['id'], service['name'], service['type'], service['description'],
+                                     service['documentation_url'], service['organization'], service['contact_url'],
+                                     service['api_version'], service['service_version'], json.dumps(service['extension']))
             # If service registration was successful, generate and store a service key
             service_key = await generate_service_key()
             await db_store_service_key(connection, service['id'], service_key)
@@ -190,29 +154,6 @@ async def db_delete_services(connection, id=None):
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to delete service(s).')
 
 
-async def db_update_organisation(connection, service_id, org):
-    """Update organisation."""
-    LOG.debug('Update organisation.')
-
-    # Check if user wants to change organisation id
-    service_details = await db_get_service_details(connection, id=service_id)
-    if not service_details['organization']['id'] == org['id']:
-        # Unallowed operation
-        raise web.HTTPBadRequest(text='Organisation ID can\'t be modified. Use POST to create a new organisation ID instead.')
-
-    # Apply updates
-    try:
-        await connection.execute("""UPDATE organisations SET name=$1, description=$2, address=$3,
-                                 welcome_url=$4, contact_url=$5, logo_url=$6, info=$7
-                                 WHERE id=$8""",
-                                 org.get('name'), org.get('description'), org.get('address'),
-                                 org.get('welcomeUrl'), org.get('contactUrl'), org.get('logoUrl'),
-                                 json.dumps(org.get('info')), org.get('id'))
-    except Exception as e:
-        LOG.debug(f'DB error: {e}')
-        raise web.HTTPInternalServerError(text='Database error occurred while attempting to update organisation details.')
-
-
 async def db_update_service(connection, id, service):
     """Update service."""
     LOG.debug('Update service.')
@@ -248,7 +189,7 @@ async def db_update_sequence(connection, id, updates):
     # Carry out operations within a transaction to avoid conflicts
     async with connection.transaction():
         # Update organisation first, because service has foreign key on organisation
-        await db_update_organisation(connection, id, updates['organization'])
+        # await db_update_organisation(connection, id, updates['organization'])
         await db_update_service(connection, id, updates)
         await db_update_service_key(connection, id, updates['id'])
 
