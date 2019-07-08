@@ -32,12 +32,7 @@ async def index(request):
 async def info(request):
     """Return service info."""
     LOG.debug('GET /info received.')
-
-    # Send request for processing
-    response = await get_info(request.host)
-
-    # Return results
-    return web.json_response(response)
+    return web.json_response(await get_info(request.host))
 
 
 # @routes.get('/query')

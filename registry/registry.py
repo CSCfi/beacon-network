@@ -9,12 +9,12 @@ import aiohttp_cors
 from aiohttp import web
 
 from .endpoints.info import get_info
-# from .endpoints.service_types import get_service_types
+from .endpoints.service_types import get_service_types
 # from .endpoints.services import register_service, get_services, update_service, delete_services
 # from .schemas import load_schema
 from .utils.utils import invalidate_aggregator_caches, application_security
 # from .utils.validate import validate, api_key
-# from .utils.db_pool import init_db_pool
+from .utils.db_pool import init_db_pool
 from .utils.logging import LOG
 from .config import CONFIG
 
@@ -34,15 +34,10 @@ async def index(request):
 async def info(request):
     """Return service info."""
     LOG.debug('GET /info received.')
-
-    # Send request for processing
-    response = await get_info(request.host)
-
-    # Return results
-    return web.json_response(response)
+    return web.json_response(await get_info(request.host))
 
 
-@routes.get('/servicetypes')
+@routes.get('/services/types')
 async def service_types(request):
     """Return service types."""
     LOG.debug('GET /servicetypes received.')
@@ -127,20 +122,20 @@ async def service_types(request):
 #     return web.HTTPNoContent()
 
 
-# async def init_db(app):
-#     """Initialise a database connection pool."""
-#     LOG.info('Creating database connection pool.')
-#     app['pool'] = await init_db_pool(host=os.environ.get('DB_HOST', CONFIG.registry.get('db_host', 'localhost')),
-#                                      port=os.environ.get('DB_PORT', CONFIG.registry.get('db_port', '5432')),
-#                                      user=os.environ.get('DB_USER', CONFIG.registry.get('db_user', 'user')),
-#                                      passwd=os.environ.get('DB_PASS', CONFIG.registry.get('db_pass', 'pass')),
-#                                      db=os.environ.get('DB_NAME', CONFIG.registry.get('db_name', 'db')))
+async def init_db(app):
+    """Initialise a database connection pool."""
+    LOG.info('Creating database connection pool.')
+    app['pool'] = await init_db_pool(host=CONFIG.db_host,
+                                     port=CONFIG.db_port,
+                                     user=CONFIG.db_user,
+                                     passwd=CONFIG.db_pass,
+                                     db=CONFIG.db_name)
 
 
-# async def close_db(app):
-#     """Close the database connection pool."""
-#     LOG.info('Closing database connection pool.')
-#     await app['pool'].close()
+async def close_db(app):
+    """Close the database connection pool."""
+    LOG.info('Closing database connection pool.')
+    await app['pool'].close()
 
 
 def set_cors(app):
@@ -166,8 +161,8 @@ def init_app():
     app = web.Application()
     app.router.add_routes(routes)
     set_cors(app)
-    # app.on_startup.append(init_db)
-    # app.on_cleanup.append(close_db)
+    app.on_startup.append(init_db)
+    app.on_cleanup.append(close_db)
     return app
 
 
