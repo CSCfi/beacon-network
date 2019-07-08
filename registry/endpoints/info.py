@@ -20,6 +20,7 @@ async def get_info(host):
         'organization': CONFIG.organization,
         'contactUrl': CONFIG.contact_url,
         'apiVersion': CONFIG.api_version,
+        'version': CONFIG.version,
         'extension': await load_extension(CONFIG.extension)
     }
 
