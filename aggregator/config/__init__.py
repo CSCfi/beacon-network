@@ -3,6 +3,7 @@
 import os
 from configparser import ConfigParser
 from collections import namedtuple
+from distutils.util import strtobool
 
 
 def parse_config_file(path):
@@ -12,6 +13,9 @@ def parse_config_file(path):
     config_vars = {
         'host': os.environ.get('HOST', config.get('app', 'host')) or '0.0.0.0',
         'port': int(os.environ.get('PORT', config.get('app', 'port')) or 8080),
+        'registries': config.get('app', 'registries') or '',
+        'beacons': bool(strtobool(config.get('app', 'beacons'))) or True,
+        'aggregators': bool(strtobool(config.get('app', 'aggregators'))) or False,
         'name': config.get('info', 'name'),
         'type': config.get('info', 'type'),
         'description': config.get('info', 'description'),

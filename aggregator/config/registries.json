@@ -1,6 +1,6 @@
 [
     {
-        "url": "localhost:8888",
-        "key": null
+        "url": "http://localhost:8080/services",
+        "key": ""
     }
 ]

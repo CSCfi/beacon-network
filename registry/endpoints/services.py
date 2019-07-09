@@ -57,7 +57,7 @@ async def get_services(request, db_pool):
         # Fetch services from database
         response = await db_get_service_details(connection,
                                                 id=service_id,
-                                                service_type=params.get('serviceType', None),
+                                                service_type=params.get('type', None),
                                                 api_version=params.get('apiVersion', None))
 
     return response

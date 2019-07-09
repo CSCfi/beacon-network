@@ -17,15 +17,14 @@ from .logging import LOG
 # from .db_ops import db_get_service_urls
 
 
-async def load_extension(extension_json):
-    """Load additional metadata in JSON."""
-    LOG.debug('Loading extension from file.')
-    extension = {}
-    LOG.debug(os.path.isfile(extension_json))
-    if os.path.isfile(extension_json):
-        with open(extension_json, 'r') as contents:
-            extension = json.loads(contents.read())
-    return extension
+async def load_json(json_file):
+    """Load data from an external JSON file."""
+    LOG.debug(f'Loading data from file: {json_file}.')
+    data = {}
+    if os.path.isfile(json_file):
+        with open(json_file, 'r') as contents:
+            data = json.loads(contents.read())
+    return data
 
 
 async def http_request_info(url):
@@ -282,7 +281,7 @@ def application_security():
     2   Closed network node (cert sharing)
 
     Level of security is controlled with ENV `APPLICATION_SECURITY` which takes int value 0-2."""
-    LOG.debug('Check application level of security.')
+    LOG.debug('Check security level of application.')
 
     # Convert ENV string to int
     level = int(os.environ.get('APPLICATION_SECURITY', 0))
@@ -322,7 +321,7 @@ async def request_security():
     2   Server must be in the same closed trust network (possess same certs)
 
     Level of security is controlled with ENV `REQUEST_SECURITY` which takes int value 0-2."""
-    LOG.debug('Check request level of security.')
+    LOG.debug('Check security level of request.')
 
     # Convert ENV string to int
     level = int(os.environ.get('REQUEST_SECURITY', 0))

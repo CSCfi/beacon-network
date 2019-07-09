@@ -5,22 +5,20 @@ import uvloop
 
 from aiohttp import web
 
-from utils.logging import LOG
-from utils.utils import get_access_token, get_services, query_service
+from ..utils.logging import LOG
+from ..utils.utils import get_access_token, get_services, query_service
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
-async def send_beacon_query(request, db_pool):
+async def send_beacon_query(request):
     """Send Beacon queries and respond synchronously."""
     LOG.debug('Normal response (sync).')
-    # response = web.Response()
-    # await response.prepare(request)
 
     # Task variables
     params = request.query_string  # query parameters (variant search)
     tasks = []  # requests to be done
-    services = await get_services(db_pool)  # service urls (beacons, aggregators) to be queried
+    services = await get_services(request.host)  # service urls (beacons, aggregators) to be queried
     access_token = await get_access_token(request)  # Get access token if one exists
 
     for service in services:
@@ -34,7 +32,7 @@ async def send_beacon_query(request, db_pool):
     return results
 
 
-async def send_beacon_query_websocket(request, db_pool):
+async def send_beacon_query_websocket(request):
     """Send Beacon queries and respond asynchronously via websocket."""
     LOG.debug('Websocket response (async).')
     # Prepare websocket connection
@@ -44,7 +42,7 @@ async def send_beacon_query_websocket(request, db_pool):
     # Task variables
     params = request.query_string  # query parameters (variant search)
     tasks = []  # requests to be done
-    services = await get_services(db_pool)  # service urls (beacons, aggregators) to be queried
+    services = await get_services(request.host)  # service urls (beacons, aggregators) to be queried
     access_token = await get_access_token(request)  # Get access token if one exists
 
     for service in services:

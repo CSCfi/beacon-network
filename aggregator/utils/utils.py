@@ -3,7 +3,6 @@
 import os
 import sys
 import json
-import secrets
 import ssl
 
 import aiohttp
@@ -13,72 +12,100 @@ from aiohttp import web
 from aiocache import cached, SimpleMemoryCache
 from aiocache.serializers import JsonSerializer
 
+from ..config import CONFIG
 from .logging import LOG
 
 
-async def load_extension(extension_json):
-    """Load additional metadata in JSON."""
-    LOG.debug('Loading extension from file.')
-    extension = {}
-    LOG.debug(os.path.isfile(extension_json))
-    if os.path.isfile(extension_json):
-        with open(extension_json, 'r') as contents:
-            extension = json.loads(contents.read())
-    return extension
+async def load_json(json_file):
+    """Load data from an external JSON file."""
+    LOG.debug(f'Loading data from file: {json_file}.')
+    data = {}
+    if os.path.isfile(json_file):
+        with open(json_file, 'r') as contents:
+            data = json.loads(contents.read())
+    return data
 
 
-async def construct_json(data, model=None, list_format='full'):
-    """Construct proper JSON response from dictionary data."""
-    LOG.debug('Construct JSON response from DB record.')
-    # Minimal body when list_format='short'
-    response = {
-        "id": data.get('ser_id', ''),
-        "name": data.get('ser_name', ''),
-        "serviceType": data.get('ser_service_type', ''),
-        "serviceUrl": data.get('ser_service_url', ''),
-        "open": data.get('ser_open', '')
-    }
+async def http_get_service_urls(registry):
+    """Query an external registry for known service urls of desired type."""
+    LOG.debug('Query external registry for given service type.')
+    service_urls = []
 
-    if list_format == 'full':
-        # if list_format='full' or not specified -> defaults to full
-        # update response to include all keys
-        response.update(
-            {
-                "apiVersion": data.get('ser_api_version', ''),
-                "organization": {
-                    "id": data.get('org_id', ''),
-                    "name": data.get('org_name', ''),
-                    "description": data.get('org_description', ''),
-                    "address": data.get('org_address', ''),
-                    "welcomeUrl": data.get('org_welcome_url', ''),
-                    "contactUrl": data.get('org_contact_url', ''),
-                    "logoUrl": data.get('org_logo_url', ''),
-                    "info": {}
-                },
-                "description": data.get('ser_description', ''),
-                "version": data.get('ser_service_version', ''),
-                "welcomeUrl": data.get('ser_welcome_url', ''),
-                "alternativeUrl": data.get('ser_alt_url', ''),
-                "createDateTime": str(data.get('ser_createtime', '')),
-                "updateDateTime": str(data.get('ser_updatetime', ''))
-            }
-        )
-        if 'org_info' in data:
-            # Load the jsonb string into a dict and update the info-key
-            response['organization']['info'].update(json.loads(data.get('org_info', '')))
+    # Query Registry for services
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(registry,
+                                ssl=await request_security()) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    for r in result:
+                        # Check if service has a type tag of Beacons
+                        if CONFIG.beacons and r.get('type') == 'urn:ga4gh:beacon':
+                            service_urls.append(r['url'])
+                        # Check if service has a type tag of Aggregators
+                        if CONFIG.aggregators and r.get('type') == 'urn:ga4gh:aggregator':
+                            service_urls.append(r['url'])
+        except Exception as e:
+            LOG.debug(f'Query error {e}.')
+            web.HTTPInternalServerError(text=f'An error occurred while attempting to query services: {e}')
 
-    return response
+    return service_urls
 
 
-async def query_params(request):
-    """Parse query string params from path."""
-    LOG.debug('Parse query params.')
-    # Query string params
-    allowed_params = ['serviceType', 'model', 'listFormat', 'apiVersion', 'remote']
-    params = {k: v for k, v in request.rel_url.query.items() if k in allowed_params}
-    # Path param
-    service_id = request.match_info.get('service_id', None)
-    return service_id, params
+# Cache Beacon URLs if they're not already cached
+@cached(ttl=86400, key="beacon_urls", serializer=JsonSerializer())
+async def get_services(url_self):
+    """Return service urls."""
+    LOG.debug('Fetch service urls.')
+
+    # Load registries from external file
+    registries = await load_json(CONFIG.registries)
+
+    # Query Registries for their known Beacon services, fetch only URLs
+    service_urls = set()
+    for registry in registries:
+        services = await http_get_service_urls(registry.get('url', ''))  # Request URLs from Registry
+        service_urls.update(services)  # Add found URLs to set (eliminate duplicates)
+
+    # Pre-process URLS
+    service_urls = [await process_url(url) for url in service_urls]
+    service_urls = await remove_self(url_self, service_urls)
+
+    return service_urls
+
+
+async def process_url(url):
+    """Process URLs to the desired form.
+
+    Some URLs might end with `/service-info`, others with `/` and some even `` (empty).
+    The Aggregator wants to use the `/query` endpoint, so the URLs must be pre-processed for queries"""
+    LOG.debug('Processing URLs.')
+
+    if url.endswith('/'):
+        url += 'query'
+    elif url.endswith('/service-info'):
+        url = url.replace('service-info', 'query')
+    else:
+        # Unknown case
+        pass
+
+    return url
+
+
+async def remove_self(url_self, urls):
+    """Remove self from list of service URLs to prevent infinite recursion.
+
+    This use case is for when an Aggregator requests service URLs for Aggregators.
+    The Aggregator should only query other Aggregators, not itself."""
+    LOG.debug('Look for self from service URLs.')
+
+    for url in urls:
+        url_split = url.split('/')
+        if url_self in url_split:
+            urls.remove(url)
+            LOG.debug('Found and removed self from service URLs.')
+
+    return urls
 
 
 async def get_access_token(request):
@@ -105,60 +132,54 @@ async def get_access_token(request):
     return access_token
 
 
-# db function temporarily placed here due to import-loop issues
-async def db_get_service_urls(connection, service_type=None):
-    """Return queryable service urls."""
-    LOG.debug(f'Querying database for service urls of type {service_type}.')
-    service_urls = []
-    try:
-        # Database query
-        query = f"""SELECT service_url FROM services WHERE service_type=$1"""
-        statement = await connection.prepare(query)
-        response = await statement.fetch(service_type)
-        if len(response) > 0:
-            # Parse urls from psql records and append to list
-            for record in response:
-                service_urls.append(record['service_url'])
-            return service_urls
-        else:
-            # raise web.HTTPNotFound(text=f'No queryable services found of service type {service_type}.')
-            # Why did we even have a 404 here
-            # pass
-            # Return empty iterable
-            return service_urls
-    except Exception as e:
-        LOG.debug(f'DB error for service_type={service_type}: {e}')
-        raise web.HTTPInternalServerError(text='Database error occurred while attempting to fetch service urls.')
+async def query_service(service, params, access_token, ws=None):
+    """Query service with params."""
+    LOG.debug('Querying service.')
+    headers = {}
+
+    if access_token:
+        headers.update({'Authorization': f'Bearer {access_token}'})
+
+    # Query service in a session
+    async with aiohttp.ClientSession() as session:
+        try:
+            # serviceUrl from DB: `https://../` append with `query`
+            async with session.get(service,
+                                   params=params,
+                                   headers=headers,
+                                   ssl=await request_security()) as response:
+                # On successful response, forward response
+                if response.status == 200:
+                    result = await response.json()
+                    if isinstance(ws, web.WebSocketResponse):
+                        # Send result to websocket (if using websockets)
+                        return await ws.send_str(json.dumps(result))
+                    else:
+                        # Standard response
+                        return result
+                else:
+                    # HTTP errors
+                    error = {"service": service,
+                             "queryParams": params,
+                             "responseStatus": response.status}
+                    if ws:
+                        return await ws.send_str(json.dumps(str(error)))
+                    else:
+                        return error
+
+        except Exception as e:
+            LOG.debug(f'Query error {e}.')
+            web.HTTPInternalServerError(text=f'An error occurred while attempting to query services: {e}')
 
 
-# db function temporarily placed here due to import-loop issues
-async def db_get_recaching_credentials(connection):
-    """Return queryable service urls and service keys."""
-    LOG.debug(f'Querying database for service urls and keys.')
-    credentials = []
-    try:
-        # Database query
-        query = f"""SELECT a.service_url AS service_url, b.service_key AS service_key
-                    FROM services a, service_keys b
-                    WHERE service_type='GA4GHBeaconAggregator'
-                    AND a.id=b.service_id"""
-        statement = await connection.prepare(query)
-        response = await statement.fetch()
-        if len(response) > 0:
-            # Parse urls from psql records and append to list
-            for record in response:
-                credentials.append({'service_url': record['service_url'],
-                                    'service_key': record['service_key']})
-            return credentials
-        else:
-            # raise web.HTTPNotFound(text=f'No queryable services found of service type {service_type}.')
-            # Why did we even have a 404 here
-            # pass
-            # Return empty iterable
-            return credentials
-    except Exception as e:
-        LOG.debug(f'DB error: {e}')
-        raise web.HTTPInternalServerError(text='Database error occurred while attempting to fetch service urls.')
+
+
+
+
+
+
+
+
 
 
 async def clear_cache():
@@ -193,244 +214,13 @@ async def cache_from_registry(beacons, response):
     return response
 
 
-# Cache Beacon URLs if they're not already cached
-@cached(ttl=86400, key="beacon_urls", serializer=JsonSerializer())
-async def get_services(db_pool):
-    """Return service urls."""
-    LOG.debug('Fetch service urls.')
-
-    # Take connection from the database pool
-    async with db_pool.acquire() as connection:
-        services = await db_get_service_urls(connection, service_type='GA4GHRegistry')  # service urls (in this case registries) to be queried
-
-    # Query Registries for their known Beacon services, fetch only URLs
-    service_urls = await http_get_service_urls(services, service_type='GA4GHBeacon')
-
-    # Remove duplicate Beacons
-    remove_duplicates = set(service_urls)
-    unique_beacons = list(remove_duplicates)
-
-    return unique_beacons
 
 
-async def http_get_service_urls(services, service_type=None):
-    """Query a an external service for known service urls."""
-    LOG.debug('Query external service for given service type.')
-    service_urls = []
-    # Here we want to find Beacons (can be re-used for other purposes too) and in short format for smaller payload
-    params = {'serviceType': service_type, 'listFormat': 'short'}
-
-    # Query service (typically a registry) in a session
-    async with aiohttp.ClientSession() as session:
-        for service in services:
-            try:
-                # serviceUrl from DB: `https://../` append with `services`
-                async with session.get(f'{service}services',
-                                       params=params,
-                                       ssl=await request_security()) as response:
-                    if response.status == 200:
-                        result = await response.json()
-                        for r in result:
-                            service_urls.append(r['serviceUrl'])
-            except Exception as e:
-                LOG.debug(f'Query error {e}.')
-                web.HTTPInternalServerError(text=f'An error occurred while attempting to query services: {e}')
-
-    return service_urls
 
 
-async def invalidate_aggregator_caches(request, db_pool):
-    """Invalidate caches at Aggregators."""
-    LOG.debug('Invalidate cached Beacons at Aggregators.')
-
-    tasks = []  # requests to be done
-    # Take connection from the database pool
-    async with db_pool.acquire() as connection:
-        aggregators = await db_get_recaching_credentials(connection)  # service urls (aggregators) to be queried, with service keys
-
-    for aggregator in aggregators:
-        # Generate task queue
-        task = asyncio.ensure_future(invalidate_cache(aggregator))
-        tasks.append(task)
-
-    # Prepare and initiate co-routines
-    await asyncio.gather(*tasks)
 
 
-async def invalidate_cache(service):
-    """Contact given service and tell them to delete their cache."""
-    LOG.debug('Notify service to delete their cache.')
 
-    # Send invalidation notification (request) to service (aggregator)
-    async with aiohttp.ClientSession() as session:
-        # try:
-        # Solution for prototype, figure out a better way later
-        # serviceUrl from DB: `https://../` append with `beacons`
-        async with session.delete(f'{service["service_url"]}beacons',
-                                  headers={'Beacon-Service-Key': service['service_key']},
-                                  ssl=await request_security()) as response:
-            if response.status in [200, 204]:
-                LOG.debug(f'Service received notification and responded with {response.status}.')
-            else:
-                # Low priority log, it doesn't matter if the invalidation was unsuccessful
-                LOG.debug(f'Service encountered a problem with notification: {response.status}.')
-        # except Exception as e:
-        #     LOG.debug(f'Query error {e}.')
-        #     # web.HTTPInternalServerError(text=f'An error occurred while attempting to send request to Aggregator.')
-        #     pass  # We don't care if a notification failed
-
-
-async def query_service(service, params, access_token, ws=None):
-    """Query service with params."""
-    LOG.debug('Querying service.')
-    headers = {}
-
-    if access_token:
-        headers.update({'Authorization': f'Bearer {access_token}'})
-
-    # Query service in a session
-    async with aiohttp.ClientSession() as session:
-        try:
-            # serviceUrl from DB: `https://../` append with `query`
-            async with session.get(f'{service}query',
-                                   params=params,
-                                   headers=headers,
-                                   ssl=await request_security()) as response:
-                # On successful response, forward response
-                if response.status == 200:
-                    result = await response.json()
-                    if isinstance(ws, web.WebSocketResponse):
-                        # Send result to websocket (if using websockets)
-                        return await ws.send_str(json.dumps(result))
-                    else:
-                        # Standard response
-                        return result
-                else:
-                    # HTTP errors
-                    error = {"service": service,
-                             "queryParams": params,
-                             "responseStatus": response.status}
-                    if ws:
-                        return await ws.send_str(json.dumps(str(error)))
-                    else:
-                        return error
-
-        except Exception as e:
-            LOG.debug(f'Query error {e}.')
-            web.HTTPInternalServerError(text=f'An error occurred while attempting to query services: {e}')
-
-
-async def generate_service_key():
-    """Generate a service key."""
-    LOG.debug('Generate service key.')
-    return secrets.token_urlsafe(64)
-
-
-# This is currently not used, but is kept for possible future implementation
-# The idea is, that the user doesn't give the id, but it is generated from the
-# Given service url, so that the id is always unique as it is tied to the registered url
-# def generate_service_id(url):
-#     """Generate service ID from given URL."""
-#     LOG.debug('Generate service ID.')
-#     address = url.split('://')  # strip http schema if it exists
-#     domain = (0,1)[len(address)>1]  # index of domain in schemaless address
-#     domain = address[domain].split('/')  # distinguish endpoints
-#     service_id = '.'.join(reversed(domain[0].split('.')))  # reverse domain to create id
-#     return service_id
-
-
-async def http_verify_remote(remote):
-    """Verify that provided address leads to a GA4GHRegistry."""
-    LOG.debug('Verify that remote is a Registry.')
-    # We don't need much information
-    params = {'listFormat': 'short'}
-
-    async with aiohttp.ClientSession() as session:
-        try:
-            # serviceUrl should be of form: `https://../` append with `info`
-            async with session.get(f'{remote}info',
-                                   params=params,
-                                   ssl=await request_security()) as response:
-                if response.status == 200:
-                    result = await response.json()
-                    if result['serviceType'] == 'GA4GHRegistry':
-                        LOG.debug('Remote verified to be a Registry.')
-                    else:
-                        LOG.debug('Remote is not a Registry, or could not retrieve serviceType.')
-                        raise web.HTTPBadRequest(text='Provided "remote" is not a GA4GHRegistry.')
-                else:
-                    LOG.debug('Provided "remote" was not found.')
-                    raise web.HTTPNotFound(text='Provided "remote" not found.')
-        except Exception as e:
-            LOG.debug(f'Query error {e}.')
-            raise web.HTTPInternalServerError(text=f'An error occurred while attempting to query remote: {e}')
-
-
-async def http_register_at_remote(service, remote, remote_api_key):
-    """Register at provided remote Registry."""
-    LOG.debug('Register at remote.')
-    headers = {'Post-Api-Key': remote_api_key}
-
-    # Send POST request to remote Registry
-    async with aiohttp.ClientSession() as session:
-        # serviceUrl should be of form: `https://../` append with `services`
-        async with session.post(f'{remote}services',
-                                headers=headers,
-                                data=json.dumps(service),
-                                ssl=await request_security()) as response:
-            if response.status in [200, 201, 202]:
-                LOG.debug('Service was successfully registered at remote.')
-                result = await response.json()
-                return result['beaconServiceKey']
-            else:
-                message = await response.text()
-                LOG.debug('Encountered problem with registration at remote.')
-                # Terminate process here, forward the error
-                if response.status == 400:
-                    raise web.HTTPBadRequest(text=message)
-                elif response.status == 401:
-                    raise web.HTTPUnauthorized(text=message)
-                elif response.status == 404:
-                    raise web.HTTPNotFound(text=message)
-                elif response.status == 409:
-                    raise web.HTTPConflict(text=message)
-                else:
-                    # 500
-                    raise web.HTTPInternalServerError(text=message)
-
-
-# DB function temporarily in /utils due to import-loop issue
-async def db_store_my_service_key(db_pool, remote_service, service_key):
-    """Store my service key which is used at remote Registry."""
-    LOG.debug('Store my remote service key.')
-
-    # Take connection from database pool, re-use connection for all tasks
-    async with db_pool.acquire() as connection:
-        try:
-            # Database commit occurs on transaction closure
-            async with connection.transaction():
-                await connection.execute("""INSERT INTO remote_keys (remote_service, service_key)
-                                         VALUES ($1, $2)""",
-                                         remote_service, service_key)
-        except Exception as e:
-            LOG.debug(f'DB error: {e}')
-            raise web.HTTPInternalServerError(text='Database error occurred while attempting to store remote service key.')
-
-
-async def remote_registration(db_pool, request, remote):
-    """Forward registration request to a remote service."""
-    LOG.debug('Remote registration.')
-    # Get POST request body JSON as python dict
-    service = await request.json()
-
-    # Verify that remote is of type GA4GHRegistry
-    await http_verify_remote(remote)
-    # Register at remote, get the beaconServiceKey from response
-    response = await http_register_at_remote(service, remote, request.headers['Remote-Api-Key'])
-    # Store the service key from response for later use via PUT /beacons from Registry
-    await db_store_my_service_key(db_pool, remote, response)
-
-    return response
 
 
 def load_certs(ssl_context):
@@ -462,7 +252,7 @@ def application_security():
     2   Closed network node (cert sharing)
 
     Level of security is controlled with ENV `APPLICATION_SECURITY` which takes int value 0-2."""
-    LOG.debug('Check application level of security.')
+    LOG.debug('Check security level of application.')
 
     # Convert ENV string to int
     level = int(os.environ.get('APPLICATION_SECURITY', 0))
@@ -502,7 +292,7 @@ async def request_security():
     2   Server must be in the same closed trust network (possess same certs)
 
     Level of security is controlled with ENV `REQUEST_SECURITY` which takes int value 0-2."""
-    LOG.debug('Check request level of security.')
+    LOG.debug('Check security level of request.')
 
     # Convert ENV string to int
     level = int(os.environ.get('REQUEST_SECURITY', 0))
