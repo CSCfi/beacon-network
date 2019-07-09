@@ -6,7 +6,6 @@ import json
 import ssl
 
 import aiohttp
-import asyncio
 
 from aiohttp import web
 from aiocache import cached, SimpleMemoryCache
@@ -35,7 +34,7 @@ async def http_get_service_urls(registry):
     async with aiohttp.ClientSession() as session:
         try:
             async with session.get(registry,
-                                ssl=await request_security()) as response:
+                                   ssl=await request_security()) as response:
                 if response.status == 200:
                     result = await response.json()
                     for r in result:
@@ -188,9 +187,6 @@ async def validate_service_key(key):
     raise web.HTTPUnauthorized(text='Unauthorized service key.')
 
 
-
-
-
 async def clear_cache():
     """Clear cache of Beacons."""
     LOG.debug('Check if cache of Beacons exists.')
@@ -206,30 +202,6 @@ async def clear_cache():
         await cache.close()
     except Exception as e:
         LOG.error(f'Error at clearing cache: {e}.')
-
-
-async def cache_from_registry(beacons, response):
-    """Cache Beacon URLs that were received from Registry's update message."""
-    LOG.debug('Caching Beacons from Registry\'s update message.')
-
-    try:
-        cache = SimpleMemoryCache()
-        await cache.set('beacon_urls', beacons)
-        LOG.debug('Cache was set.')
-    except Exception as e:
-        response = 500
-        LOG.error(f'Couldn\'t set cache: {e}.')
-
-    return response
-
-
-
-
-
-
-
-
-
 
 
 def load_certs(ssl_context):

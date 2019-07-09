@@ -1,8 +1,6 @@
 """Beacon Aggregator API."""
 
-import os
 import sys
-import json
 
 import aiohttp_cors
 
@@ -92,7 +90,6 @@ def init_app():
     """Initialise the web server."""
     LOG.info('Initialising web server.')
     app = web.Application(middlewares=[api_key()])
-    # app = web.Application()
     app.router.add_routes(routes)
     set_cors(app)
     return app
