@@ -66,10 +66,10 @@ async def parse_service_info(id, url, service):
             'type': service.get('type', 'urn:ga4gh:beacon'),
             'description': service.get('description', ''),
             'url': url,
-            'contact_url': service.get('contactUrl'),
-            'api_version': service.get('apiVersion'),
-            'service_version': service.get('version'),
-            'extension': service.get('extension')
+            'contact_url': service.get('contactUrl', ''),
+            'api_version': service.get('apiVersion', ''),
+            'service_version': service.get('version', ''),
+            'extension': service.get('extension', {})
         }
     else:
         LOG.debug('Using Beacon API endpoint.')
