@@ -172,11 +172,20 @@ async def query_service(service, params, access_token, ws=None):
             web.HTTPInternalServerError(text=f'An error occurred while attempting to query services: {e}')
 
 
+async def validate_service_key(key):
+    """Validate received service key."""
+    LOG.debug('Validating service key.')
 
+    # Get listing of Registries
+    registries = await load_json(CONFIG.registries)
 
+    for registry in registries:
+        if key == registry.get('key'):
+            # If a matching key is found, return true
+            return True
 
-
-
+    # If no matching keys were found, raise an exception
+    raise web.HTTPUnauthorized(text='Unauthorized service key.')
 
 
 

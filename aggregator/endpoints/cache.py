@@ -5,8 +5,8 @@ import asyncio
 import uvloop
 
 
-from utils.logging import LOG
-from utils.utils import clear_cache
+from ..utils.logging import LOG
+from ..utils.utils import clear_cache
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 

@@ -10,9 +10,9 @@ from aiohttp import web
 
 from .endpoints.info import get_info
 from .endpoints.query import send_beacon_query, send_beacon_query_websocket
-# from .endpoints.beacons import invalidate_cache
+from .endpoints.cache import invalidate_cache
 from .utils.utils import application_security
-# from .utils.validate import api_key
+from .utils.validate import api_key
 from .utils.logging import LOG
 from .config import CONFIG
 
@@ -60,16 +60,16 @@ async def query(request):
         return web.json_response(response)
 
 
-# @routes.delete('/cache')
-# async def cache(request):
-#     """Invalidate cached Beacons."""
-#     LOG.debug('DELETE /beacons received.')
+@routes.delete('/cache')
+async def cache(request):
+    """Invalidate cached Beacons."""
+    LOG.debug('DELETE /beacons received.')
 
-#     # Send request for processing
-#     await invalidate_cache()
+    # Send request for processing
+    await invalidate_cache()
 
-#     # Return confirmation
-#     return web.HTTPNoContent()
+    # Return confirmation
+    return web.HTTPNoContent()
 
 
 def set_cors(app):
@@ -91,8 +91,8 @@ def set_cors(app):
 def init_app():
     """Initialise the web server."""
     LOG.info('Initialising web server.')
-    # app = web.Application(middlewares=[api_key()])
-    app = web.Application()
+    app = web.Application(middlewares=[api_key()])
+    # app = web.Application()
     app.router.add_routes(routes)
     set_cors(app)
     return app
