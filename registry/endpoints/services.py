@@ -18,6 +18,7 @@ async def register_service(request, db_pool):
 
     # Response object
     response = {'message': '',
+                'serviceId': '',
                 'serviceKey': '',
                 'help': CONFIG.documentation_url}
 
@@ -36,10 +37,18 @@ async def register_service(request, db_pool):
         if id_taken:
             raise web.HTTPConflict(text=f'Service ID "{service_id}" is taken.')
         # Parse and validate service info object
-        service = await parse_service_info(service_id, url, service_info)
+        service = await parse_service_info(service_id, r, service_info)
         # Register service to host
-        service_key = await db_register_service(connection, service)
-        response['message'] = 'Service has been registered. Service key for updating and deleting registration included in this response, keep it safe.'
+        service_key = await db_register_service(connection, service, r['email'])
+        if r['type'] in ['urn:ga4gh:beacon', 'urn:ga4gh:registry']:
+            response['message'] = 'Service has been registered. Service key and id for updating and deleting'\
+                                  'registration included in this response, keep them safe.'
+        elif r['type'] == 'urn:ga4gh:aggregator':
+            response['message'] = 'Service has been registered. Service key and id for updating and deleting'\
+                                  'registration included in this response, keep them safe. Add this key to'\
+                                  '`registries.json` to allow this Registry to invalidate the cached Beacons'\
+                                  'at your Aggregator in case of catalogue changes.'
+        response['serviceId'] = service_id
         response['serviceKey'] = service_key
 
     return response

@@ -10,8 +10,7 @@ import aiohttp
 import asyncio
 
 from aiohttp import web
-from aiocache import cached, SimpleMemoryCache
-from aiocache.serializers import JsonSerializer
+from aiocache import cached
 
 from .logging import LOG
 # from .db_ops import db_get_service_urls
@@ -46,7 +45,7 @@ async def http_request_info(url):
             raise web.HTTPInternalServerError(text=f'An error occurred while attempting to contact service: {e}')
 
 
-async def parse_service_info(id, url, service):
+async def parse_service_info(id, req, service):
     """Parse and validate service info.
 
     Service infos may use the same keys in different places, for example the
@@ -56,7 +55,7 @@ async def parse_service_info(id, url, service):
 
     service_info = {}
 
-    if url.endswith('/service-info'):
+    if req['url'].endswith('/service-info'):
         LOG.debug('Using GA4GH endpoint.')
         # Use GA4GH service-info notation
         service_info = {
@@ -64,8 +63,8 @@ async def parse_service_info(id, url, service):
             'name': service.get('name', ''),
             'type': service.get('type', 'urn:ga4gh:beacon'),
             'description': service.get('description', ''),
-            'url': url,
-            'contact_url': service.get('contactUrl', ''),
+            'url': req['url'],
+            'contact_url': service.get('contactUrl', '') or req['email'],
             'api_version': service.get('apiVersion', ''),
             'service_version': service.get('version', ''),
             'extension': service.get('extension', {})
@@ -78,8 +77,8 @@ async def parse_service_info(id, url, service):
             'name': service.get('name', ''),
             'type': 'urn:ga4gh:beacon',
             'description': service.get('description', ''),
-            'url': url,
-            'contact_url': service.get('organization', {}).get('contactUrl', ''),
+            'url': req['url'],
+            'contact_url': service.get('organization', {}).get('contactUrl', '') or req['email'],
             'api_version': service.get('apiVersion', ''),
             'service_version': service.get('version', ''),
             'extension': service.get('info', {})
@@ -122,18 +121,6 @@ async def query_params(request):
     # Path param
     service_id = request.match_info.get('service_id', None)
     return service_id, params
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # db function temporarily placed here due to import-loop issues
@@ -243,13 +230,10 @@ async def generate_service_id(url):
     """Generate service ID from given URL."""
     LOG.debug('Generate service ID.')
     address = url.split('://')  # strip http schema if it exists
-    domain = (0,1)[len(address)>1]  # index of domain in schemaless address
+    domain = (0, 1)[len(address) > 1]  # index of domain in schemaless address
     domain = address[domain].split('/')  # distinguish endpoints
     service_id = '.'.join(reversed(domain[0].split('.')))  # reverse domain to create id
     return service_id
-
-
-
 
 
 def load_certs(ssl_context):

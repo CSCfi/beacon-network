@@ -64,7 +64,7 @@ paths:
       summary: Register a new service at host service.
       description: Third parties use this endpoint to register themselves at the host service.
       parameters:
-      - name: Post-Api-Key
+      - name: Authorization
         in: header
         description: Api key to access POST endpoint.
         schema:

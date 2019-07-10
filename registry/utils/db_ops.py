@@ -63,18 +63,18 @@ async def db_delete_service_key(connection, id):
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to delete service key.')
 
 
-async def db_register_service(connection, service):
+async def db_register_service(connection, service, email):
     """Register new service at host."""
     LOG.debug('Register new service.')
     try:
         # Database commit occurs on transaction closure
         async with connection.transaction():
             await connection.execute("""INSERT INTO services (id, name, type, description, url, contact_url,
-                                     api_version, service_version, extension, created_at, updated_at)
-                                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())""",
+                                     api_version, service_version, extension, email, created_at, updated_at)
+                                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())""",
                                      service['id'], service['name'], service['type'],
                                      service['description'], service['url'], service['contact_url'],
-                                     service['api_version'], service['service_version'], json.dumps(service['extension']))
+                                     service['api_version'], service['service_version'], json.dumps(service['extension']), email)
             # If service registration was successful, generate and store a service key
             service_key = await generate_service_key()
             await db_store_service_key(connection, service['id'], service_key)
@@ -176,21 +176,14 @@ async def db_update_sequence(connection, id, updates):
         await db_update_service_key(connection, id, updates['id'])
 
 
-async def db_verify_service_key(connection, service_id=None, service_key=None, alt_use_case=False):
+async def db_verify_service_key(connection, service_id=None, service_key=None):
     """Check if service id exists."""
     LOG.debug('Querying database to verify Beacon-Service-Key.')
     try:
         # Database query
-        if service_id and not alt_use_case:
-            # Use case for updating and deleting self at PUT|DELETE /services
-            query = """SELECT service_id FROM service_keys WHERE service_id=$1 AND service_key=$2"""
-            statement = await connection.prepare(query)
-            response = await statement.fetch(service_id, service_key)
-        else:
-            # Use case for accessing remote Aggregator's PUT /beacons endpoint
-            query = """SELECT remote_service FROM remote_keys WHERE service_key=$1"""
-            statement = await connection.prepare(query)
-            response = await statement.fetch(service_key)
+        query = """SELECT service_id FROM service_keys WHERE service_id=$1 AND service_key=$2"""
+        statement = await connection.prepare(query)
+        response = await statement.fetch(service_id, service_key)
     except Exception as e:
         LOG.debug(f'DB error: {e}')
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to verify Beacon Service Key.')
@@ -201,9 +194,9 @@ async def db_verify_service_key(connection, service_id=None, service_key=None, a
         LOG.debug('Service key is authorised.')
 
 
-async def db_verify_post_api_key(connection, api_key):
+async def db_verify_api_key(connection, api_key):
     """Check if provided api key for registration is authorised."""
-    LOG.debug('Querying database to verify Post-Api-Key.')
+    LOG.debug('Querying database to verify "Authorization" API key.')
     try:
         # Database query
         query = """SELECT comment FROM api_keys WHERE api_key=$1"""
@@ -211,7 +204,7 @@ async def db_verify_post_api_key(connection, api_key):
         response = await statement.fetch(api_key)
     except Exception as e:
         LOG.debug(f'DB error: {e}')
-        raise web.HTTPInternalServerError(text='Database error occurred while attempting to verify Post Api Key')
+        raise web.HTTPInternalServerError(text='Database error occurred while attempting to verify "Authorization" API key.')
     else:
         if len(response) == 0:
             LOG.debug('Provided api key is unauthorised.')

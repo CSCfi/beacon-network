@@ -1,6 +1,5 @@
 """Beacon Registry API."""
 
-import os
 import sys
 import json
 
@@ -12,9 +11,9 @@ from .endpoints.info import get_info
 from .endpoints.service_types import get_service_types
 # from .endpoints.services import register_service, get_services, update_service, delete_services
 from .endpoints.services import register_service, get_services
-# from .schemas import load_schema
+from .schemas import load_schema
 from .utils.utils import invalidate_aggregator_caches, application_security
-# from .utils.validate import validate, api_key
+from .utils.validate import validate, api_key
 from .utils.db_pool import init_db_pool
 from .utils.logging import LOG
 from .config import CONFIG
@@ -46,7 +45,7 @@ async def service_types(request):
 
 
 @routes.post('/services')
-# @validate(load_schema("serviceinfo"))
+@validate(load_schema("self_registration"))
 async def services_post(request):
     """POST request to the /services endpoint.
     Register a new service at host.
@@ -157,8 +156,7 @@ def set_cors(app):
 def init_app():
     """Initialise the web server."""
     LOG.info('Initialising web server.')
-    # app = web.Application(middlewares=[api_key()])
-    app = web.Application()
+    app = web.Application(middlewares=[api_key()])
     app.router.add_routes(routes)
     set_cors(app)
     app.on_startup.append(init_db)
