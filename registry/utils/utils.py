@@ -15,16 +15,6 @@ from aiocache import cached
 from .logging import LOG
 
 
-async def load_json(json_file):
-    """Load data from an external JSON file."""
-    LOG.debug(f'Loading data from file: {json_file}.')
-    data = {}
-    if os.path.isfile(json_file):
-        with open(json_file, 'r') as contents:
-            data = json.loads(contents.read())
-    return data
-
-
 async def http_request_info(url):
     """Request service info of given URL."""
     LOG.debug('Send a request to given URL to get service info.')

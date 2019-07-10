@@ -2,7 +2,6 @@
 
 from ..config import CONFIG
 from ..utils.logging import LOG
-from ..utils.utils import load_json
 
 
 async def get_info(host):
@@ -21,7 +20,7 @@ async def get_info(host):
         'contactUrl': CONFIG.contact_url,
         'apiVersion': CONFIG.api_version,
         'version': CONFIG.version,
-        'extension': await load_json(CONFIG.extension)
+        'extension': CONFIG.extension
     }
 
     return service_info

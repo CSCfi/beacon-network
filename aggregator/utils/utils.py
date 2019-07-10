@@ -15,16 +15,6 @@ from ..config import CONFIG
 from .logging import LOG
 
 
-async def load_json(json_file):
-    """Load data from an external JSON file."""
-    LOG.debug(f'Loading data from file: {json_file}.')
-    data = {}
-    if os.path.isfile(json_file):
-        with open(json_file, 'r') as contents:
-            data = json.loads(contents.read())
-    return data
-
-
 async def http_get_service_urls(registry):
     """Query an external registry for known service urls of desired type."""
     LOG.debug('Query external registry for given service type.')
@@ -57,12 +47,9 @@ async def get_services(url_self):
     """Return service urls."""
     LOG.debug('Fetch service urls.')
 
-    # Load registries from external file
-    registries = await load_json(CONFIG.registries)
-
     # Query Registries for their known Beacon services, fetch only URLs
     service_urls = set()
-    for registry in registries:
+    for registry in CONFIG.registries:
         services = await http_get_service_urls(registry.get('url', ''))  # Request URLs from Registry
         service_urls.update(services)  # Add found URLs to set (eliminate duplicates)
 
@@ -175,10 +162,7 @@ async def validate_service_key(key):
     """Validate received service key."""
     LOG.debug('Validating service key.')
 
-    # Get listing of Registries
-    registries = await load_json(CONFIG.registries)
-
-    for registry in registries:
+    for registry in CONFIG.registries:
         if key == registry.get('key'):
             # If a matching key is found, return true
             LOG.debug(f'Using service key of: {registry.get("url")}.')
