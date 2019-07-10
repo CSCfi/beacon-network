@@ -181,6 +181,7 @@ async def validate_service_key(key):
     for registry in registries:
         if key == registry.get('key'):
             # If a matching key is found, return true
+            LOG.debug(f'Using service key of: {registry.get("url")}.')
             return True
 
     # If no matching keys were found, raise an exception
