@@ -13,7 +13,6 @@ from aiohttp import web
 from aiocache import cached
 
 from .logging import LOG
-# from .db_ops import db_get_service_urls
 
 
 async def load_json(json_file):
@@ -156,23 +155,19 @@ async def db_get_recaching_credentials(connection):
     credentials = []
     try:
         # Database query
-        query = f"""SELECT a.service_url AS service_url, b.service_key AS service_key
+        query = f"""SELECT a.url AS url, b.service_key AS service_key
                     FROM services a, service_keys b
-                    WHERE service_type='GA4GHBeaconAggregator'
+                    WHERE type='urn:ga4gh:aggregator'
                     AND a.id=b.service_id"""
         statement = await connection.prepare(query)
         response = await statement.fetch()
         if len(response) > 0:
             # Parse urls from psql records and append to list
             for record in response:
-                credentials.append({'service_url': record['service_url'],
+                credentials.append({'service_url': record['url'],
                                     'service_key': record['service_key']})
             return credentials
         else:
-            # raise web.HTTPNotFound(text=f'No queryable services found of service type {service_type}.')
-            # Why did we even have a 404 here
-            # pass
-            # Return empty iterable
             return credentials
     except Exception as e:
         LOG.debug(f'DB error: {e}')
@@ -203,21 +198,20 @@ async def invalidate_cache(service):
 
     # Send invalidation notification (request) to service (aggregator)
     async with aiohttp.ClientSession() as session:
-        # try:
-        # Solution for prototype, figure out a better way later
-        # serviceUrl from DB: `https://../` append with `beacons`
-        async with session.delete(f'{service["service_url"]}beacons',
-                                  headers={'Beacon-Service-Key': service['service_key']},
-                                  ssl=await request_security()) as response:
-            if response.status in [200, 204]:
-                LOG.debug(f'Service received notification and responded with {response.status}.')
-            else:
-                # Low priority log, it doesn't matter if the invalidation was unsuccessful
-                LOG.debug(f'Service encountered a problem with notification: {response.status}.')
-        # except Exception as e:
-        #     LOG.debug(f'Query error {e}.')
-        #     # web.HTTPInternalServerError(text=f'An error occurred while attempting to send request to Aggregator.')
-        #     pass  # We don't care if a notification failed
+        try:
+            # Aggregator URLs end with /service-info in the DB, replace them with /cache
+            async with session.delete(service["service_url"].replace('service-info', 'cache'),
+                                      headers={'Beacon-Service-Key': service['service_key']},
+                                      ssl=await request_security()) as response:
+                if response.status in [200, 204]:
+                    LOG.debug(f'Service received notification and responded with {response.status}.')
+                else:
+                    # Low priority log, it doesn't matter if the invalidation was unsuccessful
+                    LOG.debug(f'Service encountered a problem with notification: {response.status}.')
+        except Exception as e:
+            LOG.debug(f'Query error {e}.')
+            # web.HTTPInternalServerError(text=f'An error occurred while attempting to send request to Aggregator.')
+            pass  # We don't care if a notification failed
 
 
 async def generate_service_key():

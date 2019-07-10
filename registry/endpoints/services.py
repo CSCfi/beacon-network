@@ -4,8 +4,7 @@ from aiohttp import web
 
 from ..config import CONFIG
 from ..utils.logging import LOG
-# from ..utils.db_ops import db_check_service_id, db_register_service, db_get_service_details, db_delete_services, db_update_sequence
-from ..utils.db_ops import db_check_service_id, db_register_service, db_get_service_details, db_update_sequence
+from ..utils.db_ops import db_check_service_id, db_register_service, db_get_service_details, db_update_sequence, db_delete_services
 from ..utils.utils import http_request_info, generate_service_id, parse_service_info, query_params
 
 
@@ -101,26 +100,26 @@ async def update_service(request, db_pool):
         raise web.HTTPBadRequest(text='Missing path parameter Service ID: "/services/<service_id>"')
 
 
-# async def delete_services(request, db_pool):
-#     """Delete service(s)."""
-#     LOG.debug('Delete service(s).')
+async def delete_services(request, db_pool):
+    """Delete service(s)."""
+    LOG.debug('Delete service(s).')
 
-#     # Parse query params from path, mainly service_id
-#     service_id, params = await query_params(request)
+    # Parse query params from path, mainly service_id
+    service_id, _ = await query_params(request)
 
-#     # Delete specified service
-#     if service_id:
-#         # Take connection from the database pool
-#         async with db_pool.acquire() as connection:
-#             # # Delete specified service
-#             # if service_id:
-#             # Verify that given service_id exists
-#             id_found = await db_check_service_id(connection, service_id)
-#             if not id_found:
-#                 raise web.HTTPNotFound(text='No services found with given service ID.')
-#             await db_delete_services(connection, id=service_id)
-#             # # Delete all services
-#             # else:
-#             #     await db_delete_services(connection)
-#     else:
-#         raise web.HTTPForbidden(text='Mass deletion has been disabled.')
+    # Delete specified service
+    if service_id:
+        # Take connection from the database pool
+        async with db_pool.acquire() as connection:
+            # # Delete specified service
+            # if service_id:
+            # Verify that given service_id exists
+            id_found = await db_check_service_id(connection, service_id)
+            if not id_found:
+                raise web.HTTPNotFound(text='No services found with given service ID.')
+            await db_delete_services(connection, id=service_id)
+            # # Delete all services
+            # else:
+            #     await db_delete_services(connection)
+    else:
+        raise web.HTTPForbidden(text='Mass deletion has been disabled.')

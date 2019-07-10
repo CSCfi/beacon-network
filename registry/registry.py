@@ -9,8 +9,7 @@ from aiohttp import web
 
 from .endpoints.info import get_info
 from .endpoints.service_types import get_service_types
-# from .endpoints.services import register_service, get_services, update_service, delete_services
-from .endpoints.services import register_service, get_services, update_service
+from .endpoints.services import register_service, get_services, update_service, delete_services
 from .schemas import load_schema
 from .utils.utils import invalidate_aggregator_caches, application_security
 from .utils.validate import validate, api_key
@@ -58,7 +57,7 @@ async def services_post(request):
     response = await register_service(request, db_pool)
 
     # Notify aggregators of changed service catalogue
-    # await invalidate_aggregator_caches(request, db_pool)
+    await invalidate_aggregator_caches(request, db_pool)
 
     # Return confirmation and service key if no problems occurred during processing
     return web.HTTPCreated(body=json.dumps(response), content_type='application/json')
@@ -95,30 +94,30 @@ async def services_put(request):
     await update_service(request, db_pool)
 
     # # Notify aggregators of changed service catalogue
-    # await invalidate_aggregator_caches(request, db_pool)
+    await invalidate_aggregator_caches(request, db_pool)
 
     # Return confirmation
     return web.Response(text='Service has been updated.')
 
 
-# @routes.delete('/services')
-# @routes.delete('/services/{service_id}')
-# async def services_delete(request):
-#     """DELETE request to the /user endpoint.
-#     Delete registered service from host.
-#     """
-#     LOG.debug('DELETE /services received.')
-#     # Tap into the database pool
-#     db_pool = request.app['pool']
+@routes.delete('/services')
+@routes.delete('/services/{service_id}')
+async def services_delete(request):
+    """DELETE request to the /user endpoint.
+    Delete registered service from host.
+    """
+    LOG.debug('DELETE /services received.')
+    # Tap into the database pool
+    db_pool = request.app['pool']
 
-#     # Send request for processing
-#     await delete_services(request, db_pool)
+    # Send request for processing
+    await delete_services(request, db_pool)
 
-#     # Notify aggregators of changed service catalogue
-#     await invalidate_aggregator_caches(request, db_pool)
+    # Notify aggregators of changed service catalogue
+    await invalidate_aggregator_caches(request, db_pool)
 
-#     # Return confirmation
-#     return web.HTTPNoContent()
+    # Return confirmation
+    return web.Response(text='Service has been deleted.')
 
 
 async def init_db(app):

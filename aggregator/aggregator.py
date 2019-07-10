@@ -67,7 +67,7 @@ async def cache(request):
     await invalidate_cache()
 
     # Return confirmation
-    return web.HTTPNoContent()
+    return web.Response(text='Cache has been deleted.')
 
 
 def set_cors(app):
