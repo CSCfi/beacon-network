@@ -5,7 +5,7 @@ from aiohttp import web
 from ..config import CONFIG
 from ..utils.logging import LOG
 # from ..utils.db_ops import db_check_service_id, db_register_service, db_get_service_details, db_delete_services, db_update_sequence
-from ..utils.db_ops import db_check_service_id, db_register_service, db_get_service_details
+from ..utils.db_ops import db_check_service_id, db_register_service, db_get_service_details, db_update_sequence
 from ..utils.utils import http_request_info, generate_service_id, parse_service_info, query_params
 
 
@@ -72,27 +72,33 @@ async def get_services(request, db_pool):
     return response
 
 
-# async def update_service(request, db_pool):
-#     """Update service details."""
-#     LOG.debug('Update service.')
-#     # Get POST request body JSON as python dict
-#     service = await request.json()
+async def update_service(request, db_pool):
+    """Update service details."""
+    LOG.debug('Update service.')
+    # Get POST request body JSON as python dict
+    r = await request.json()
+    url = r.get('url')
 
-#     # Parse query params from path, mainly service_id
-#     service_id, params = await query_params(request)
+    # Parse query params from path, mainly service_id
+    service_id, _ = await query_params(request)
 
-#     # Check that user specified id in path
-#     if service_id:
-#         # Take connection from the database pool
-#         async with db_pool.acquire() as connection:
-#             # Verify that given service exists
-#             id_found_service = await db_check_service_id(connection, service_id)
-#             if not id_found_service:
-#                 raise web.HTTPNotFound(text='No services found with given service ID.')
-#             # Initiate update
-#             await db_update_sequence(connection, service_id, service)
-#     else:
-#         raise web.HTTPBadRequest(text='Missing path parameter Service ID: "/services/<service_id>"')
+    # Check that user specified id in path
+    if service_id:
+        # Take connection from the database pool
+        async with db_pool.acquire() as connection:
+            # Verify that given service exists
+            id_found_service = await db_check_service_id(connection, service_id)
+            if not id_found_service:
+                raise web.HTTPNotFound(text='No services found with given service ID.')
+            # Request service info from given url and generate a new ID in case it changed
+            service_info = await http_request_info(url)
+            service_id = await generate_service_id(url)
+            # Parse and validate service info object
+            service = await parse_service_info(service_id, r, service_info)
+            # Initiate update
+            await db_update_sequence(connection, service_id, service, r['email'])
+    else:
+        raise web.HTTPBadRequest(text='Missing path parameter Service ID: "/services/<service_id>"')
 
 
 # async def delete_services(request, db_pool):

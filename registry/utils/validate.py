@@ -94,16 +94,19 @@ def api_key():
             # Handle other methods
             elif request.method in ['PUT', 'DELETE']:
                 LOG.debug(f'Using {request.method} method.')
-                try:
-                    beacon_service_key = request.headers['Beacon-Service-Key']
-                    LOG.debug('Beacon-Service-Key received.')
-                except Exception:
-                    LOG.debug('Missing "Beacon-Service-Key" from headers.')
-                    raise web.HTTPBadRequest(text='Missing header "Beacon-Service-Key".')
-                # Take one connection from the active database pool
-                async with request.app['pool'].acquire() as connection:
-                    # Verify that provided service key is authorised
-                    await db_verify_service_key(connection, service_id=request.match_info.get('service_id'), service_key=beacon_service_key)
+                if request.match_info.get('service_id'):
+                    try:
+                        beacon_service_key = request.headers['Beacon-Service-Key']
+                        LOG.debug('Beacon-Service-Key received.')
+                    except Exception:
+                        LOG.debug('Missing "Beacon-Service-Key" from headers.')
+                        raise web.HTTPBadRequest(text='Missing header "Beacon-Service-Key".')
+                    # Take one connection from the active database pool
+                    async with request.app['pool'].acquire() as connection:
+                        # Verify that provided service key is authorised
+                        await db_verify_service_key(connection, service_id=request.match_info.get('service_id'), service_key=beacon_service_key)
+                else:
+                    raise web.HTTPBadRequest(text='Missing path paremeter "/services/<service_id>".')
                 # None of the checks failed
                 return await handler(request)
 

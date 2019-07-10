@@ -136,7 +136,7 @@ async def db_delete_services(connection, id=None):
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to delete service(s).')
 
 
-async def db_update_service(connection, id, service):
+async def db_update_service(connection, id, service, email):
     """Update service."""
     LOG.debug('Update service.')
 
@@ -150,29 +150,28 @@ async def db_update_service(connection, id, service):
 
     # Apply updates
     try:
-        org_id = service['organization']['id']
-        await connection.execute("""UPDATE services SET id=$1, name=$2, service_type=$3, api_version=$4,
-                                 service_url=$5, host_org=$6, description=$7, service_version=$8,
-                                 open=$9, welcome_url=$10, alt_url=$11, update_datetime=NOW()
-                                 WHERE id=$12""",
-                                 service.get('id'), service.get('name'), service.get('serviceType'),
-                                 service.get('apiVersion'), service.get('serviceUrl'), org_id,
-                                 service.get('description'), service.get('version'), service.get('open'),
-                                 service.get('welcomeUrl'), service.get('alternativeUrl'), id)
+        await connection.execute("""UPDATE services SET id=$1, name=$2, type=$3, description=$4,
+                                 url=$5, contact_url=$6, api_version=$7, service_version=$8, extension=$9,
+                                 email=$10, updated_at=NOW()
+                                 WHERE id=$11""",
+                                 service['id'], service['name'], service['type'],
+                                 service['description'], service['url'], service['contact_url'],
+                                 service['api_version'], service['service_version'], json.dumps(service['extension']),
+                                 email, service['id'])
     except Exception as e:
         LOG.debug(f'DB error: {e}')
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to update service details.')
 
 
-async def db_update_sequence(connection, id, updates):
+async def db_update_sequence(connection, id, updates, email):
     """Initiate update sequence."""
     LOG.debug('Initiate update sequence.')
 
     # Carry out operations within a transaction to avoid conflicts
     async with connection.transaction():
-        # Update organisation first, because service has foreign key on organisation
-        # await db_update_organisation(connection, id, updates['organization'])
-        await db_update_service(connection, id, updates)
+        # First update the service info, if that passes, update the service id at service_keys if it changed
+        await db_update_service(connection, id, updates, email)
+        # Update service id at service_keys in case it changed
         await db_update_service_key(connection, id, updates['id'])
 
 
@@ -189,8 +188,8 @@ async def db_verify_service_key(connection, service_id=None, service_key=None):
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to verify Beacon Service Key.')
     else:
         if len(response) == 0:
-            LOG.debug('Provided service key is unauthorised.')
-            raise web.HTTPUnauthorized(text='Unauthorised service key.')
+            LOG.debug('Provided service key is unauthorised or service id is wrong.')
+            raise web.HTTPUnauthorized(text='Unauthorised service key or wrong service id.')
         LOG.debug('Service key is authorised.')
 
 

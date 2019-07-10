@@ -10,7 +10,7 @@ from aiohttp import web
 from .endpoints.info import get_info
 from .endpoints.service_types import get_service_types
 # from .endpoints.services import register_service, get_services, update_service, delete_services
-from .endpoints.services import register_service, get_services
+from .endpoints.services import register_service, get_services, update_service
 from .schemas import load_schema
 from .utils.utils import invalidate_aggregator_caches, application_security
 from .utils.validate import validate, api_key
@@ -81,24 +81,24 @@ async def services_get(request):
     return web.json_response(response)
 
 
-# @routes.put('/services/{service_id}')
-# @validate(load_schema("serviceinfo"))
-# async def services_put(request):
-#     """PATCH request to the /user endpoint.
-#     Update service details at host.
-#     """
-#     LOG.debug('PUT /services received.')
-#     # Tap into the database pool
-#     db_pool = request.app['pool']
+@routes.put('/services/{service_id}')
+@validate(load_schema("self_registration"))
+async def services_put(request):
+    """PATCH request to the /user endpoint.
+    Update service details at host.
+    """
+    LOG.debug('PUT /services received.')
+    # Tap into the database pool
+    db_pool = request.app['pool']
 
-#     # Send request for processing
-#     await update_service(request, db_pool)
+    # Send request for processing
+    await update_service(request, db_pool)
 
-#     # Notify aggregators of changed service catalogue
-#     await invalidate_aggregator_caches(request, db_pool)
+    # # Notify aggregators of changed service catalogue
+    # await invalidate_aggregator_caches(request, db_pool)
 
-#     # Return confirmation
-#     return web.HTTPNoContent()
+    # Return confirmation
+    return web.Response(text='Service has been updated.')
 
 
 # @routes.delete('/services')
