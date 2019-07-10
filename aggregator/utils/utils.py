@@ -73,6 +73,9 @@ async def process_url(url):
         url = url.replace('service-info', 'query')
     else:
         # Unknown case
+        # One case is observed, where URL was similar to https://service.institution.org/beacon
+        # For URLs where the info endpoint is /, but / is not present, let's add /query
+        url += '/query'
         pass
 
     return url
