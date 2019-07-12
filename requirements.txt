@@ -6,4 +6,4 @@ aiomcache
 ujson
 uvloop
 asyncpg
-jsonschema==3.0.0a3
+jsonschema==3.0.1
