@@ -24,13 +24,13 @@
       ]
     },
     "url": {
-      "title": "URL to the info endpoint of the service. For example, GA4GH products use /service-info and Beacon API spec uses /",
+      "title": "URL to the info endpoint of the service. For example, GA4GH products use /service-info and Beacon API spec uses /. Use HTTPS, HTTP is for local testing.",
       "type": "string",
       "examples": [
         "https://beacon.ga4gh.org/service-info",
         "https://elixir-beacon.elixir-europe.org/"
       ],
-      "pattern": "^http://"
+      "pattern": "^(http|https)://"
     }
   }
 }
