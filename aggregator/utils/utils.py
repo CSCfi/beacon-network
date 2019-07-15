@@ -109,6 +109,10 @@ async def get_access_token(request):
         if not auth_scheme == 'Bearer':
             LOG.debug(f'User tried to use "{auth_scheme}"" auth_scheme.')
             web.HTTPForbidden(text=f'Unallowed authorization scheme "{auth_scheme}", user "Bearer" instead.')
+    elif CONFIG.auth_cookie in request.cookies:
+        LOG.debug('Session from cookies.')
+        # Request access token from session storage
+        access_token = await get_access_token_with_session()
     elif 'access_token' in request.cookies:
         LOG.debug('Auth from cookies.')
         # Then check if access token was stored in cookies
@@ -119,6 +123,27 @@ async def get_access_token(request):
         # pass
 
     return access_token
+
+
+async def get_access_token_with_session():
+    """Request access token from session storage."""
+    LOG.debug('Contacting session storage.')
+
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(CONFIG.auth_url) as response:
+                if response.status == 200:
+                    LOG.debug(f'Session storage response: {response.status}.')
+                    result = await response.json()
+                    if 'access_token' in result:
+                        LOG.debug('Access token received.')
+                        return result.get('access_token', '')
+                    else:
+                        LOG.debug('Session storage did not contain an access token.')
+                        return ''
+        except Exception as e:
+            LOG.debug(f'Query error {e}.')
+            web.HTTPInternalServerError(text=f'An error occurred while attempting to query services: {e}')
 
 
 async def query_service(service, params, access_token, ws=None):

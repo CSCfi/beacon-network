@@ -31,6 +31,8 @@ def parse_config_file(path):
         'registries': load_json(config.get('app', 'registries')) or [],
         'beacons': bool(strtobool(config.get('app', 'beacons'))) or True,
         'aggregators': bool(strtobool(config.get('app', 'aggregators'))) or False,
+        'auth_url': config.get('app', 'beacons') or 'localhost:5000',
+        'auth_cookie': config.get('app', 'aggregators') or 'AIOHTTP_SESSION',
         'name': config.get('info', 'name'),
         'type': config.get('info', 'type'),
         'description': config.get('info', 'description'),
