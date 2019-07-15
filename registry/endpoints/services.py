@@ -36,7 +36,7 @@ async def register_service(request, db_pool):
         if id_taken:
             raise web.HTTPConflict(text=f'Service ID "{service_id}" is taken.')
         # Parse and validate service info object
-        service = await parse_service_info(service_id, r, service_info)
+        service = await parse_service_info(service_id, service_info, req=r)
         # Register service to host
         service_key = await db_register_service(connection, service, r['email'])
         if r['type'] in ['urn:ga4gh:beacon', 'urn:ga4gh:registry']:
@@ -93,7 +93,7 @@ async def update_service(request, db_pool):
             service_info = await http_request_info(url)
             service_id = await generate_service_id(url)
             # Parse and validate service info object
-            service = await parse_service_info(service_id, r, service_info)
+            service = await parse_service_info(service_id, service_info, req=r)
             # Initiate update
             await db_update_sequence(connection, service_id, service, r['email'])
     else:

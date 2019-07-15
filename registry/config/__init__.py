@@ -8,6 +8,7 @@ from collections import namedtuple
 
 from ..utils.logging import LOG
 
+
 def load_json(json_file):
     """Load data from an external JSON file."""
     LOG.debug(f'Loading data from file: {json_file}.')

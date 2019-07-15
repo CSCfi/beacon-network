@@ -11,6 +11,7 @@ from .endpoints.info import get_info
 from .endpoints.service_types import get_service_types
 from .endpoints.service_statuses import get_service_statuses
 from .endpoints.services import register_service, get_services, update_service, delete_services
+from .endpoints.update import update_service_infos
 from .schemas import load_schema
 from .utils.utils import invalidate_aggregator_caches, application_security
 from .utils.validate import validate, api_key
@@ -126,6 +127,20 @@ async def services_delete(request):
 
     # Return confirmation
     return web.Response(text='Service has been deleted.')
+
+
+@routes.get('/update/services')
+async def update_services(request):
+    """Update registered service infos."""
+    LOG.debug('GET /update/services received.')
+    # Tap into the database pool
+    db_pool = request.app['pool']
+
+    # Notify aggregators of changed service catalogue
+    fail, total = await update_service_infos(request, db_pool)
+
+    # Return confirmation
+    return web.Response(text=f'{total - fail} successful update(s). {fail} failed update(s).')
 
 
 async def init_db(app):

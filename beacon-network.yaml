@@ -193,6 +193,23 @@ paths:
         204:
           description: No Content
 
+  /update/services:
+    get:
+      tags:
+        - Registry Endpoints
+      summary: Update service infos.
+      description: Update service infos of all registered services by requesting up to date data.
+      parameters:
+      - name: Authorization
+        in: header
+        description: Api key to access this endpoint.
+        schema:
+          type: string
+        required: true
+      responses:
+        200:
+          description: Services have been updated.
+
   /query:
     get:
       tags:

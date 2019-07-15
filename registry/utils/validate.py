@@ -7,7 +7,7 @@ from jsonschema import Draft7Validator, validators
 from jsonschema.exceptions import ValidationError
 
 from .logging import LOG
-from .db_ops import db_verify_api_key, db_verify_service_key
+from .db_ops import db_verify_api_key, db_verify_service_key, db_verify_admin_key
 
 
 def extend_with_default(validator_class):
@@ -70,10 +70,26 @@ def api_key():
     async def api_key_middleware(request, handler):
         LOG.debug('Start api key check')
 
-        assert isinstance(request, web.Request)
+        if not isinstance(request, web.Request):
+            raise web.HTTPBadRequest(text='Invalid HTTP Request.')
 
         # Check which endpoint user is requesting and sort according to method
-        if '/services' in request.path:
+        if request.path == '/update/services' and request.method == 'GET':
+            LOG.debug('In /update/services endpoint using GET.')
+            try:
+                api_key = request.headers['Authorization']
+                LOG.debug('API key received.')
+            except Exception:
+                LOG.debug('Missing "Authorization" from headers.')
+                raise web.HTTPBadRequest(text='Missing header "Authorization".')
+            # Take one connection from the active database pool
+            async with request.app['pool'].acquire() as connection:
+                # Check if provided api key is valid
+                await db_verify_admin_key(connection, api_key)
+            # None of the checks failed
+            return await handler(request)
+
+        elif '/services' in request.path:
             LOG.debug('In /services endpoint.')
             if request.method == 'POST':
                 LOG.debug('Using POST method.')
@@ -87,7 +103,6 @@ def api_key():
                 async with request.app['pool'].acquire() as connection:
                     # Check if provided api key is valid
                     await db_verify_api_key(connection, api_key)
-
                 # None of the checks failed
                 return await handler(request)
 

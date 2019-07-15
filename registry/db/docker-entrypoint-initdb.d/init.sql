@@ -28,3 +28,9 @@ CREATE TABLE api_keys (
     api_key VARCHAR(64),
     comment VARCHAR(256)
 );
+
+--Admin key used to poll /update/services endpoint
+CREATE TABLE admin_keys (
+    admin_key VARCHAR(64),
+    comment VARCHAR(256)
+);

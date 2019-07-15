@@ -209,3 +209,21 @@ async def db_verify_api_key(connection, api_key):
             LOG.debug('Provided api key is unauthorised.')
             raise web.HTTPUnauthorized(text='Unauthorised api key.')
         LOG.debug('Api key is authorised.')
+
+
+async def db_verify_admin_key(connection, api_key):
+    """Check if provided admin key for update is authorised."""
+    LOG.debug('Querying database to verify "Authorization" Admin key.')
+    try:
+        # Database query
+        query = """SELECT comment FROM admin_keys WHERE admin_key=$1"""
+        statement = await connection.prepare(query)
+        response = await statement.fetch(api_key)
+    except Exception as e:
+        LOG.debug(f'DB error: {e}')
+        raise web.HTTPInternalServerError(text='Database error occurred while attempting to verify "Authorization" API key.')
+    else:
+        if len(response) == 0:
+            LOG.debug('Provided admin key is unauthorised.')
+            raise web.HTTPUnauthorized(text='Unauthorised admin key.')
+        LOG.debug('Admin key is authorised.')

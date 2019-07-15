@@ -34,7 +34,7 @@ async def http_request_info(url):
             raise web.HTTPInternalServerError(text=f'An error occurred while attempting to contact service: {e}')
 
 
-async def parse_service_info(id, req, service):
+async def parse_service_info(id, service, req={}):
     """Parse and validate service info.
 
     Service infos may use the same keys in different places, for example the
@@ -44,7 +44,7 @@ async def parse_service_info(id, req, service):
 
     service_info = {}
 
-    if req['url'].endswith('/service-info'):
+    if req.get('url', '').endswith('/service-info'):
         LOG.debug('Using GA4GH endpoint.')
         # Use GA4GH service-info notation
         service_info = {
@@ -52,8 +52,8 @@ async def parse_service_info(id, req, service):
             'name': service.get('name', ''),
             'type': service.get('type', 'urn:ga4gh:beacon'),
             'description': service.get('description', ''),
-            'url': req['url'],
-            'contact_url': service.get('contactUrl', '') or req['email'],
+            'url': req.get('url', '') or service.get('url', ''),
+            'contact_url': service.get('contactUrl', '') or req.get('email', ''),
             'api_version': service.get('apiVersion', ''),
             'service_version': service.get('version', ''),
             'extension': service.get('extension', {})
@@ -66,15 +66,24 @@ async def parse_service_info(id, req, service):
             'name': service.get('name', ''),
             'type': 'urn:ga4gh:beacon',
             'description': service.get('description', ''),
-            'url': req['url'],
-            'contact_url': service.get('organization', {}).get('contactUrl', '') or req['email'],
+            'url': req.get('url', '') or service.get('url', ''),
+            'contact_url': service.get('organization', {}).get('contactUrl', '') or req.get('email', ''),
             'api_version': service.get('apiVersion', ''),
             'service_version': service.get('version', ''),
             'extension': service.get('info', {})
         }
         try:
-            # add organization.logoUrl to extension
-            service_info['extension'].update({'logoUrl': service.get('organization').get('logoUrl')})
+            # add following Beacon API keys to extension for UI use
+            # organization.name
+            # organization.welcomeUrl
+            # organization.logoUrl
+            service_info['extension'].update(
+                {
+                    'organization.name': service.get('organization').get('name'),
+                    'organization.welcomeUrl': service.get('organization').get('welcomeUrl'),
+                    'organization.logoUrl': service.get('organization').get('logoUrl')
+                }
+            )
         except Exception as e:
             LOG.debug(f'Failed to update extension: {e}.')
             pass
