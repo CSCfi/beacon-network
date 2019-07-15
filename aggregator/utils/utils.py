@@ -109,7 +109,7 @@ async def get_access_token(request):
         if not auth_scheme == 'Bearer':
             LOG.debug(f'User tried to use "{auth_scheme}"" auth_scheme.')
             web.HTTPForbidden(text=f'Unallowed authorization scheme "{auth_scheme}", user "Bearer" instead.')
-    elif CONFIG.auth_cookie in request.cookies:
+    elif CONFIG.session_cookie in request.cookies:
         LOG.debug('Session from cookies.')
         # Request access token from session storage
         access_token = await get_access_token_with_session()
@@ -131,7 +131,7 @@ async def get_access_token_with_session():
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(CONFIG.auth_url) as response:
+            async with session.get(CONFIG.session_storage) as response:
                 if response.status == 200:
                     LOG.debug(f'Session storage response: {response.status}.')
                     result = await response.json()
