@@ -24,7 +24,7 @@ async def update_service_infos(request, db_pool):
 
         # Generate async task queue
         for service in services:
-            task =  asyncio.ensure_future(update_sequence(service, db_pool))
+            task = asyncio.ensure_future(update_sequence(service, db_pool))
             tasks.append(task)
 
     # Initiate async queue
