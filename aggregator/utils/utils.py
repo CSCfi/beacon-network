@@ -101,15 +101,14 @@ async def get_access_token(request):
     """Retrieve access token if it exists."""
     LOG.debug('Look for access token.')
     access_token = None
-    LOG.debug(request)
-    LOG.debug(request.cookies)
+
     if 'Authorization' in request.headers:
         LOG.debug('Auth from headers.')
         # First check if access token was delivered via headers
         auth_scheme, access_token = request.headers.get('Authorization').split(' ')
         if not auth_scheme == 'Bearer':
             LOG.debug(f'User tried to use "{auth_scheme}"" auth_scheme.')
-            web.HTTPForbidden(text=f'Unallowed authorization scheme "{auth_scheme}", user "Bearer" instead.')
+            raise web.HTTPForbidden(text=f'Unallowed authorization scheme "{auth_scheme}", user "Bearer" instead.')
     elif 'access_token' in request.cookies:
         LOG.debug('Auth from cookies.')
         # Then check if access token was stored in cookies
