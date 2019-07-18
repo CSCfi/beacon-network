@@ -24,7 +24,7 @@ setup(
     install_requires=[
         'aiohttp', 'asyncpg', 'aiohttp_cors', 'uvloop',
         'asyncio', 'aiocache', 'aiomcache', 'ujson',
-        'jsonschema==3.0.1'
+        'jsonschema==3.0.1', 'gunicorn'
     ],
     entry_points={
         'console_scripts': [

@@ -175,7 +175,7 @@ def set_cors(app):
         cors.add(route)
 
 
-def init_app():
+async def init_app():
     """Initialise the web server."""
     LOG.info('Initialising web server.')
     app = web.Application(middlewares=[api_key()])
