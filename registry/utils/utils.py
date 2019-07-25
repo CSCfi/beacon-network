@@ -53,7 +53,7 @@ async def parse_service_info(id, service, req={}):
             'type': service.get('type', 'urn:ga4gh:beacon'),
             'description': service.get('description', ''),
             'url': req.get('url', '') or service.get('url', ''),
-            'contact_url': service.get('contactUrl', '') or req.get('email', ''),
+            'contact_url': service.get('contactUrl', ''),
             'api_version': service.get('apiVersion', ''),
             'service_version': service.get('version', ''),
             'extension': service.get('extension', {})
@@ -67,7 +67,7 @@ async def parse_service_info(id, service, req={}):
             'type': 'urn:ga4gh:beacon',
             'description': service.get('description', ''),
             'url': req.get('url', '') or service.get('url', ''),
-            'contact_url': service.get('organization', {}).get('contactUrl', '') or req.get('email', ''),
+            'contact_url': service.get('organization', {}).get('contactUrl', ''),
             'api_version': service.get('apiVersion', ''),
             'service_version': service.get('version', ''),
             'extension': service.get('info', {})
@@ -79,9 +79,11 @@ async def parse_service_info(id, service, req={}):
             # organization.logoUrl
             service_info['extension'].update(
                 {
-                    'organization.name': service.get('organization').get('name'),
-                    'organization.welcomeUrl': service.get('organization').get('welcomeUrl'),
-                    'organization.logoUrl': service.get('organization').get('logoUrl')
+                    'organization': {
+                        'name': service.get('organization').get('name'),
+                        'welcomeUrl': service.get('organization').get('welcomeUrl'),
+                        'logoUrl': service.get('organization').get('logoUrl')
+                    }
                 }
             )
         except Exception as e:

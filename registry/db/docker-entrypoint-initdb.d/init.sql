@@ -8,10 +8,15 @@ CREATE TABLE IF NOT EXISTS services (
     api_version VARCHAR(8),
     service_version VARCHAR(8),
     extension JSONB,
-    email VARCHAR(256),
     created_at TIMESTAMP WITH TIME ZONE,
     updated_at TIMESTAMP WITH TIME ZONE,
     PRIMARY KEY (id)
+);
+
+--Email for maintainer of service
+CREATE TABLE hosts (
+    service_id VARCHAR(256),
+    email VARCHAR(256)
 );
 
 --Services that have been registered have individual service keys that are used for self-maintenance

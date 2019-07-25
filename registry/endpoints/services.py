@@ -5,6 +5,7 @@ from aiohttp import web
 from ..config import CONFIG
 from ..utils.logging import LOG
 from ..utils.db_ops import db_check_service_id, db_register_service, db_get_service_details, db_update_sequence, db_delete_services
+from ..utils.db_ops import db_store_email
 from ..utils.utils import http_request_info, generate_service_id, parse_service_info, query_params
 
 
@@ -38,7 +39,8 @@ async def register_service(request, db_pool):
         # Parse and validate service info object
         service = await parse_service_info(service_id, service_info, req=r)
         # Register service to host
-        service_key = await db_register_service(connection, service, r['email'])
+        service_key = await db_register_service(connection, service)
+        await db_store_email(connection, service_id, r['email'])
         if r['type'] in ['urn:ga4gh:beacon', 'urn:ga4gh:registry']:
             response['message'] = 'Service has been registered. Service key and id for updating and deleting'\
                                   'registration included in this response, keep them safe.'
@@ -89,13 +91,18 @@ async def update_service(request, db_pool):
             id_found_service = await db_check_service_id(connection, service_id)
             if not id_found_service:
                 raise web.HTTPNotFound(text='No services found with given service ID.')
-            # Request service info from given url and generate a new ID in case it changed
+            # In case service id changes, check that it doesn't conflict with an existing service
+            new_service_id = await generate_service_id(url)
+            new_id_found_service = await db_check_service_id(connection, new_service_id)
+            if new_id_found_service:
+                raise web.HTTPConflict(text=f'Another service has already been registered with the newly generated service ID: {new_service_id}.')
+            # Request service info from given url
             service_info = await http_request_info(url)
-            service_id = await generate_service_id(url)
             # Parse and validate service info object
-            service = await parse_service_info(service_id, service_info, req=r)
+            service = await parse_service_info(new_service_id, service_info, req=r)
             # Initiate update
-            await db_update_sequence(connection, service_id, service, r['email'])
+            await db_update_sequence(connection, new_service_id, service)
+            await db_store_email(connection, new_service_id, r['email'])
     else:
         raise web.HTTPBadRequest(text='Missing path parameter Service ID: "/services/<service_id>"')
 

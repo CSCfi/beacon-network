@@ -40,6 +40,7 @@ async def update_service_infos(request, db_pool):
 async def update_sequence(service, db_pool):
     """Update sequence tasks."""
     LOG.debug('Updating service info.')
+
     try:
         # Request service info from given url
         service_info = await http_request_info(service['url'])
@@ -48,7 +49,7 @@ async def update_sequence(service, db_pool):
         parsed_service_info = await parse_service_info(service['id'], service_info, req=req)
         # Update service info
         async with db_pool.acquire() as connection:
-            await db_update_service(connection, service['id'], parsed_service_info, service.get('contact_url', ''))
+            await db_update_service(connection, service['id'], parsed_service_info)
     except Exception as e:
         LOG.error(f'Update failed for {service["id"]}: {e}.')
         return service['id']

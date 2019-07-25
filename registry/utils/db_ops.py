@@ -63,18 +63,31 @@ async def db_delete_service_key(connection, id):
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to delete service key.')
 
 
-async def db_register_service(connection, service, email):
+async def db_store_email(connection, service_id, email):
+    """Store email separately from service info."""
+    LOG.debug('Store email.')
+    try:
+        async with connection.transaction():
+            await connection.execute("""INSERT INTO hosts
+                                     VALUES ($1, $2)""",
+                                     service_id, email)
+    except Exception as e:
+        LOG.debug(f'DB error: {e}')
+        pass
+
+
+async def db_register_service(connection, service):
     """Register new service at host."""
     LOG.debug('Register new service.')
     try:
         # Database commit occurs on transaction closure
         async with connection.transaction():
             await connection.execute("""INSERT INTO services (id, name, type, description, url, contact_url,
-                                     api_version, service_version, extension, email, created_at, updated_at)
-                                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())""",
+                                     api_version, service_version, extension, created_at, updated_at)
+                                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())""",
                                      service['id'], service['name'], service['type'],
                                      service['description'], service['url'], service['contact_url'],
-                                     service['api_version'], service['service_version'], json.dumps(service['extension']), email)
+                                     service['api_version'], service['service_version'], json.dumps(service['extension']))
             # If service registration was successful, generate and store a service key
             service_key = await generate_service_key()
             await db_store_service_key(connection, service['id'], service_key)
@@ -136,10 +149,9 @@ async def db_delete_services(connection, id=None):
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to delete service(s).')
 
 
-async def db_update_service(connection, id, service, email):
+async def db_update_service(connection, id, service):
     """Update service."""
     LOG.debug('Update service.')
-
     # Check if user wants to change service id
     if not id == service['id']:
         # Check if desired service ID is taken
@@ -152,25 +164,25 @@ async def db_update_service(connection, id, service, email):
     try:
         await connection.execute("""UPDATE services SET id=$1, name=$2, type=$3, description=$4,
                                  url=$5, contact_url=$6, api_version=$7, service_version=$8, extension=$9,
-                                 email=$10, updated_at=NOW()
-                                 WHERE id=$11""",
+                                 updated_at=NOW()
+                                 WHERE id=$10""",
                                  service['id'], service['name'], service['type'],
                                  service['description'], service['url'], service['contact_url'],
                                  service['api_version'], service['service_version'], json.dumps(service['extension']),
-                                 email, service['id'])
+                                 service['id'])
     except Exception as e:
         LOG.debug(f'DB error: {e}')
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to update service details.')
 
 
-async def db_update_sequence(connection, id, updates, email):
+async def db_update_sequence(connection, id, updates):
     """Initiate update sequence."""
     LOG.debug('Initiate update sequence.')
 
     # Carry out operations within a transaction to avoid conflicts
     async with connection.transaction():
         # First update the service info, if that passes, update the service id at service_keys if it changed
-        await db_update_service(connection, id, updates, email)
+        await db_update_service(connection, id, updates)
         # Update service id at service_keys in case it changed
         await db_update_service_key(connection, id, updates['id'])
 
