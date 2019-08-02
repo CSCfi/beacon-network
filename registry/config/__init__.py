@@ -25,8 +25,8 @@ def parse_config_file(path):
     config = ConfigParser()
     config.read(path)
     config_vars = {
-        'host': os.environ.get('HOST', config.get('app', 'host')) or '0.0.0.0',
-        'port': int(os.environ.get('PORT', config.get('app', 'port')) or 8080),
+        'host': os.environ.get('APP_HOST', config.get('app', 'host')) or '0.0.0.0',
+        'port': int(os.environ.get('APP_PORT', config.get('app', 'port')) or 8080),
         'db_host': os.environ.get('DB_HOST', config.get('app', 'db_host')) or 'localhost',
         'db_port': int(os.environ.get('DB_PORT', config.get('app', 'db_port')) or 5432),
         'db_user': os.environ.get('DB_USER', config.get('app', 'db_user')) or 'user',

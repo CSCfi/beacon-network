@@ -26,8 +26,8 @@ def parse_config_file(path):
     config = ConfigParser()
     config.read(path)
     config_vars = {
-        'host': os.environ.get('HOST', config.get('app', 'host')) or '0.0.0.0',
-        'port': int(os.environ.get('PORT', config.get('app', 'port')) or 8080),
+        'host': os.environ.get('APP_HOST', config.get('app', 'host')) or '0.0.0.0',
+        'port': int(os.environ.get('APP_PORT', config.get('app', 'port')) or 8080),
         'registries': load_json(config.get('app', 'registries')) or [],
         'beacons': bool(strtobool(config.get('app', 'beacons'))) or True,
         'aggregators': bool(strtobool(config.get('app', 'aggregators'))) or False,
