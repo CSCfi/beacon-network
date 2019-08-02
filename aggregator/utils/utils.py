@@ -64,7 +64,8 @@ async def process_url(url):
     """Process URLs to the desired form.
 
     Some URLs might end with `/service-info`, others with `/` and some even `` (empty).
-    The Aggregator wants to use the `/query` endpoint, so the URLs must be pre-processed for queries"""
+    The Aggregator wants to use the `/query` endpoint, so the URLs must be pre-processed for queries.
+    """
     LOG.debug('Processing URLs.')
 
     if url.endswith('/'):
@@ -85,7 +86,8 @@ async def remove_self(url_self, urls):
     """Remove self from list of service URLs to prevent infinite recursion.
 
     This use case is for when an Aggregator requests service URLs for Aggregators.
-    The Aggregator should only query other Aggregators, not itself."""
+    The Aggregator should only query other Aggregators, not itself.
+    """
     LOG.debug('Look for self from service URLs.')
 
     for url in urls:
@@ -220,7 +222,8 @@ def application_security():
     Private
     2   Closed network node (cert sharing)
 
-    Level of security is controlled with ENV `APPLICATION_SECURITY` which takes int value 0-2."""
+    Level of security is controlled with ENV `APPLICATION_SECURITY` which takes int value 0-2.
+    """
     LOG.debug('Check security level of application.')
 
     # Convert ENV string to int
@@ -260,7 +263,8 @@ async def request_security():
     Private
     2   Server must be in the same closed trust network (possess same certs)
 
-    Level of security is controlled with ENV `REQUEST_SECURITY` which takes int value 0-2."""
+    Level of security is controlled with ENV `REQUEST_SECURITY` which takes int value 0-2.
+    """
     LOG.debug('Check security level of request.')
 
     # Convert ENV string to int

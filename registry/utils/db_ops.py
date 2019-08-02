@@ -176,7 +176,7 @@ async def db_update_service(connection, id, service):
 
 
 async def db_update_sequence(connection, id, updates):
-    """Initiate update sequence."""
+    """Start update sequence."""
     LOG.debug('Initiate update sequence.')
 
     # Carry out operations within a transaction to avoid conflicts

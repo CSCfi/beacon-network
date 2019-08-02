@@ -26,7 +26,8 @@ routes = web.RouteTableDef()
 async def index(request):
     """Greeting endpoint.
 
-    Returns name of the service, doubles as a healthcheck utility."""
+    Returns name of the service, doubles as a healthcheck utility.
+    """
     LOG.debug('Greeting endpoint.')
     return web.Response(text=CONFIG.name)
 
@@ -56,6 +57,7 @@ async def service_statuses(request):
 @validate(load_schema("self_registration"))
 async def services_post(request):
     """POST request to the /services endpoint.
+
     Register a new service at host.
     """
     LOG.debug('POST /services received.')
@@ -76,6 +78,7 @@ async def services_post(request):
 @routes.get('/services/{service_id}')
 async def services_get(request):
     """GET request to the /services endpoint.
+
     Return services that are registered at host.
     """
     LOG.debug('GET /services received.')
@@ -93,6 +96,7 @@ async def services_get(request):
 @validate(load_schema("self_registration"))
 async def services_put(request):
     """PATCH request to the /user endpoint.
+
     Update service details at host.
     """
     LOG.debug('PUT /services received.')
@@ -113,6 +117,7 @@ async def services_put(request):
 @routes.delete('/services/{service_id}')
 async def services_delete(request):
     """DELETE request to the /user endpoint.
+
     Delete registered service from host.
     """
     LOG.debug('DELETE /services received.')

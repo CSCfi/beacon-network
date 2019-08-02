@@ -5,6 +5,7 @@ import asyncpg
 
 async def init_db_pool(host, port, user, passwd, db):
     """Create a connection pool.
+
     As we will have frequent requests to the database it is recommended to create a connection pool.
     """
     return await asyncpg.create_pool(host=host,

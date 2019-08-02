@@ -39,7 +39,8 @@ async def parse_service_info(id, service, req={}):
 
     Service infos may use the same keys in different places, for example the
     Beacon API specification differs slightly from GA4GH service-info specification.
-    This issue should be fixed in a future product-approval-process (PAP) of Beacon API."""
+    This issue should be fixed in a future product-approval-process (PAP) of Beacon API.
+    """
     LOG.debug('Parsing service info.')
 
     service_info = {}
@@ -259,7 +260,8 @@ def application_security():
     Private
     2   Closed network node (cert sharing)
 
-    Level of security is controlled with ENV `APPLICATION_SECURITY` which takes int value 0-2."""
+    Level of security is controlled with ENV `APPLICATION_SECURITY` which takes int value 0-2.
+    """
     LOG.debug('Check security level of application.')
 
     # Convert ENV string to int
@@ -299,7 +301,8 @@ async def request_security():
     Private
     2   Server must be in the same closed trust network (possess same certs)
 
-    Level of security is controlled with ENV `REQUEST_SECURITY` which takes int value 0-2."""
+    Level of security is controlled with ENV `REQUEST_SECURITY` which takes int value 0-2.
+    """
     LOG.debug('Check security level of request.')
 
     # Convert ENV string to int

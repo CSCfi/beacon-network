@@ -21,7 +21,8 @@ routes = web.RouteTableDef()
 async def index(request):
     """Greeting endpoint.
 
-    Returns name of the service, doubles as a healthcheck utility."""
+    Returns name of the service, doubles as a healthcheck utility.
+    """
     LOG.debug('Greeting endpoint.')
     return web.Response(text=CONFIG.name)
 

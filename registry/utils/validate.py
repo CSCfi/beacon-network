@@ -12,6 +12,7 @@ from .db_ops import db_verify_api_key, db_verify_service_key, db_verify_admin_ke
 
 def extend_with_default(validator_class):
     """Include default values present in JSON Schema.
+
     Source: https://python-jsonschema.readthedocs.io/en/latest/faq/#why-doesn-t-my-schema-s-default-property-set-the-default-on-my-instance
     """
     validate_properties = validator_class.VALIDATORS["properties"]
@@ -76,16 +77,13 @@ def api_key():
         # Check which endpoint user is requesting and sort according to method
         if request.path == '/update/services' and request.method == 'GET':
             LOG.debug('In /update/services endpoint using GET.')
-            try:
-                api_key = request.headers['Authorization']
-                LOG.debug('API key received.')
-            except Exception:
+            if 'Authorization' not in request.headers:
                 LOG.debug('Missing "Authorization" from headers.')
                 raise web.HTTPBadRequest(text='Missing header "Authorization".')
             # Take one connection from the active database pool
             async with request.app['pool'].acquire() as connection:
                 # Check if provided api key is valid
-                await db_verify_admin_key(connection, api_key)
+                await db_verify_admin_key(connection, request.headers.get('Authorization'))
             # None of the checks failed
             return await handler(request)
 
@@ -93,16 +91,13 @@ def api_key():
             LOG.debug('In /services endpoint.')
             if request.method == 'POST':
                 LOG.debug('Using POST method.')
-                try:
-                    api_key = request.headers['Authorization']
-                    LOG.debug('API key received.')
-                except Exception:
+                if 'Authorization' not in request.headers:
                     LOG.debug('Missing "Authorization" from headers.')
                     raise web.HTTPBadRequest(text='Missing header "Authorization".')
                 # Take one connection from the active database pool
                 async with request.app['pool'].acquire() as connection:
                     # Check if provided api key is valid
-                    await db_verify_api_key(connection, api_key)
+                    await db_verify_api_key(connection, request.headers.get('Authorization'))
                 # None of the checks failed
                 return await handler(request)
 
@@ -110,16 +105,15 @@ def api_key():
             elif request.method in ['PUT', 'DELETE']:
                 LOG.debug(f'Using {request.method} method.')
                 if request.match_info.get('service_id'):
-                    try:
-                        beacon_service_key = request.headers['Beacon-Service-Key']
-                        LOG.debug('Beacon-Service-Key received.')
-                    except Exception:
+                    if 'Beacon-Service-Key' not in request.headers:
                         LOG.debug('Missing "Beacon-Service-Key" from headers.')
                         raise web.HTTPBadRequest(text='Missing header "Beacon-Service-Key".')
                     # Take one connection from the active database pool
                     async with request.app['pool'].acquire() as connection:
                         # Verify that provided service key is authorised
-                        await db_verify_service_key(connection, service_id=request.match_info.get('service_id'), service_key=beacon_service_key)
+                        await db_verify_service_key(connection,
+                                                    service_id=request.match_info.get('service_id'),
+                                                    service_key=request.headers.get('Beacon-Service-Key'))
                 else:
                     raise web.HTTPBadRequest(text='Missing path paremeter "/services/<service_id>".')
                 # None of the checks failed

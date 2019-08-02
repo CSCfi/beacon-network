@@ -1,5 +1,8 @@
 # Beacon Network
 
+[![Build Status](https://travis-ci.org/CSCfi/beacon-network.svg?branch=master)](https://travis-ci.org/CSCfi/beacon-network)
+[![Documentation Status](https://readthedocs.org/projects/beacon-network/badge/?version=latest)](https://beacon-network.readthedocs.io/en/latest/?badge=latest)
+
 Beacon Network is a service for gathering multiple Beacons together for easy access. 
 
 Beacon Network as a service consists of:

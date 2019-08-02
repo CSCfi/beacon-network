@@ -5,8 +5,6 @@ import os
 import sys
 import datetime
 
-import registry
-import aggregator
 from unittest.mock import MagicMock
 
 

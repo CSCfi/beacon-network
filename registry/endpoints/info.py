@@ -7,7 +7,8 @@ from ..utils.logging import LOG
 async def get_info(host):
     """Return service info of self.
 
-    Service ID is parsed from hostname to ensure that each service has a unique ID."""
+    Service ID is parsed from hostname to ensure that each service has a unique ID.
+    """
     LOG.debug('Return service info.')
 
     service_info = {
