@@ -21,11 +21,11 @@ def api_key():
         if '/cache' in request.path:
             LOG.debug('At /cache endpoint.')
             try:
-                service_key = request.headers['Beacon-Service-Key']
-                LOG.debug('Beacon-Service-Key received.')
+                service_key = request.headers['Authorization']
+                LOG.debug('Authorization received.')
             except Exception:
-                LOG.debug('Missing "Beacon-Service-Key" from headers.')
-                raise web.HTTPBadRequest(text='Missing header "Beacon-Service-Key".')
+                LOG.debug('Missing "Authorization" from headers.')
+                raise web.HTTPBadRequest(text='Missing header "Authorization".')
             # Validate service key
             await validate_service_key(service_key)
             # None of the checks failed

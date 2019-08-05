@@ -229,7 +229,7 @@ paths:
       summary: Invalidate cached Beacons.
       description: Invalidates the list of cached Beacons at this Aggregator, forcing the Aggregator to fetch new, up-to-date lists from known Registries.
       parameters:
-      - name: Beacon-Service-Key
+      - name: Authorization
         in: header
         description: Service key to access this endpoint.
         schema:
