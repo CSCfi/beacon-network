@@ -94,7 +94,7 @@ async def update_service(request, db_pool):
             # In case service id changes, check that it doesn't conflict with an existing service
             new_service_id = await generate_service_id(url)
             new_id_found_service = await db_check_service_id(connection, new_service_id)
-            if new_id_found_service:
+            if new_id_found_service and service_id != new_service_id:
                 raise web.HTTPConflict(text=f'Another service has already been registered with the newly generated service ID: {new_service_id}.')
             # Request service info from given url
             service_info = await http_request_info(url)
@@ -103,6 +103,11 @@ async def update_service(request, db_pool):
             # Initiate update
             await db_update_sequence(connection, new_service_id, service)
             await db_store_email(connection, new_service_id, r['email'])
+            #
+            # Have a response here to return the user with a similar response to POST /services
+            # in case the service ID changed.
+            # Update docs as well
+            #
     else:
         raise web.HTTPBadRequest(text='Missing path parameter Service ID: "/services/<service_id>"')
 

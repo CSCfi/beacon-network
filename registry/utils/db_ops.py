@@ -166,7 +166,7 @@ async def db_update_service(connection, id, service):
                                  url=$5, contact_url=$6, api_version=$7, service_version=$8, extension=$9,
                                  updated_at=NOW()
                                  WHERE id=$10""",
-                                 service['id'], service['name'], service['type'],
+                                 id, service['name'], service['type'],
                                  service['description'], service['url'], service['contact_url'],
                                  service['api_version'], service['service_version'], json.dumps(service['extension']),
                                  service['id'])
