@@ -44,7 +44,8 @@ def validate(schema):
         @wraps(func)
         async def wrapped(*args):
             request = args[-1]
-            assert isinstance(request, web.Request)
+            if not isinstance(request, web.Request):
+                raise web.HTTPBadRequest(text='Invalid HTTP Request.')
             try:
                 LOG.debug('Jsonify request body')
                 request_body = await request.json()
