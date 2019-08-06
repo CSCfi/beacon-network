@@ -1,5 +1,7 @@
 """Common Services Endpoint."""
 
+import json
+
 from aiohttp import web
 
 from ..config import CONFIG
@@ -83,6 +85,12 @@ async def update_service(request, db_pool):
     # Parse query params from path, mainly service_id
     service_id, _ = await query_params(request)
 
+    # Response object
+    response = {'message': '',
+                'oldServiceId': service_id,
+                'newServiceId': '',
+                'help': CONFIG.documentation_url}
+
     # Check that user specified id in path
     if service_id:
         # Take connection from the database pool
@@ -93,21 +101,24 @@ async def update_service(request, db_pool):
                 raise web.HTTPNotFound(text='No services found with given service ID.')
             # In case service id changes, check that it doesn't conflict with an existing service
             new_service_id = await generate_service_id(url)
+            response['newServiceId'] = new_service_id
             new_id_found_service = await db_check_service_id(connection, new_service_id)
+            # If the newly generated service id already exists in the database, and the old service id is not the same as the new service id
+            # then a conflict occurs, in other cases, it's an update without changing the url and id
             if new_id_found_service and service_id != new_service_id:
-                raise web.HTTPConflict(text=f'Another service has already been registered with the newly generated service ID: {new_service_id}.')
+                response['message'] = 'Service update failed, see error..'
+                response['error'] = 'Another service has already been registered with the new service id.'
+                raise web.HTTPConflict(body=json.dumps(response), content_type='application/json')
             # Request service info from given url
             service_info = await http_request_info(url)
             # Parse and validate service info object
             service = await parse_service_info(new_service_id, service_info, req=r)
             # Initiate update
-            await db_update_sequence(connection, new_service_id, service)
+            await db_update_sequence(connection, service_id, service)  # new_service_id is in `service`
             await db_store_email(connection, new_service_id, r['email'])
-            #
-            # Have a response here to return the user with a similar response to POST /services
-            # in case the service ID changed.
-            # Update docs as well
-            #
+            # Return confirmation
+            response['message'] = 'Service has been updated. Your new service id is attached in this response. The old Beacon-Service-Key remains the same.'
+            return response
     else:
         raise web.HTTPBadRequest(text='Missing path parameter Service ID: "/services/<service_id>"')
 

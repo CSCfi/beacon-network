@@ -104,13 +104,13 @@ async def services_put(request):
     db_pool = request.app['pool']
 
     # Send request for processing
-    await update_service(request, db_pool)
+    response = await update_service(request, db_pool)
 
     # # Notify aggregators of changed service catalogue
     await invalidate_aggregator_caches(request, db_pool)
 
     # Return confirmation
-    return web.Response(text='Service has been updated.')
+    return web.json_response(response)
 
 
 @routes.delete('/services')
