@@ -12,7 +12,7 @@ async def get_info(host):
     LOG.debug('Return service info.')
 
     service_info = {
-        'id': '.'.join(reversed(host.split(','))),
+        'id': '.'.join(reversed(host.split('.'))),
         'name': CONFIG.name,
         'type': CONFIG.type,
         'description': CONFIG.description,
