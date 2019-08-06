@@ -2,3 +2,4 @@ __pycache__/
 .vscode/
 beacon_network.egg-info/
 .tox/
+.coverage

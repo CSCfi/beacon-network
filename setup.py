@@ -18,7 +18,7 @@ setup(
     ],
     packages=['aggregator', 'aggregator/config', 'aggregator/endpoints',
               'aggregator/utils', 'registry', 'registry/config',
-              'registry/db', 'registry/endpoints', 'registry/schemas',
+              'registry/endpoints', 'registry/schemas',
               'registry/utils'],
     package_data={'': ['*.json', '*.ini']},
     install_requires=[
@@ -26,10 +26,18 @@ setup(
         'asyncio', 'aiocache', 'aiomcache', 'ujson',
         'jsonschema==3.0.1', 'gunicorn'
     ],
+    extras_require={
+        'test': ['coverage', 'pytest', 'pytest-cov',
+                 'coveralls', 'testfixtures', 'tox',
+                 'flake8', 'flake8-docstrings', 'asynctest', 'aioresponses'],
+        'docs': [
+            'sphinx >= 1.4',
+            'sphinx_rtd_theme']
+    },
     entry_points={
         'console_scripts': [
             'beacon_registry=registry.registry:main',
             'beacon_aggregator=aggregator.aggregator:main'
         ],
-    },
+    }
 )
