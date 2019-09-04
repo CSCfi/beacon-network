@@ -335,10 +335,6 @@ components:
           type: string
           example: Beacon service for ELIXIR node
           description: Description of the service.
-        documentationUrl:
-          type: string
-          example: https://service.ga4gh.org/docs
-          description: URL for the documentation of this server, either technical or administrative.
         organization:
           type: object
           properties:
