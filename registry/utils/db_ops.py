@@ -1,7 +1,5 @@
 """Database Operations."""
 
-import json
-
 from aiohttp import web
 
 from .logging import LOG
