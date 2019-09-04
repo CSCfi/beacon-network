@@ -1,22 +1,11 @@
 """Registry Configuration."""
 
 import os
-import json
 
 from configparser import ConfigParser
 from collections import namedtuple
 
 from ..utils.logging import LOG
-
-
-def load_json(json_file):
-    """Load data from an external JSON file."""
-    LOG.debug(f'Loading data from file: {json_file}.')
-    data = {}
-    if os.path.isfile(json_file):
-        with open(json_file, 'r') as contents:
-            data = json.loads(contents.read())
-    return data
 
 
 def parse_config_file(path):
@@ -37,10 +26,11 @@ def parse_config_file(path):
         'description': config.get('info', 'description'),
         'documentation_url': config.get('info', 'documentation_url'),
         'organization': config.get('info', 'organization'),
+        'organization_url': config.get('info', 'organization_url'),
         'contact_url': config.get('info', 'contact_url'),
-        'api_version': config.get('info', 'api_version'),
         'version': config.get('info', 'version'),
-        'extension': load_json(config.get('info', 'extension')) or {}
+        'create_time': config.get('info', 'create_time'),
+        'environment': config.get('info', 'environment')
     }
     return namedtuple("Config", config_vars.keys())(*config_vars.values())
 

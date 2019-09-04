@@ -1,5 +1,7 @@
 """Common Info Endpoint."""
 
+import datetime
+
 from ..config import CONFIG
 from ..utils.logging import LOG
 
@@ -16,12 +18,16 @@ async def get_info(host):
         'name': CONFIG.name,
         'type': CONFIG.type,
         'description': CONFIG.description,
-        'documentationUrl': CONFIG.documentation_url,
-        'organization': CONFIG.organization,
+        'organization': {
+            'name': CONFIG.organization,
+            'url': CONFIG.organization_url
+        },
         'contactUrl': CONFIG.contact_url,
-        'apiVersion': CONFIG.api_version,
-        'version': CONFIG.version,
-        'extension': CONFIG.extension
+        'documentationUrl': CONFIG.documentation_url,
+        'createdAt': CONFIG.create_time,
+        'updatedAt': datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'environment': CONFIG.environment,
+        'version': CONFIG.version
     }
 
     return service_info

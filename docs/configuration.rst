@@ -19,7 +19,7 @@ Configuration variables for defining the ``/service-info`` endpoint are found in
 
 .. literalinclude:: ../aggregator/config/config.ini
    :language: python
-   :lines: 20-46
+   :lines: 20-49
 
 Environment Variables
 ~~~~~~~~~~~~~~~~~~~~~
@@ -62,7 +62,7 @@ Configuration variables for defining the ``/service-info`` endpoint are found in
 
 .. literalinclude:: ../registry/config/config.ini
    :language: python
-   :lines: 26-52
+   :lines: 26-55
 
 Environment Variables
 ~~~~~~~~~~~~~~~~~~~~~
