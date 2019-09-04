@@ -83,11 +83,13 @@ async def db_register_service(connection, service):
         # Database commit occurs on transaction closure
         async with connection.transaction():
             await connection.execute("""INSERT INTO services (id, name, type, description, url, contact_url,
-                                     api_version, service_version, extension, created_at, updated_at)
-                                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())""",
+                                     api_version, service_version, environment, organization,
+                                     organization_url, organization_logo, created_at, updated_at)
+                                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())""",
                                      service['id'], service['name'], service['type'],
                                      service['description'], service['url'], service['contact_url'],
-                                     service['api_version'], service['service_version'], json.dumps(service['extension']))
+                                     service['api_version'], service['service_version'], service['environment'],
+                                     service['organization'], service['organization_url'], service['organization_logo'])
             # If service registration was successful, generate and store a service key
             service_key = await generate_service_key()
             await db_store_service_key(connection, service['id'], service_key)
@@ -111,7 +113,8 @@ async def db_get_service_details(connection, id=None, service_type=None, api_ver
     try:
         # Database query
         query = f"""SELECT id, name, type, description, url, contact_url, api_version,
-                    service_version, extension, created_at, updated_at
+                    service_version, environment, organization, organization_url,
+                    organization_logo, created_at, updated_at
                     FROM services
                     WHERE {'id=$1' if id is not None else '$1'}
                     AND {'type=$2' if service_type is not None else '$2'}
@@ -163,12 +166,14 @@ async def db_update_service(connection, id, service):
     # Apply updates
     try:
         await connection.execute("""UPDATE services SET id=$1, name=$2, type=$3, description=$4,
-                                 url=$5, contact_url=$6, api_version=$7, service_version=$8, extension=$9,
+                                 url=$5, contact_url=$6, api_version=$7, service_version=$8,
+                                 environment=$9, organization=$10, organization_url=$11, organization_logo=$12,
                                  updated_at=NOW()
-                                 WHERE id=$10""",
+                                 WHERE id=$13""",
                                  service['id'], service['name'], service['type'],
                                  service['description'], service['url'], service['contact_url'],
-                                 service['api_version'], service['service_version'], json.dumps(service['extension']),
+                                 service['api_version'], service['service_version'], service['environment'],
+                                 service['organization'], service['organization_url'], service['organization_logo'],
                                  id)
     except Exception as e:
         LOG.debug(f'DB error: {e}')

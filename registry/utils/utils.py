@@ -2,7 +2,6 @@
 
 import os
 import sys
-import json
 import secrets
 import ssl
 
@@ -48,48 +47,43 @@ async def parse_service_info(id, service, req={}):
     if req.get('url', '').endswith('/service-info'):
         LOG.debug('Using GA4GH endpoint.')
         # Use GA4GH service-info notation
+        # Get type, which is of form `org.ga4gh:beacon:1.0.0`, separate type and version
+        type_bundle = service.get('type', '').split(':')
+        service_type = f'{type_bundle[0]}:{type_bundle[1]}'  # org.ga4gh:beacon
+        api_version = type_bundle[2]  # 1.0.0
         service_info = {
             'id': id,
             'name': service.get('name', ''),
-            'type': service.get('type', 'urn:ga4gh:beacon'),
+            'type': service_type,
             'description': service.get('description', ''),
             'url': req.get('url', '') or service.get('url', ''),
             'contact_url': service.get('contactUrl', ''),
-            'api_version': service.get('apiVersion', ''),
+            'api_version': api_version,
             'service_version': service.get('version', ''),
-            'extension': service.get('extension', {})
+            'environment': service.get('environment', ''),
+            'organization': service.get('organization').get('name'),
+            'organization_url': service.get('organization').get('url'),
+            'organization_logo': service.get('organization').get('logoUrl')
         }
     else:
         LOG.debug('Using Beacon API endpoint.')
         # Use Beacon API spec notation
+        # Beacon API `/` doesn't have `type` or `environment`, so it's set here by default
+        # If `apiVersion` is missing, we expect at least >1.0.0
         service_info = {
             'id': id,
             'name': service.get('name', ''),
-            'type': 'urn:ga4gh:beacon',
+            'type': 'org.ga4gh:beacon',
             'description': service.get('description', ''),
             'url': req.get('url', '') or service.get('url', ''),
             'contact_url': service.get('organization', {}).get('contactUrl', ''),
-            'api_version': service.get('apiVersion', ''),
+            'api_version': service.get('apiVersion', '1.0.0'),
             'service_version': service.get('version', ''),
-            'extension': service.get('info', {})
+            'environment': service.get('environment', 'prod'),
+            'organization': service.get('organization').get('name'),
+            'organization_url': service.get('organization').get('welcomeUrl'),
+            'organization_logo': service.get('organization').get('logoUrl')
         }
-        try:
-            # add following Beacon API keys to extension for UI use
-            # organization.name
-            # organization.welcomeUrl
-            # organization.logoUrl
-            service_info['extension'].update(
-                {
-                    'organization': {
-                        'name': service.get('organization').get('name'),
-                        'welcomeUrl': service.get('organization').get('welcomeUrl'),
-                        'logoUrl': service.get('organization').get('logoUrl')
-                    }
-                }
-            )
-        except Exception as e:
-            LOG.debug(f'Failed to update extension: {e}.')
-            pass
 
     return service_info
 
@@ -100,15 +94,19 @@ async def construct_json(data):
     response = {
         'id': data.get('id', ''),
         'name': data.get('name', ''),
-        'type': data.get('type', ''),
+        'type': f"{data.get('type', '')}:{data.get('api_version', '')}",
         'description': data.get('description', ''),
-        'url': data.get('url', ''),
+        'organization': {
+            'name': data.get('organization', ''),
+            'url': data.get('organization_url', ''),
+            'logoUrl': data.get('organization_logo', '')
+        },
+        'contactUrl': data.get('contact_url', ''),
         'createdAt': str(data.get('created_at', '')),
         'updatedAt': str(data.get('updated_at', '')),
-        'contactUrl': data.get('contact_url', ''),
-        'apiVersion': data.get('api_version', ''),
+        'environment': data.get('environment', ''),
         'version': data.get('service_version', ''),
-        'extension': json.loads(data.get('extension', {}))
+        'url': data.get('url', '')
     }
     return response
 

@@ -15,16 +15,15 @@
       "pattern": "^[a-zA-Z0-9.!#$%&'*+=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
     },
     "type": {
-      "title": "Service type of the application, must be one of the three allowed values",
+      "title": "Service type of the application, must be one of the two allowed values",
       "type": "string",
       "enum": [
-        "urn:ga4gh:beacon",
-        "urn:ga4gh:aggregator",
-        "urn:ga4gh:registry"
+        "org.ga4gh:beacon",
+        "org.ga4gh:beacon-aggregator"
       ]
     },
     "url": {
-      "title": "URL to the info endpoint of the service. For example, GA4GH products use /service-info and Beacon API spec uses /. Use HTTPS, HTTP is for local testing.",
+      "title": "URL to the info endpoint of the service. For example, GA4GH products use /service-info and Beacon API spec uses /. Use HTTPS, HTTP is for local testing only.",
       "type": "string",
       "examples": [
         "https://beacon.ga4gh.org/service-info",
