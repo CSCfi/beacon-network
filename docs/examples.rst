@@ -28,14 +28,18 @@ Response
     {
         "id": "localhost:5000",
         "name": "ELIXIR-FI Beacon Aggregator",
-        "type": "urn:ga4gh:aggregator",
+        "type": "org.ga4gh:beacon-aggregator:1.0.0",
         "description": "ELIXIR-FI Beacon Aggregator at CSC for Beacon network",
-        "documentationUrl": "https://beacon-network.readthedocs.io/en/latest/",
-        "organization": "fi.csc",
+        "organization": {
+            "name": "CSC - IT Center for Science Ltd.",
+            "url": "https://csc.fi/"
+        },
         "contactUrl": "https://www.csc.fi/contact-info",
-        "apiVersion": "0.3.0",
-        "version": "0.2.dev",
-        "extension": {}
+        "documentationUrl": "https://beacon-network.readthedocs.io/en/latest/",
+        "createdAt": "2019-09-04T12:00:00Z",
+        "updatedAt": "2019-09-04T12:00:00Z",
+        "environment": "dev",
+        "version": "0.3.dev"
     }
 
 Query Beacons
@@ -161,14 +165,18 @@ Response
     {
         "id": "localhost:8080",
         "name": "ELIXIR-FI Beacon Registry",
-        "type": "urn:ga4gh:registry",
+        "type": "org.ga4gh:service-registry:1.0.0",
         "description": "ELIXIR-FI Beacon Registry at CSC for Beacon network",
-        "documentationUrl": "https://beacon-network.readthedocs.io/en/latest/",
-        "organization": "fi.csc",
+        "organization": {
+            "name": "CSC - IT Center for Science Ltd.",
+            "url": "https://csc.fi/"
+        },
         "contactUrl": "https://www.csc.fi/contact-info",
-        "apiVersion": "0.3.0",
-        "version": "0.2.dev",
-        "extension": {}
+        "documentationUrl": "https://beacon-network.readthedocs.io/en/latest/",
+        "createdAt": "2019-09-04T12:00:00Z",
+        "updatedAt": "2019-09-04T12:00:00Z",
+        "environment": "dev",
+        "version": "0.2.dev"
     }
 
 List Service Types
@@ -189,30 +197,10 @@ Response
 .. code-block:: javascript
 
     [
-        "urn:ga4gh:registry",
-        "urn:ga4gh:aggregator",
-        "urn:ga4gh:beacon"
+        "org.ga4gh:service-registry",
+        "org.ga4gh:beacon-aggregator",
+        "org.ga4gh:beacon"
     ]
-
-List Service Statuses
-~~~~~~~~~~~~~~~~~~~~~
-
-Service statuses are listed with ``GET`` method from the ``/services/status`` endpoint. This endpoint has not yet been implemented.
-
-Request
-^^^^^^^
-
-.. code-block:: console
-
-    curl localhost:8080/services/status
-
-Response
-^^^^^^^^
-
-.. code-block:: javascript
-
-    405: Not Implemented
-
 
 Register a New Service
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -233,8 +221,8 @@ Request
     -H 'Authorization: secret' \
     -d '{
         "email": "support@csc.fi",
-        "type": "urn:ga4gh:beacon",
-        "url": "localhost:3000/"
+        "type": "org.ga4gh:beacon",
+        "url": "http://localhost:3000/"
     }'
 
 Response
@@ -270,57 +258,53 @@ Response
         {
             "id": "fi.rahtiapp.staging-elixirbeacon",
             "name": "GA4GHBeacon at CSC",
-            "type": "urn:ga4gh:beacon",
+            "type": "org.ga4gh:beacon",
             "description": "Beacon API Web Server based on the GA4GH Beacon API",
-            "url": "https://staging-elixirbeacon.rahtiapp.fi/",
+            "organization": {
+                "name": "CSC - IT Center for Science",
+                "logoUrl": "https://www.csc.fi/documents/10180/161914/CSC_2012_LOGO_RGB_72dpi.jpg",
+                "url": "https://www.csc.fi/"
+            }
             "createdAt": "2019-07-25 10:57:34.238533+00:00",
             "updatedAt": "2019-08-02 00:00:13.006256+00:00",
             "contactUrl": "https://www.csc.fi/contact-info",
-            "apiVersion": "1.1.0",
+            "environment": "dev",
             "version": "1.4.0",
-            "extension": {
-                "achievement": "World's first 1.0 Beacon",
-                "organization": {
-                    "name": "CSC - IT Center for Science",
-                    "logoUrl": "https://www.csc.fi/documents/10180/161914/CSC_2012_LOGO_RGB_72dpi.jpg",
-                    "welcomeUrl": "https://www.csc.fi/"
-                }
-            }
+            "url": "https://staging-elixirbeacon.rahtiapp.fi/"
         },
         {
             "id": "fi.rahtiapp.beaconpy-elixirbeacon",
             "name": "GA4GHBeacon at CSC",
-            "type": "urn:ga4gh:beacon",
+            "type": "org.ga4gh:beacon",
             "description": "Beacon API Web Server based on the GA4GH Beacon API",
-            "url": "https://beaconpy-elixirbeacon.rahtiapp.fi/",
+            "organization": {
+                "name": "CSC - IT Center for Science",
+                "logoUrl": "https://www.csc.fi/documents/10180/161914/CSC_2012_LOGO_RGB_72dpi.jpg",
+                "url": "https://www.csc.fi/"
+            }
             "createdAt": "2019-07-25 10:57:28.863961+00:00",
             "updatedAt": "2019-08-02 00:00:13.016122+00:00",
             "contactUrl": "https://www.csc.fi/contact-info",
-            "apiVersion": "1.1.0",
+            "environment": "prod",
             "version": "1.4.0",
-            "extension": {
-                "achievement": "World's first 1.0 Beacon",
-                "organization": {
-                    "name": "CSC - IT Center for Science",
-                    "logoUrl": "https://www.csc.fi/documents/10180/161914/CSC_2012_LOGO_RGB_72dpi.jpg",
-                    "welcomeUrl": "https://www.csc.fi/"
-                }
-            }
+            "url": "https://staging-elixirbeacon.rahtiapp.fi/"
         },
         {
             "id": "fi.rahtiapp.dev-aggregator-beacon",
             "name": "ELIXIR-FI Beacon Aggregator",
-            "type": "urn:ga4gh:aggregator",
+            "type": "org.ga4gh:beacon-aggregator",
             "description": "ELIXIR-FI Beacon Aggregator at CSC for Beacon network",
-            "url": "https://dev-aggregator-beacon.rahtiapp.fi/service-info",
+            "organization": {
+                "name": "CSC - IT Center for Science",
+                "logoUrl": "",
+                "url": "https://www.csc.fi/"
+            }
             "createdAt": "2019-07-25 10:57:11.340018+00:00",
             "updatedAt": "2019-08-05 00:00:10.960787+00:00",
             "contactUrl": "https://www.csc.fi/contact-info",
-            "apiVersion": "0.3.0",
+            "environment": "dev",
             "version": "0.2.dev",
-            "extension": {
-                "logoUrl": "https://www.csc.fi/csc-subpage-theme/images/csc-logo-teksti-en.png"
-            }
+            "url": "https://dev-aggregator-beacon.rahtiapp.fi/service-info",
         }
     ]
 
@@ -344,22 +328,19 @@ Response
     {
         "id": "fi.rahtiapp.staging-elixirbeacon",
         "name": "GA4GHBeacon at CSC",
-        "type": "urn:ga4gh:beacon",
+        "type": "org.ga4gh:beacon",
         "description": "Beacon API Web Server based on the GA4GH Beacon API",
-        "url": "https://staging-elixirbeacon.rahtiapp.fi/",
+        "organization": {
+            "name": "CSC - IT Center for Science",
+            "logoUrl": "https://www.csc.fi/documents/10180/161914/CSC_2012_LOGO_RGB_72dpi.jpg",
+            "url": "https://www.csc.fi/"
+        }
         "createdAt": "2019-07-25 10:57:34.238533+00:00",
         "updatedAt": "2019-08-02 00:00:13.006256+00:00",
         "contactUrl": "https://www.csc.fi/contact-info",
-        "apiVersion": "1.1.0",
+        "environment": "dev",
         "version": "1.4.0",
-        "extension": {
-            "achievement": "World's first 1.0 Beacon",
-            "organization": {
-                "name": "CSC - IT Center for Science",
-                "logoUrl": "https://www.csc.fi/documents/10180/161914/CSC_2012_LOGO_RGB_72dpi.jpg",
-                "welcomeUrl": "https://www.csc.fi/"
-            }
-        }
+        "url": "https://staging-elixirbeacon.rahtiapp.fi/"
     }
 
 Update Service
@@ -381,8 +362,8 @@ Request
     -H 'Beacon-Service-Key: secret' \
     -d '{
         "email": "support@csc.fi",
-        "type": "urn:ga4gh:beacon",
-        "url": "localhost:3000/"
+        "type": "org.ga4gh:beacon",
+        "url": "http://localhost:3000/"
     }'
 
 Response
