@@ -9,7 +9,6 @@ from aiohttp import web
 
 from .endpoints.info import get_info
 from .endpoints.service_types import get_service_types
-from .endpoints.service_statuses import get_service_statuses
 from .endpoints.services import register_service, get_services, update_service, delete_services
 from .endpoints.update import update_service_infos
 from .schemas import load_schema
@@ -44,13 +43,6 @@ async def service_types(request):
     """Return service types."""
     LOG.debug('GET /services/types received.')
     return web.json_response(await get_service_types())
-
-
-@routes.get('/services/status')
-async def service_statuses(request):
-    """Return service statuses."""
-    LOG.debug('GET /services/status received.')
-    return web.json_response(await get_service_statuses())
 
 
 @routes.post('/services')
