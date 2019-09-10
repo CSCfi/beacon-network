@@ -6,7 +6,7 @@ from aggregator.aggregator import init_app
 
 
 class AppTestCase(AioHTTPTestCase):
-    """Test endpoints."""
+    """Test aggregator endpoints."""
 
     async def get_application(self):
         """Retrieve web application for test."""

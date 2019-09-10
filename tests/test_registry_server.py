@@ -17,7 +17,7 @@ async def create_db_mock(app):
 
 
 class TestRegistryEndpoints(AioHTTPTestCase):
-    """Test endpoints."""
+    """Test registry endpoints."""
 
     @asynctest.mock.patch('registry.registry.init_db', side_effect=create_db_mock)
     async def get_application(self, mock_db):
@@ -94,7 +94,7 @@ class TestRegistryEndpoints(AioHTTPTestCase):
 
 
 class TestRegistryStartUp(asynctest.TestCase):
-    """Test start up functions."""
+    """Test registry start up functions."""
 
     def setUp(self):
         """Initialise fixtures."""
