@@ -115,8 +115,10 @@ async def query_params(request):
     """Parse query string params from path."""
     LOG.debug('Parse query params.')
     # Query string params
-    allowed_params = ['type', 'apiVersion']
-    params = {k: v for k, v in request.rel_url.query.items() if k in allowed_params}
+    params = {
+        'type': request.query.get('type', None),
+        'apiVersion': request.query.get('apiVersion', None)
+    }
     # Path param
     service_id = request.match_info.get('service_id', None)
     return service_id, params
