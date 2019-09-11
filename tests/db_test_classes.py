@@ -73,3 +73,10 @@ class Connection:
     def transaction(self, *args, **kwargs):
         """Mimic transaction."""
         return Transaction(*args, **kwargs)
+
+
+class BadConnection:
+    """Faulty connection."""
+
+    def __init__(self):
+        """Initialise class."""

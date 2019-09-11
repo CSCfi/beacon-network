@@ -1,0 +1,176 @@
+import asynctest
+
+from aiohttp import web
+
+from registry.utils.db_pool import init_db_pool
+from registry.utils.db_ops import db_check_service_id, db_store_service_key, db_update_service_key
+from registry.utils.db_ops import db_delete_service_key, db_store_email, db_register_service
+from registry.utils.db_ops import db_get_service_details, db_delete_services
+
+from .db_test_classes import Connection, BadConnection
+
+
+class TestDatabase(asynctest.TestCase):
+    """Test database setup."""
+
+    @asynctest.mock.patch('registry.utils.db_pool.asyncpg')
+    async def test_init_pool(self, db_mock):
+        """Test database connection pool creation."""
+        db_mock.return_value = asynctest.CoroutineMock(name='create_pool')
+        db_mock.create_pool = asynctest.CoroutineMock()
+        await init_db_pool(host='localhost', port='8080', user='user', passwd='pass', db='db')
+        db_mock.create_pool.assert_called()
+
+
+class TestDatabaseOperations(asynctest.TestCase):
+    """Test database operations."""
+
+    async def test_db_check_service_id_found(self):
+        """Test service id checker: found."""
+        connection = Connection(return_value=[{'name': 'Finnish Beacon'}])
+        found = await db_check_service_id(connection, 'fi.beacon')
+        self.assertTrue(found)
+
+    async def test_db_check_service_id_none(self):
+        """Test service id checker: not found."""
+        connection = Connection(return_value=[])
+        not_found = await db_check_service_id(connection, 'fi.beacon')
+        self.assertFalse(not_found)
+
+    async def test_db_check_service_id_error(self):
+        """Test service id checker: error."""
+        connection = BadConnection()
+        with self.assertRaises(web.HTTPInternalServerError):
+            await db_check_service_id(connection, 'fi.beacon')
+
+    async def test_db_store_service_key_success(self):
+        """Test the storing of service key: successful storing."""
+        connection = Connection()
+        await db_store_service_key(connection, 'fi.beacon', 'abc123')
+        # No exceptions raised
+
+    async def test_db_store_service_key_fail(self):
+        """Test the storing of service key: failed to store."""
+        connection = BadConnection()
+        with self.assertRaises(web.HTTPInternalServerError):
+            await db_store_service_key(connection, 'fi.beacon', 'abc123')
+
+    async def test_db_update_service_key_success(self):
+        """Test the updating of service key: successful update."""
+        connection = Connection()
+        await db_update_service_key(connection, 'fi.beacon', 'se.beacon')
+        # No exceptions raised
+
+    async def test_db_update_service_key_fail(self):
+        """Test the updating of service key: failed to update."""
+        connection = BadConnection()
+        with self.assertRaises(web.HTTPInternalServerError):
+            await db_update_service_key(connection, 'fi.beacon', 'se.beacon')
+
+    async def test_db_delete_service_key_success(self):
+        """Test the deletion of service key: successful deletion."""
+        connection = Connection()
+        await db_delete_service_key(connection, 'fi.beacon')
+        # No exceptions raised
+
+    async def test_db_delete_service_key_fail(self):
+        """Test the deletion of service key: failed to delete."""
+        connection = BadConnection()
+        with self.assertRaises(web.HTTPInternalServerError):
+            await db_delete_service_key(connection, 'fi.beacon')
+
+    async def test_db_store_email_success(self):
+        """Test the storing of email: successful storing."""
+        connection = Connection()
+        await db_store_email(connection, 'fi.beacon', 'adming@beacon.fi')
+        # No exceptions raised
+
+    async def test_db_store_email_fail(self):
+        """Test the storing of email: failed to store."""
+        connection = BadConnection()
+        await db_store_email(connection, 'fi.beacon', 'admin@beacon.fi')
+        # Storing an email is a low priority function, and failure
+        # doesn't raise an exception
+
+    @asynctest.mock.patch('registry.utils.db_ops.db_store_service_key')
+    @asynctest.mock.patch('registry.utils.db_ops.generate_service_key')
+    async def test_db_register_service_success(self, mock_key, mock_store):
+        """Test the registration of a new service: succesful registration."""
+        mock_key.return_value = 'abc123'
+        mock_store.return_value = True
+        connection = Connection()
+        service = {
+            'id': 'id',
+            'name': 'name',
+            'type': 'type',
+            'description': 'desc',
+            'url': 'url',
+            'contact_url': 'contact',
+            'api_version': 'api',
+            'service_version': 'version',
+            'environment': 'env',
+            'organization': 'org',
+            'organization_url': 'url',
+            'organization_logo': 'logo'
+        }
+        key = await db_register_service(connection, service)
+        self.assertEqual(key, 'abc123')
+
+    @asynctest.mock.patch('registry.utils.db_ops.db_store_service_key')
+    @asynctest.mock.patch('registry.utils.db_ops.generate_service_key')
+    async def test_db_register_service_fail(self, mock_key, mock_store):
+        """Test the registration of a new service: failed to register."""
+        mock_key.return_value = 'abc123'
+        mock_store.return_value = True
+        connection = Connection()
+        service = {}  # Service data is missing keys, execute will fail
+        with self.assertRaises(web.HTTPInternalServerError):
+            await db_register_service(connection, service)
+
+    @asynctest.mock.patch('registry.utils.db_ops.construct_json')
+    async def test_db_get_service_details_found_by_id(self, mock_cons):
+        """Test the retrieval of service details: successful retrieval of specifiec id."""
+        connection = Connection(return_value=[{}])
+        mock_cons.return_value = {}
+        details = await db_get_service_details(connection, id='fi.beacon')
+        # Requested specific service by id, so response is {}
+        self.assertEqual(details, {})
+
+    @asynctest.mock.patch('registry.utils.db_ops.construct_json')
+    async def test_db_get_service_details_found_multiple(self, mock_cons):
+        """Test the retrieval of service details: successful retrieval multiple services."""
+        connection = Connection(return_value=[{}, {}, {}])
+        mock_cons.return_value = {}
+        details = await db_get_service_details(connection)
+        # Requested all services, so response is [{}, ...]
+        self.assertEqual(len(details), 3)
+
+    async def test_db_get_service_details_none(self):
+        """Test the retrieval of service details: none found."""
+        connection = Connection()
+        with self.assertRaises(web.HTTPNotFound):
+            await db_get_service_details(connection, id='fi.beacon')
+
+    async def test_db_get_service_details_fail(self):
+        """Test the retrieval of service details: failed retrieval."""
+        connection = BadConnection()
+        with self.assertRaises(web.HTTPInternalServerError):
+            await db_get_service_details(connection, id='fi.beacon')
+
+    @asynctest.mock.patch('registry.utils.db_ops.db_delete_service_key')
+    async def test_db_delete_services_success(self, mock_del):
+        """Test the deletion of a service: successful deletion."""
+        mock_del.return_value = True
+        connection = Connection()
+        await db_delete_services(connection, 'fi.beacon')
+        # No exceptions raised
+
+    async def test_db_delete_services_fail(self):
+        """Test the deletion of a service: failed to delete."""
+        connection = BadConnection()
+        with self.assertRaises(web.HTTPInternalServerError):
+            await db_delete_services(connection, 'fi.beacon')
+
+
+if __name__ == '__main__':
+    asynctest.main()
