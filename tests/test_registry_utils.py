@@ -4,7 +4,10 @@ from aioresponses import aioresponses
 import aiohttp
 
 from registry.utils.utils import http_request_info, parse_service_info, construct_json
-from registry.utils.utils import query_params
+from registry.utils.utils import query_params, db_get_service_urls, db_get_recaching_credentials
+from registry.utils.utils import generate_service_key, generate_service_id
+
+from .db_test_classes import Connection
 
 
 class MockRequest:
@@ -164,6 +167,47 @@ class TestUtils(asynctest.TestCase):
         service_id, params = await query_params(request)
         self.assertEqual(service_id, None)
         self.assertEqual(params, {'type': None, 'apiVersion': None})
+
+    async def test_get_service_urls_found(self):
+        """Test retrieval of service urls: urls found."""
+        connection = Connection(return_value=[{'service_url': 'https://beacon1.fi/'},
+                                              {'service_url': 'https://beacon2.fi/'}])
+        service_urls = await db_get_service_urls(connection, service_type='org.ga4gh:beacon')
+        self.assertEqual(len(service_urls), 2)
+
+    async def test_get_service_urls_none(self):
+        """Test retrieval of service urls: none found."""
+        connection = Connection(return_value=[])
+        service_urls = await db_get_service_urls(connection, service_type='org.ga4gh:beacon')
+        self.assertEqual(len(service_urls), 0)
+
+    async def test_get_recaching_credentials_found(self):
+        """Test retrieval of recaching credentials: creds found."""
+        connection = Connection(return_value=[{'url': 'https://beacon1.fi', 'service_key': 'abc123'},
+                                              {'url': 'https://beacon1.fi', 'service_key': 'abc123'}])
+        credentials = await db_get_recaching_credentials(connection)
+        self.assertEqual(len(credentials), 2)
+
+    async def test_get_recaching_credentials_none(self):
+        """Test retrieval of recaching credentials: none found."""
+        connection = Connection(return_value=[])
+        credentials = await db_get_recaching_credentials(connection)
+        self.assertEqual(len(credentials), 0)
+
+    async def test_generate_service_key(self):
+        """Test generation of service key."""
+        key = await generate_service_key()
+        self.assertEqual(type(key), str)
+        self.assertEqual(len(key), 86)
+
+    async def test_generate_service_id(self):
+        """Test generation of service id."""
+        id1 = await generate_service_id('https://beacon.fi/')
+        self.assertEqual(id1, 'fi.beacon')
+        id2 = await generate_service_id('https://beacon.fi/endpoint')
+        self.assertEqual(id2, 'fi.beacon')
+        id3 = await generate_service_id('beacon.fi/endpoint')
+        self.assertEqual(id3, 'fi.beacon')
 
 
 if __name__ == '__main__':

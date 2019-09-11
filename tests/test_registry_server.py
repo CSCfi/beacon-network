@@ -1,5 +1,4 @@
 import unittest
-import json
 
 import asyncpg
 import asynctest
@@ -44,7 +43,6 @@ class TestRegistryEndpoints(AioHTTPTestCase):
     async def test_service_types(self):
         """Test service types endpoint."""
         resp = await self.client.request("GET", "/services/types")
-        services = ['org.ga4gh:service-registry', 'org.ga4gh:beacon-aggregator', 'org.ga4gh:beacon']
         data = await resp.json()
         assert 200 == resp.status
         assert 'org.ga4gh:service-registry' == data[0]
