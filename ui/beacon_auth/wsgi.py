@@ -53,7 +53,7 @@ def make_authorization_url():
               "state": state,
               "redirect_uri": CALLBACK_URL,
               "duration": "temporary",
-              "scope": 'openid ga4gh'}
+              "scope": 'openid ga4gh_passport_v1'}
     url = "https://login.elixir-czech.org/oidc/authorize?" + urllib.parse.urlencode(params)
     return url
 
