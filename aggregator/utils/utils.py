@@ -137,7 +137,6 @@ async def query_service(service, params, access_token, ws=None):
     # Query service in a session
     async with aiohttp.ClientSession() as session:
         try:
-            # serviceUrl from DB: `https://../` append with `query`
             async with session.get(service,
                                    params=params,
                                    headers=headers,
@@ -156,6 +155,7 @@ async def query_service(service, params, access_token, ws=None):
                     error = {"service": service,
                              "queryParams": params,
                              "responseStatus": response.status}
+                    LOG.error(f'Query to {service} failed: {response}.')
                     if ws:
                         return await ws.send_str(json.dumps(str(error)))
                     else:

@@ -62,8 +62,8 @@ async def parse_service_info(id, service, req={}):
             'service_version': service.get('version', ''),
             'environment': service.get('environment', ''),
             'organization': service.get('organization').get('name'),
-            'organization_url': service.get('organization').get('url'),
-            'organization_logo': service.get('organization').get('logoUrl')
+            'organization_url': service.get('organization').get('url', ''),
+            'organization_logo': service.get('organization').get('logoUrl', '')
         }
     else:
         LOG.debug('Using Beacon API endpoint.')
@@ -81,11 +81,39 @@ async def parse_service_info(id, service, req={}):
             'service_version': service.get('version', ''),
             'environment': service.get('environment', 'prod'),
             'organization': service.get('organization').get('name'),
-            'organization_url': service.get('organization').get('welcomeUrl'),
-            'organization_logo': service.get('organization').get('logoUrl')
+            'organization_url': service.get('organization').get('welcomeUrl', ''),
+            'organization_logo': service.get('organization').get('logoUrl', '')
         }
 
+    # Validate service info, raise a fatal exception on any issue
+    await validate_service_info(service_info, service.get('id'))
+
     return service_info
+
+
+async def validate_service_info(service, fetched_service_id):
+    """Validate parsed service info object."""
+    LOG.debug('Validating parsed service info.')
+    # `service` has been pre-parsed, it contains the correct form of id in `service['id]`
+    # `fetched_service_if` is the id given by the service in their info object
+
+    # The registry will validate that all URLs begin with `https://` if they are set,
+    # because all traffic in the Beacon Network UI must be encrypted.
+    # The id will also be validated that it follows Beacon API specification convention:
+    # The id should be equal to "reverse domain name", so that it can be seamlessly utilised
+    # In the UI to display more information about query responses using the Registry/services/<service-id> endpoint
+    if service['id'] != fetched_service_id:
+        raise web.HTTPBadRequest(text=f'Service ID that was fetched from info endpoint was rejected. Received "{fetched_service_id}", '
+                                      + f'when expected "{service["id"]}". Service ID must follow reverse domain name notation '
+                                      + 'according to Beacon API specification.')
+    if not service['url'].startswith('https://'):
+        raise web.HTTPBadRequest(text=f'''Service URL was rejected. Received "{service['url']}". Service URL must begin with https://.''')
+    if service['contact_url'] != '' and not service['contact_url'].startswith(('https://', 'mailto:')):
+        raise web.HTTPBadRequest(text=f'''Contact URL was rejected. Received "{service['contact_url']}". Contact URL must begin with https:// or mailto:.''')
+    if service['organization_url'] != '' and not service['organization_url'].startswith('https://'):
+        raise web.HTTPBadRequest(text=f'''Organization URL was rejected. Received "{service['organization_url']}". Organization URL must begin with https://.''')
+    if service['organization_logo'] != '' and not service['organization_logo'].startswith('https://'):
+        raise web.HTTPBadRequest(text=f'''Logo URL was rejected. Received "{service['organization_logo']}". Logo URL must begin with https://.''')
 
 
 async def construct_json(data):

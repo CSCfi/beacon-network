@@ -75,7 +75,7 @@ class TestUtils(asynctest.TestCase):
             'environment': 'prod',
             'organization': 'CSC',
             'organization_url': 'https://csc.fi/',
-            'organization_logo': None
+            'organization_logo': ''
         }
         self.assertEqual(parsed_info, expected_info)
 

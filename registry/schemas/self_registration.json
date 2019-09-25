@@ -29,7 +29,7 @@
         "https://beacon.ga4gh.org/service-info",
         "https://elixir-beacon.elixir-europe.org/"
       ],
-      "pattern": "^(http|https)://"
+      "pattern": "^https://"
     }
   }
 }
