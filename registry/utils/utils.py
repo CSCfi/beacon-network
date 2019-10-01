@@ -107,13 +107,13 @@ async def validate_service_info(service, fetched_service_id):
                                       + f'when expected "{service["id"]}". Service ID must follow reverse domain name notation '
                                       + 'according to Beacon API specification.')
     if not service['url'].startswith('https://'):
-        raise web.HTTPBadRequest(text=f'''Service URL was rejected. Received "{service['url']}". Service URL must begin with https://.''')
+        raise web.HTTPBadRequest(text=f'Service URL was rejected. Received "{service["url"]}". Service URL must begin with https://.')
     if service['contact_url'] != '' and not service['contact_url'].startswith(('https://', 'mailto:')):
-        raise web.HTTPBadRequest(text=f'''Contact URL was rejected. Received "{service['contact_url']}". Contact URL must begin with https:// or mailto:.''')
+        raise web.HTTPBadRequest(text=f'Contact URL was rejected. Received "{service["contact_url"]}". Contact URL must begin with https:// or mailto:.')
     if service['organization_url'] != '' and not service['organization_url'].startswith('https://'):
-        raise web.HTTPBadRequest(text=f'''Organization URL was rejected. Received "{service['organization_url']}". Organization URL must begin with https://.''')
+        raise web.HTTPBadRequest(text=f'Organization URL was rejected. Received "{service["organization_url"]}". Organization URL must begin with https://.')
     if service['organization_logo'] != '' and not service['organization_logo'].startswith('https://'):
-        raise web.HTTPBadRequest(text=f'''Logo URL was rejected. Received "{service['organization_logo']}". Logo URL must begin with https://.''')
+        raise web.HTTPBadRequest(text=f'Logo URL was rejected. Received "{service["organization_logo"]}". Logo URL must begin with https://.')
 
 
 async def construct_json(data):
