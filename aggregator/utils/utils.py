@@ -109,11 +109,15 @@ async def get_access_token(request):
 
     if 'Authorization' in request.headers:
         LOG.debug('Auth from headers.')
-        # First check if access token was delivered via headers
-        auth_scheme, access_token = request.headers.get('Authorization').split(' ')
-        if not auth_scheme == 'Bearer':
-            LOG.debug(f'User tried to use "{auth_scheme}"" auth_scheme.')
-            raise web.HTTPForbidden(text=f'Unallowed authorization scheme "{auth_scheme}", user "Bearer" instead.')
+        try:
+            # First check if access token was delivered via headers
+            auth_scheme, access_token = request.headers.get('Authorization').split(' ')
+            if not auth_scheme == 'Bearer':
+                LOG.debug(f'User tried to use "{auth_scheme}"" auth_scheme.')
+                raise web.HTTPBadRequest(text=f'Unallowed authorization scheme "{auth_scheme}", user "Bearer" instead.')
+        except ValueError as e:
+            LOG.debug(f'Error while attempting to get token from headers: {e}')
+            raise web.HTTPBadRequest(text='Authorization header requires "Bearer" scheme.')
     elif 'access_token' in request.cookies:
         LOG.debug('Auth from cookies.')
         # Then check if access token was stored in cookies
