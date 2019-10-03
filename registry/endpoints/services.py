@@ -44,12 +44,12 @@ async def register_service(request, db_pool):
         service_key = await db_register_service(connection, service)
         await db_store_email(connection, service_id, r['email'])
         if r['type'] == 'org.ga4gh:beacon':
-            response['message'] = 'Service has been registered. Service key and id for updating and deleting'\
+            response['message'] = 'Service has been registered. Service key and id for updating and deleting '\
                                   'registration included in this response, keep them safe.'
         elif r['type'] == 'org.ga4gh:beacon-aggregator':
-            response['message'] = 'Service has been registered. Service key and id for updating and deleting'\
-                                  'registration included in this response, keep them safe. Add this key to'\
-                                  '`registries.json` to allow this Registry to invalidate the cached Beacons'\
+            response['message'] = 'Service has been registered. Service key and id for updating and deleting '\
+                                  'registration included in this response, keep them safe. Add this key to '\
+                                  '`registries.json` to allow this Registry to invalidate the cached Beacons '\
                                   'at your Aggregator in case of catalogue changes.'
         response['serviceId'] = service_id
         response['serviceKey'] = service_key
