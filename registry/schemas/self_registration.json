@@ -11,8 +11,7 @@
     "email": {
       "title": "Email for the admin/maintainer of this service",
       "type": "string",
-      "examples": ["admin@service.org"],
-      "pattern": "^[a-zA-Z0-9.!#$%&'*+=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
+      "examples": ["admin@service.org"]
     },
     "type": {
       "title": "Service type of the application, must be one of the two allowed values",
