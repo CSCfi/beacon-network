@@ -4,6 +4,7 @@ import os
 import sys
 import secrets
 import ssl
+import re
 
 import aiohttp
 import asyncio
@@ -94,6 +95,7 @@ async def parse_service_info(id, service, req={}):
 async def validate_service_info(service, fetched_service_id):
     """Validate parsed service info object."""
     LOG.debug('Validating parsed service info.')
+    regex = r'[^@]+@[^@]+\.[^@]+'  # simple email validator
     # `service` has been pre-parsed, it contains the correct form of id in `service['id]`
     # `fetched_service_if` is the id given by the service in their info object
 
@@ -108,8 +110,9 @@ async def validate_service_info(service, fetched_service_id):
                                       + 'according to Beacon API specification.')
     if not service['url'].startswith('https://'):
         raise web.HTTPBadRequest(text=f'Service URL was rejected. Received "{service["url"]}". Service URL must begin with https://.')
-    if service['contact_url'] != '' and not service['contact_url'].startswith(('https://', 'mailto:')):
-        raise web.HTTPBadRequest(text=f'Contact URL was rejected. Received "{service["contact_url"]}". Contact URL must begin with https:// or mailto:.')
+    if service['contact_url'] != '' and not service['contact_url'].startswith(('https://', 'mailto:')) and not re.search(regex, service['contact_url']):
+        raise web.HTTPBadRequest(text=f'Contact URL was rejected. Received "{service["contact_url"]}". Contact URL must begin with https:// or mailto: '
+                                      'or be a valid email address.')
     if service['organization_url'] != '' and not service['organization_url'].startswith('https://'):
         raise web.HTTPBadRequest(text=f'Organization URL was rejected. Received "{service["organization_url"]}". Organization URL must begin with https://.')
     if service['organization_logo'] != '' and not service['organization_logo'].startswith('https://'):
