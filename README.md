@@ -23,3 +23,7 @@ For information regarding the other relevant service components, see:
 ## Documentation
 
 For instructions on configuring and setting up Registry and Aggregator APIs, refer to the [documentation](https://beacon-network.readthedocs.io/).
+
+## License
+
+`beacon-network` and all it sources are released under *Apache 2.0 License*.
