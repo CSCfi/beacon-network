@@ -20,7 +20,7 @@ services:
     ports:
       - 5432
     volumes:
-      - ./registry/db/docker-entrypoint-initdb.d/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./registry/db/docker-entrypoint-initdb.d/init.sql:/docker-entrypoint-initdb.d/init.sql:z
     networks:
       - net_registry
 
