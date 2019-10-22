@@ -162,7 +162,7 @@ async def db_get_service_urls(connection, service_type=None):
     service_urls = []
     try:
         # Database query
-        query = f"""SELECT service_url FROM services WHERE service_type=$1"""
+        query = """SELECT service_url FROM services WHERE service_type=$1"""
         statement = await connection.prepare(query)
         response = await statement.fetch(service_type)
         if len(response) > 0:
@@ -188,10 +188,10 @@ async def db_get_recaching_credentials(connection):
     credentials = []
     try:
         # Database query
-        query = f"""SELECT a.url AS url, b.service_key AS service_key
-                    FROM services a, service_keys b
-                    WHERE type='urn:ga4gh:aggregator'
-                    AND a.id=b.service_id"""
+        query = """SELECT a.url AS url, b.service_key AS service_key
+                   FROM services a, service_keys b
+                   WHERE type='urn:ga4gh:aggregator'
+                   AND a.id=b.service_id"""
         statement = await connection.prepare(query)
         response = await statement.fetch()
         if len(response) > 0:
