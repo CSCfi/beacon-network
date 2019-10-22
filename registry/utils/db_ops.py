@@ -61,19 +61,6 @@ async def db_delete_service_key(connection, id):
         raise web.HTTPInternalServerError(text='Database error occurred while attempting to delete service key.')
 
 
-async def db_store_email(connection, service_id, email):
-    """Store email separately from service info."""
-    LOG.debug('Store email.')
-    try:
-        async with connection.transaction():
-            await connection.execute("""INSERT INTO hosts
-                                     VALUES ($1, $2)""",
-                                     service_id, email)
-    except Exception as e:
-        LOG.debug(f'DB error: {e}')
-        pass
-
-
 async def db_register_service(connection, service):
     """Register new service at host."""
     LOG.debug('Register new service.')

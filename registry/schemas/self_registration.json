@@ -3,16 +3,10 @@
   "type": "object",
   "title": "POST/PUT /services schema",
   "required": [
-    "email",
     "type",
     "url"
   ],
   "properties": {
-    "email": {
-      "title": "Email for the admin/maintainer of this service",
-      "type": "string",
-      "examples": ["admin@service.org"]
-    },
     "type": {
       "title": "Service type of the application, must be one of the two allowed values",
       "type": "string",

@@ -16,12 +16,6 @@ CREATE TABLE IF NOT EXISTS services (
     PRIMARY KEY (id)
 );
 
---Email for maintainer of service
-CREATE TABLE hosts (
-    service_id VARCHAR(256),
-    email VARCHAR(256)
-);
-
 --Services that have been registered have individual service keys that are used for self-maintenance
 --These service keys are used at PUT and DELETE /services endpoints
 CREATE TABLE service_keys (

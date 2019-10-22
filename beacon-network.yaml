@@ -397,11 +397,6 @@ components:
       description: Registration form for adding a new service to the Registry. Information about the service is fetched from the `service-info` endpoint of the given URL. The fetched `service-info` from given URL must be valid, or the service will not be registered.
       type: object
       properties:
-        email:
-          type: string
-          format: email
-          example: admin@service.org
-          description: Contact for the administrator of this service.
         type:
           type: string
           example: org.ga4gh:beacon:1.0.0

@@ -4,7 +4,7 @@ from aiohttp import web
 
 from registry.utils.db_pool import init_db_pool
 from registry.utils.db_ops import db_check_service_id, db_store_service_key, db_update_service_key
-from registry.utils.db_ops import db_delete_service_key, db_store_email, db_register_service
+from registry.utils.db_ops import db_delete_service_key, db_register_service
 from registry.utils.db_ops import db_get_service_details, db_delete_services, db_update_service
 from registry.utils.db_ops import db_update_sequence, db_verify_service_key, db_verify_api_key, db_verify_admin_key
 
@@ -79,19 +79,6 @@ class TestDatabaseOperations(asynctest.TestCase):
         connection = BadConnection()
         with self.assertRaises(web.HTTPInternalServerError):
             await db_delete_service_key(connection, 'fi.beacon')
-
-    async def test_db_store_email_success(self):
-        """Test the storing of email: successful storing."""
-        connection = Connection()
-        await db_store_email(connection, 'fi.beacon', 'adming@beacon.fi')
-        # No exceptions raised
-
-    async def test_db_store_email_fail(self):
-        """Test the storing of email: failed to store."""
-        connection = BadConnection()
-        await db_store_email(connection, 'fi.beacon', 'admin@beacon.fi')
-        # Storing an email is a low priority function, and failure
-        # doesn't raise an exception
 
     @asynctest.mock.patch('registry.utils.db_ops.db_store_service_key')
     @asynctest.mock.patch('registry.utils.db_ops.generate_service_key')
