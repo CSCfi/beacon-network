@@ -305,13 +305,12 @@ def application_security():
     elif level == 1:
         LOG.debug(f'Application security level {level}.')
         ssl_context = ssl.create_default_context()
-        ssl_context.check_hostname = False
-        ssl_context.verify_mode = ssl.CERT_NONE
         ssl_context = load_certs(ssl_context)
     elif level == 2:
         LOG.debug(f'Application security level {level}.')
-        ssl_context = ssl.create_default_context()
-        ssl_context.check_hostname = True
+        # This means, that clients that connect to this Registry (server)
+        # are required to authenticate (they must have the correct cert)
+        ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         ssl_context.verify_mode = ssl.CERT_REQUIRED
         ssl_context = load_certs(ssl_context)
     else:
@@ -348,9 +347,8 @@ async def request_security():
         ssl_context = True
     elif level == 2:
         LOG.debug(f'Request security level {level}.')
-        ssl_context = ssl.create_default_context()
-        ssl_context.check_hostname = True
-        ssl_context.verify_mode = ssl.CERT_REQUIRED
+        # Servers that this app requests (as a client) must have the correct certs
+        ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         ssl_context = load_certs(ssl_context)
     else:
         LOG.debug(f'Could not determine request security level ({level}), setting to default (0).')
