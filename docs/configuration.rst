@@ -56,13 +56,13 @@ Configuration variables for setting up the web application and database connecti
 
 .. literalinclude:: ../registry/config/config.ini
    :language: python
-   :lines: 4-24
+   :lines: 4-28
 
 Configuration variables for defining the ``/service-info`` endpoint are found in the ``[info]`` section.
 
 .. literalinclude:: ../registry/config/config.ini
    :language: python
-   :lines: 26-55
+   :lines: 30-59
 
 Environment Variables
 ~~~~~~~~~~~~~~~~~~~~~
@@ -97,6 +97,8 @@ Environment Variables
 | DB_PASS               | pass           | Password for database user.                                                                                                                                 |
 +-----------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | DB_NAME               | db             | Database name.                                                                                                                                              |
++-----------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| DB_NAME               | True           | Boolean if API key at POST /services should be expired after use.                                                                                           |
 +-----------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 SSL

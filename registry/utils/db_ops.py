@@ -229,3 +229,16 @@ async def db_verify_admin_key(connection, api_key):
             LOG.debug('Provided admin key is unauthorised.')
             raise web.HTTPUnauthorized(text='Unauthorised admin key.')
         LOG.debug('Admin key is authorised.')
+
+
+async def db_delete_api_key(connection, api_key):
+    """Delete provided api key.
+
+    This process will expire the One-Time-Password used at registration.
+    """
+    LOG.debug('Deleting API key.')
+    try:
+        await connection.execute("""DELETE FROM api_keys WHERE api_key=$1""", api_key)
+    except Exception as e:
+        LOG.debug(f'DB error: {e}')
+        raise web.HTTPInternalServerError(text='Database error occurred while attempting to expire OTP.')

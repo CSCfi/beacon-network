@@ -6,7 +6,8 @@ from aiohttp import web
 
 from ..config import CONFIG
 from ..utils.logging import LOG
-from ..utils.db_ops import db_check_service_id, db_register_service, db_get_service_details, db_update_sequence, db_delete_services
+from ..utils.db_ops import db_check_service_id, db_register_service, db_get_service_details
+from ..utils.db_ops import db_update_sequence, db_delete_services, db_delete_api_key
 from ..utils.utils import http_request_info, generate_service_id, parse_service_info, query_params
 
 
@@ -41,6 +42,10 @@ async def register_service(request, db_pool):
         service = await parse_service_info(service_id, service_info, req=r)
         # Register service to host
         service_key = await db_register_service(connection, service)
+        # Check if API keys are OTPs and should be deleted after use
+        if CONFIG.api_otp:
+            # Expire the OTP (delete the API key)
+            await db_delete_api_key(connection, request.headers.get('Authorization'))
         if r['type'] == 'org.ga4gh:beacon':
             response['message'] = 'Service has been registered. Service key and id for updating and deleting '\
                                   'registration included in this response, keep them safe.'

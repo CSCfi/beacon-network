@@ -4,7 +4,7 @@ from aiohttp import web
 
 from registry.utils.db_pool import init_db_pool
 from registry.utils.db_ops import db_check_service_id, db_store_service_key, db_update_service_key
-from registry.utils.db_ops import db_delete_service_key, db_register_service
+from registry.utils.db_ops import db_delete_service_key, db_register_service, db_delete_api_key
 from registry.utils.db_ops import db_get_service_details, db_delete_services, db_update_service
 from registry.utils.db_ops import db_update_sequence, db_verify_service_key, db_verify_api_key, db_verify_admin_key
 
@@ -79,6 +79,18 @@ class TestDatabaseOperations(asynctest.TestCase):
         connection = BadConnection()
         with self.assertRaises(web.HTTPInternalServerError):
             await db_delete_service_key(connection, 'fi.beacon')
+
+    async def test_db_delete_api_key_success(self):
+        """Test the deletion of api key: successful deletion."""
+        connection = Connection()
+        await db_delete_api_key(connection, 'secret')
+        # No exceptions raised
+
+    async def test_db_delete_api_key_fail(self):
+        """Test the deletion of api key: failed to delete."""
+        connection = BadConnection()
+        with self.assertRaises(web.HTTPInternalServerError):
+            await db_delete_api_key(connection, 'secret')
 
     @asynctest.mock.patch('registry.utils.db_ops.db_store_service_key')
     @asynctest.mock.patch('registry.utils.db_ops.generate_service_key')
