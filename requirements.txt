@@ -1,0 +1,10 @@
+asyncio
+aiohttp
+aiohttp_cors
+aiocache
+aiomcache
+ujson
+uvloop
+asyncpg
+jsonschema==3.0.2
+gunicorn

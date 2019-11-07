@@ -1,11 +1,29 @@
-# Beacon Network APIs
-Beacon Network is an ecosystem of registered Beacon services. The network consists of three different services; Registries, Aggregators and Beacons.
+# Beacon Network
 
-###  Registry
-Beacon Registry `network-apis/registry.py` serves as a central storage of known Beacon services.
+[![Build Status](https://travis-ci.org/CSCfi/beacon-network.svg?branch=master)](https://travis-ci.org/CSCfi/beacon-network)
+[![Coverage Status](https://coveralls.io/repos/github/CSCfi/beacon-network/badge.svg?branch=master)](https://coveralls.io/github/CSCfi/beacon-network?branch=master)
+[![Documentation Status](https://readthedocs.org/projects/beacon-network/badge/?version=latest)](https://beacon-network.readthedocs.io/en/latest/?badge=latest)
 
-### Aggregator
-Beacon Aggregator `network-apis/aggregator.py` serves as a query proxy that delegates user queries to multiple Beacons and returns the collected responses synchronously (http) or asynchronously (websocket).
+Beacon Network is a service for gathering multiple Beacons together for easy access. 
 
-### Beacon
-[Beacon](https://github.com/CSCfi/beacon-python/) serves as a single queryable endpoint for data discovery. Standalone Beacons can be connected to Beacon Aggregators and Registries via service registration workflows.
+Beacon Network as a service consists of:
+
+* A Registry for holding data regarding member Beacons
+* An Aggregator that serves as a gateway to query all known Beacons at once
+* A web portal that provides a GUI to use the APIs described above
+* An OIDC client used for authenticating users and authorizing access to protected data
+
+This repository covers Aggregator and Registry APIs.
+
+For information regarding the other relevant service components, see:
+
+* [OIDC Client](https://github.com/CSCfi/oidc-client)
+* [Beacon Network UI](https://github.com/CSCfi/beacon-network-ui)
+
+## Documentation
+
+For instructions on configuring and setting up Registry and Aggregator APIs, refer to the [documentation](https://beacon-network.readthedocs.io/).
+
+## License
+
+`beacon-network` and all it sources are released under *Apache 2.0 License*.

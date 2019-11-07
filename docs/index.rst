@@ -1,20 +1,21 @@
-Beacon Network Services
-=======================
+Beacon Network
+==============
 
-Beacon Network is a set of services that create a hub for using Beacon APIs. These services are designed and developed by `GA4GH <https://www.ga4gh.org/>`_  and `ELIXIR <https://elixir-europe.org/>`_ partner organisations.
+Beacon Network is a service for gathering multiple Beacons together for easy access. 
 
-As of this moment, Beacon Network consists of four components:
+Beacon Network as a service consists of:
 
-* Registry API
-* Aggregator API
-* Auth API
-* Client UI
+* A Registry for holding data regarding member Beacons
+* An Aggregator that serves as a gateway to query all known Beacons at once
+* A web portal that provides a GUI to use the APIs described above
+* An OIDC client used for authenticating users and authorizing access to protected data
 
-This ecosystem serves to provide wider access and GUI to third party Beacons. For more information on Beacon APIs, the end services of this software family, see the following links:
+This documentation covers the configuration, installation and deployment of the Registry and Aggregator APIs.
 
-* `ELIXIR Beacon Project <https://beacon-project.io/>`_
-* `Beacon API specification <https://app.swaggerhub.com/apis-docs/ELIXIR-Finland/ga-4_gh_beacon_api_specification/1.0.0-rc1>`_
-* `Example Beacon API implementation <https://github.com/CSCfi/beacon-python>`_
+For information regarding the other relevant service components, see:
+
+* `OIDC Client <https://github.com/CSCfi/oidc-client>`_
+* `Beacon Network UI <https://github.com/CSCfi/beacon-network-ui>`_
 
 Table of Contents
 -----------------
@@ -22,5 +23,7 @@ Table of Contents
 .. toctree::
    :maxdepth: 2
 
+   Configuration  <configuration>
    Setup          <setup>
-   API Examples   <examples>
+   API            <api>
+   Examples       <examples>

@@ -1,0 +1,57 @@
+version: '3.2'
+
+# Environment variables here will override values in /config/config.ini
+
+networks:
+  net_registry:
+    driver: bridge
+
+services:
+
+  # REGISTRY DB AND APP
+
+  db_registry:
+    hostname: db_registry
+    image: postgres:9.6
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: registry
+    ports:
+      - 5432
+    volumes:
+      - ./registry/db/docker-entrypoint-initdb.d/init.sql:/docker-entrypoint-initdb.d/init.sql:z
+    networks:
+      - net_registry
+
+  app_registry:
+    hostname: app_registry
+    image: cscfi/beacon-network
+    depends_on:
+      - db_registry
+    environment:
+      APP_HOST: "0.0.0.0"
+      APP_PORT: 8080
+      DB_HOST: db_registry
+      DB_PORT: 5432
+      BEACON_RUN_APP: registry
+      DEBUG: "true"
+    links:
+      - db_registry
+    ports:
+      - 8080:8080
+    networks:
+      - net_registry
+
+  # AGGREGATORAPP
+
+  app_aggregator:
+    hostname: app_aggregator
+    image: cscfi/beacon-network
+    environment:
+      APP_HOST: "0.0.0.0"
+      APP_PORT: 5050
+      BEACON_RUN_APP: aggregator
+      DEBUG: "true"
+    ports:
+      - 5050:5050

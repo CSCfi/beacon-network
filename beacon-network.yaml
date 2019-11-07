@@ -1,0 +1,453 @@
+openapi: 3.0.0
+info:
+  description: >-
+    This is a definition of the Beacon Network API, which constitutes the common endpoints of Beacon Registry and Aggregator services.
+
+    
+    The base specification is based on GA4GH Discovery specification **https://github.com/ga4gh-discovery/ga4gh-service-registry**
+
+
+    For the GA4GH Beacon API specification refer to **https://github.com/ga4gh-beacon/specification**
+  version: "1.0.0"
+  title: Beacon Network API
+  contact:
+    email: servicedesk@csc.fi
+  license:
+    name: License Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+tags:
+  - name: Common Endpoints
+    description: Endpoints shared by Registry, Aggregator and Beacon
+  - name: Registry Endpoints
+    description: Endpoints available only at Beacon Registry API
+  - name: Aggregator Endpoints
+    description: Endpoints available only at Beacon Aggregator API
+
+paths:
+
+  /service-info:
+    get:
+      tags:
+        - Common Endpoints
+      summary: Return service information.
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceInfo'
+
+  /services:
+    get:
+      tags:
+        - Registry Endpoints
+      summary: List services known by this service.
+      description: Third parties can view service info of services that have been registered at this host.
+      parameters:
+      - name: type
+        in: query
+        description: Filter results to contain only selected service type
+        schema:
+          $ref: '#/components/schemas/ServiceTypes'
+      - name: apiVersion
+        in: query
+        description: Filter results to contain only services that adhere to a specific version of the API specification. Semantic versioning is often used, e.g. "1.0.0"
+        example: 1.0.0
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Services'
+    post:
+      tags:
+        - Registry Endpoints
+      summary: Register a new service at host service.
+      description: Third parties use this endpoint to register themselves at the host service.
+      parameters:
+      - name: Authorization
+        in: header
+        description: Api key to access POST endpoint.
+        schema:
+          type: string
+        required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestBody'
+      responses:
+        201:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationResponse'
+
+  /services/types:
+    get:
+      tags:
+        - Registry Endpoints
+      summary: List all Beacon service types.
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceTypes'
+
+  /services/status:
+    get:
+      tags:
+        - Registry Endpoints
+      summary: List statuses of registered services. (WIP)
+      description: Registry pings registered services and reports if they are up or down. (WIP, for example https://beacon-ui-beacon.rahtiapp.fi/#!/about)
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceStatuses'
+
+  /services/{id}:
+    get:
+      tags:
+        - Registry Endpoints
+      summary: List service info of the selected service that has been registered at this host.
+      description: Third parties can view service info of services that have been registered at this host.
+      parameters:
+      - name: id
+        in: path
+        description: Unique id of the targeted service.
+        schema:
+          type: string
+        required: true
+      - name: type
+        in: query
+        description: Filter results to contain only selected service type
+        schema:
+          $ref: '#/components/schemas/ServiceTypes'
+      - name: apiVersion
+        in: query
+        description: Filter results to contain only services that adhere to a specific version of the API specification. Semantic versioning is often used, e.g. "1.0.0"
+        example: 1.0.0
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceInfo'
+    put:
+      tags:
+        - Registry Endpoints
+      summary: Update service info at host service.
+      description: Services that have previously registered at this host can update their service info via this endpoint.
+      parameters:
+      - name: id
+        in: path
+        description: Unique id of the targeted service.
+        schema:
+          type: string
+        required: true
+      - name: Beacon-Service-Key
+        in: header
+        description: Service key tied to this id.
+        schema:
+          type: string
+        required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestBody'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateResponse'
+    delete:
+      tags:
+        - Registry Endpoints
+      summary: Delete service from this host.
+      parameters:
+      - name: id
+        in: path
+        description: Unique id of the targeted service.
+        schema:
+          type: string
+        required: true
+      - name: Beacon-Service-Key
+        in: header
+        description: Service key tied to this id.
+        schema:
+          type: string
+        required: true
+      responses:
+        200:
+          description: Service has been deleted.
+
+  /update/services:
+    get:
+      tags:
+        - Registry Endpoints
+      summary: Update service infos.
+      description: Update service infos of all registered services by requesting up to date data.
+      parameters:
+      - name: Authorization
+        in: header
+        description: Api key to access this endpoint.
+        schema:
+          type: string
+        required: true
+      responses:
+        200:
+          description: Services have been updated.
+
+  /query:
+    get:
+      tags:
+        - Aggregator Endpoints
+      summary: Relay query to Beacon.
+      description: Relays query parameters from path and header to registered Beacons. Follow Beacon specification for parameters and responses.
+      
+        - https://app.swaggerhub.com/apis-docs/ELIXIR-Finland/ga-4_gh_beacon_api_specification/1.0.0-rc1
+      responses:
+        200:
+          description: (( See Beacon API Specification ))
+
+  /cache:
+    delete:
+      tags:
+        - Aggregator Endpoints
+      summary: Invalidate cached Beacons.
+      description: Invalidates the list of cached Beacons at this Aggregator, forcing the Aggregator to fetch new, up-to-date lists from known Registries.
+      parameters:
+      - name: Authorization
+        in: header
+        description: Service key to access this endpoint.
+        schema:
+          type: string
+        required: true
+      responses:
+        200:
+          description: Cache has been deleted.
+
+components:
+  schemas:
+
+    ServiceTypes:
+      type: string
+      example: [org.ga4gh:service-registry, org.ga4gh:beacon-aggregator, org.ga4gh:beacon]
+      enum:
+        - org.ga4gh:service-registry
+        - org.ga4gh:beacon-aggregator
+        - org.ga4gh:beacon
+      description: Different Beacon service types.
+
+    ServiceInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          example: org.ga4gh.service
+          description: Unique identifier of the service using reverse domain name notation.
+        name:
+          type: string
+          example: ELIXIR Beacon
+          description: Name of the service.
+        type:
+          type: string
+          example: org.ga4gh:beacon:1.0.0
+          description: Namespaced service typer with specification number. See GA4GH Discovery spec for more information.
+        description:
+          type: string
+          example: Beacon service for ELIXIR node
+          description: Description of the service.
+        documentationUrl:
+          type: string
+          example: https://service.ga4gh.org/docs
+          description: URL for the documentation of this server, either technical or administrative.
+        organization:
+          type: object
+          properties:
+            name:
+              type: string
+              example: Global Alliance for Genomic Health
+              description: Name of the organization that hosts this service.
+            url:
+              type: string
+              example: https://ga4gh.org/
+              description: URL to the organization's home page (RFC 3986 format).
+        contactUrl:
+          type: string
+          example: https://ga4gh.org/contactus/
+          description: URL of the contact for the host/maintainer of this service, e.g. a link
+            to a contact form (RFC 3986 format), or an email (RFC 2368 format).
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp describing when the service was first deployed and available (RFC 3339 format)
+          example: "2019-06-04T12:58:19Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp describing when the service was last updated (RFC 3339 format)
+          example: "2019-06-04T12:58:19Z"
+        environment:
+          type: string
+          enum: [prod, dev, test]
+          description: Environment the service is running in. Use this to distinguish between production, development and testing/staging deployments.
+          example: test
+        version:
+          type: string
+          example: 1.0.0
+          description: Internal version of the service.
+
+    RegistryServiceInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          example: org.ga4gh.service
+          description: Unique identifier of the service using reverse domain name notation.
+        name:
+          type: string
+          example: ELIXIR Beacon
+          description: Name of the service.
+        type:
+          type: string
+          example: org.ga4gh:beacon:1.0.0
+          description: Namespaced service typer with specification number. See GA4GH Discovery spec for more information.
+        description:
+          type: string
+          example: Beacon service for ELIXIR node
+          description: Description of the service.
+        organization:
+          type: object
+          properties:
+            name:
+              type: string
+              example: Global Alliance for Genomic Health
+              description: Name of the organization that hosts this service.
+            url:
+              type: string
+              example: https://ga4gh.org/
+              description: URL to the organization's home page (RFC 3986 format).
+            logoUrl:
+              type: string
+              example: https://ga4gh.org/our-logo.png
+              description: URL to the organization's logo (RFC 3986 format) web safe image extensions are preferred, e.g. PNG, SVG, JPG.
+        contactUrl:
+          type: string
+          example: https://ga4gh.org/contactus/
+          description: URL of the contact for the host/maintainer of this service, e.g. a link
+            to a contact form (RFC 3986 format), or an email (RFC 2368 format).
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp describing when the service was first deployed and available (RFC 3339 format)
+          example: "2019-06-04T12:58:19Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp describing when the service was last updated (RFC 3339 format)
+          example: "2019-06-04T12:58:19Z"
+        environment:
+          type: string
+          enum: [prod, dev, test]
+          description: Environment the service is running in. Use this to distinguish between production, development and testing/staging deployments.
+          example: test
+        version:
+          type: string
+          example: 1.0.0
+          description: Internal version of the service.
+        url:
+          type: string
+          example: https://service.ga4gh.org/
+          description: URL to the root endpoint for this service (RFC 3986 format).
+
+    Services:
+      type: array
+      items:
+        $ref: '#/components/schemas/RegistryServiceInfo'
+    
+    ServiceStatuses:
+      type: array
+      items:
+        $ref: '#/components/schemas/ServiceStatus'
+    
+    ServiceStatus:
+      type: object
+      description: |
+        (WIP!) Some kind of object to relay service status information, for example usage see https://beacon-ui-beacon.rahtiapp.fi/#!/about, or Opsview plugin -like status monitoring
+    RequestBody:
+      description: Registration form for adding a new service to the Registry. Information about the service is fetched from the `service-info` endpoint of the given URL. The fetched `service-info` from given URL must be valid, or the service will not be registered.
+      type: object
+      properties:
+        type:
+          type: string
+          example: org.ga4gh:beacon:1.0.0
+          description:  Service type of this service.
+        url:
+          type: string
+          example: https://beacon.example.org/
+          description: URL to the root endpoint for this service (RFC 3986 format). Service info should be available by appending `service-info` to this URL, e.g. `https://example.org/service-info`.
+
+    RegistrationResponse:
+      description: Information and instructions regarding the newly registered service.
+      type: object
+      properties:
+        message:
+          type: string
+          example: Service has been registered. Service key and id for updating and deleting registration included in this response, keep them safe.
+          description: Confirmation message with instructions.
+        serviceId:
+          type: string
+          example: org.ga4gh.beacon
+          description: Unique identifier crafted from given URL.
+        serviceKey:
+          type: string
+          example: 688787D8FF144C502C7F5CFFAAFE2CC588D86079F9DE88304C26B0CB99CE91C6
+          description: Secret key used to update and delete this service.
+        help:
+          type: string
+          example: https://ga4gh.org/documentation
+          description: URL to documentation, support or other guidelines.
+
+    UpdateResponse:
+      description: Information and instructions regarding the updated service.
+      type: object
+      properties:
+        message:
+          type: string
+          example: Service has been updated. Your new service id is attached in this response. The old Beacon-Service-Key remains the same.
+          description: Confirmation message with instructions.
+        oldServiceId:
+          type: string
+          example: org.ga4gh.beacon
+          description: Unique identifier fetched from database.
+        newServiceId:
+          type: string
+          example: org.ga4gh.beacon
+          description: Unique identifier crafted from given URL.
+        help:
+          type: string
+          example: https://ga4gh.org/documentation
+          description: URL to documentation, support or other guidelines.
+
+externalDocs:
+  url: https://github.com/CSCfi/beacon-network
+  description: API Source Code and original Specification

@@ -1,0 +1,1 @@
+"""Beacon Network Aggregator."""
