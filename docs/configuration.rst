@@ -28,7 +28,7 @@ The ``registries.json`` file acts as the aggregator's database. The array can be
 will contact all of the listed ``url`` keys, which should point to ``/services`` endpoint at registries. If the aggregator is
 registered as a service at the registry, the ``serviceKey`` from the registration response can be put into the ``key`` key, which 
 allows the registry to call the ``DELETE /cache`` endpoint at the aggregator to remove the cached list of beacons from the aggregator.
-This forces the aggregator to request a new up-to-date list of beacons from the registry. This can be useful to let the aggregator know
+This triggers the aggregator to request a new up-to-date list of beacons from the registry. This can be useful to let the aggregator know
 about changes in the registry's service catalogue.
 
 .. literalinclude:: ../aggregator/config/registries.json
