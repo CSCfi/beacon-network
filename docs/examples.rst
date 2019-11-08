@@ -220,7 +220,6 @@ Request
     localhost:8080/services \
     -H 'Authorization: secret' \
     -d '{
-        "email": "support@csc.fi",
         "type": "org.ga4gh:beacon",
         "url": "http://localhost:3000/"
     }'
@@ -231,7 +230,7 @@ Response
 .. code-block:: javascript
 
     {
-        "message": "Service has been registered. Service key and id for updating and deletingregistration included in this response, keep them safe.",
+        "message": "Service has been registered. Service key and id for updating and deleting registration included in this response, keep them safe.",
         "serviceId": "localhost:3000",
         "serviceKey": "secret",
         "help": "https://beacon-network.readthedocs.io/en/latest/"
@@ -361,7 +360,6 @@ Request
     localhost:8080/services/localhost:3000 \
     -H 'Beacon-Service-Key: secret' \
     -d '{
-        "email": "support@csc.fi",
         "type": "org.ga4gh:beacon",
         "url": "http://localhost:3000/"
     }'
