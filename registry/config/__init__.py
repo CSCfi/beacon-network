@@ -23,6 +23,7 @@ def parse_config_file(path):
         'db_pass': os.environ.get('DB_PASS', config.get('app', 'db_pass')) or 'pass',
         'db_name': os.environ.get('DB_NAME', config.get('app', 'db_name')) or 'db',
         'api_otp': bool(strtobool(os.environ.get('API_OTP', config.get('app', 'api_otp')))) or True,
+        'cors': os.environ.get('APP_CORS', config.get('app', 'cors')) or '*',
         'name': config.get('info', 'name'),
         'type': config.get('info', 'type'),
         'description': config.get('info', 'description'),
