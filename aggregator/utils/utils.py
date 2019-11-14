@@ -241,11 +241,10 @@ async def parse_results(results):
             if isinstance(result, list):
                 for sub_result in result:
                     parsed_results.append(sub_result)
-        else:
-            # For direct Beacon responses, no processing is required [{}, ...] --> [{}, ...]
-            parsed_results.append(result)
+            else:
+                # For direct Beacon responses, no processing is required [{}, ...] --> [{}, ...]
+                parsed_results.append(result)
     else:
-        LOG.debug('Didnt find list')
         # There were no lists in the results, so this processing can be skipped
         return results
 
