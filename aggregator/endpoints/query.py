@@ -5,8 +5,9 @@ import uvloop
 
 from aiohttp import web
 
+from ..config import CONFIG
 from ..utils.logging import LOG
-from ..utils.utils import get_access_token, get_services, query_service
+from ..utils.utils import get_access_token, get_services, query_service, parse_results
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -28,6 +29,11 @@ async def send_beacon_query(request):
 
     # Prepare and initiate co-routines
     results = await asyncio.gather(*tasks)
+
+    # Check if this aggregator is aggregating aggregators
+    # Aggregators return lists instead of objects, so they need to be broken down into a single list
+    if CONFIG.aggregators:
+        results = await parse_results(results)
 
     return results
 

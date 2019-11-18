@@ -4,7 +4,7 @@ from aioresponses import aioresponses
 from aiohttp import web
 
 from aggregator.utils.utils import http_get_service_urls, get_services, process_url
-from aggregator.utils.utils import remove_self, get_access_token  # , query_service
+from aggregator.utils.utils import remove_self, get_access_token, parse_results  # , query_service
 from aggregator.utils.utils import validate_service_key  # , clear_cache
 
 
@@ -158,6 +158,18 @@ class TestUtils(asynctest.TestCase):
         """Successfully validate service key."""
         with self.assertRaises(web.HTTPUnauthorized):
             await validate_service_key('wrong key')
+
+    async def test_parse_results_found(self):
+        """Test parsing of nested results: found list."""
+        results = [{}, {}, [{}, {}]]
+        parsed_results = await parse_results(results)
+        self.assertEqual(parsed_results, [{}, {}, {}, {}])
+
+    async def test_parse_results_none_found(self):
+        """Test parsing of nested results: none found."""
+        results = [{}, {}]
+        parsed_results = await parse_results(results)
+        self.assertEqual(parsed_results, [{}, {}])
 
 
 if __name__ == '__main__':

@@ -31,6 +31,7 @@ def parse_config_file(path):
         'registries': load_json(config.get('app', 'registries')) or [],
         'beacons': bool(strtobool(config.get('app', 'beacons'))) or True,
         'aggregators': bool(strtobool(config.get('app', 'aggregators'))) or False,
+        'cors': os.environ.get('APP_CORS', config.get('app', 'cors')),
         'name': config.get('info', 'name'),
         'type': config.get('info', 'type'),
         'description': config.get('info', 'description'),

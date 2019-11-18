@@ -159,9 +159,10 @@ async def close_db(app):
 def set_cors(app):
     """Set CORS rules."""
     LOG.debug('Applying CORS rules.')
+    LOG.debug(f'Applying CORS rules: {CONFIG.cors}.')
     # Configure CORS settings, allow all domains
     cors = aiohttp_cors.setup(app, defaults={
-        "*": aiohttp_cors.ResourceOptions(
+        CONFIG.cors: aiohttp_cors.ResourceOptions(
             allow_credentials=True,
             expose_headers="*",
             allow_headers="*",
@@ -177,7 +178,8 @@ async def init_app():
     LOG.info('Initialising web server.')
     app = web.Application(middlewares=[api_key()])
     app.router.add_routes(routes)
-    set_cors(app)
+    if CONFIG.cors:
+        set_cors(app)
     app.on_startup.append(init_db)
     app.on_cleanup.append(close_db)
     return app
