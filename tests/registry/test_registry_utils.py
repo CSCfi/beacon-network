@@ -5,7 +5,8 @@ import aiohttp
 
 from registry.utils.utils import http_request_info, parse_service_info, construct_json
 from registry.utils.utils import query_params, db_get_service_urls, db_get_recaching_credentials
-from registry.utils.utils import generate_service_key, generate_service_id
+from registry.utils.utils import generate_service_key, generate_service_id, validate_service_info
+from registry.utils.utils import invalidate_aggregator_caches, invalidate_cache
 
 from .db_test_classes import Connection
 
@@ -208,6 +209,86 @@ class TestUtils(asynctest.TestCase):
         self.assertEqual(id2, 'fi.beacon')
         id3 = await generate_service_id('beacon.fi/endpoint')
         self.assertEqual(id3, 'fi.beacon')
+
+    async def test_validate_service_info(self):
+        """Test service info validation errors."""
+        # Validation passes in other tests, this test is to test the errors
+        service = {
+            'id': 'fi.beacon',
+            'url': 'http://beacon.fi',
+            'contact_url': 'http://csc.fi/contact',
+            'organization_url': 'http://csc.fi',
+            'organization_logo': 'http://csc.fi/logo.png'
+        }
+        # Test unmatching IDs
+        with self.assertRaises(aiohttp.web.HTTPBadRequest):
+            await validate_service_info(service, 'fi.beacon-other')
+        # Test unsafe url (url)
+        with self.assertRaises(aiohttp.web.HTTPBadRequest):
+            await validate_service_info(service, 'fi.beacon')
+        # Fix previous and test next unsafe url (contact_url)
+        service['url'] = 'https://beacon.fi'
+        with self.assertRaises(aiohttp.web.HTTPBadRequest):
+            await validate_service_info(service, 'fi.beacon')
+        # Fix previous and test next unsafe url (organization_url)
+        service['contact_url'] = 'https://csc.fi/contact'
+        with self.assertRaises(aiohttp.web.HTTPBadRequest):
+            await validate_service_info(service, 'fi.beacon')
+        # Fix previous and test next unsafe url (organization_logo)
+        service['organization_url'] = 'https://csc.fi'
+        with self.assertRaises(aiohttp.web.HTTPBadRequest):
+            await validate_service_info(service, 'fi.beacon')
+        # Fix previous and test passing
+        service['organization_logo'] = 'https://csc.fi/logo.png'
+        await validate_service_info(service, 'fi.beacon')
+        # Passed validation
+
+    @asynctest.mock.patch('registry.utils.utils.db_get_recaching_credentials')
+    @asynctest.mock.patch('registry.utils.utils.invalidate_cache')
+    async def test_invalidate_aggregator_caches(self, m_invalidate, m_db):
+        """Test invalidation of aggregator caches."""
+        m_db.return_value = ['https://aggregator.csc.fi/service-info']
+        m_invalidate.return_value = True
+        m_pool = asynctest.CoroutineMock()
+        m_pool.acquire().__aenter__.return_value = True
+        await invalidate_aggregator_caches({}, m_pool)
+
+    @aioresponses()
+    @asynctest.mock.patch('registry.utils.utils.LOG')
+    async def test_invalidate_cache_success(self, m_resp, m_log):
+        """Test invalidation of cache: successful invalidation."""
+        service = {
+            'service_url': 'https://aggregator.csc.fi/service-info',
+            'service_key': 'secret'
+        }
+        m_resp.delete('https://aggregator.csc.fi/cache', status=200)
+        await invalidate_cache(service)
+        m_log.debug.assert_called_with('Service received notification and responded with 200.')
+
+    @aioresponses()
+    @asynctest.mock.patch('registry.utils.utils.LOG')
+    async def test_invalidate_cache_fail(self, m_resp, m_log):
+        """Test invalidation of cache: failed request."""
+        service = {
+            'service_url': 'https://aggregator.csc.fi/service-info',
+            'service_key': 'wrongkey'
+        }
+        m_resp.delete('https://aggregator.csc.fi/cache', status=400)
+        await invalidate_cache(service)
+        m_log.debug.assert_called_with('Service encountered a problem with notification: 400.')
+
+    @aioresponses()
+    @asynctest.mock.patch('registry.utils.utils.LOG')
+    async def test_invalidate_cache_error(self, m_resp, m_log):
+        """Test invalidation of cache: errored request."""
+        service = {
+            'service_url': 'https://aggregator.csc.fi/service-info'
+        }
+        m_resp.delete('https://aggregator.csc.fi/cache', status=200)
+        # Exception is raised and then passed, check log message
+        await invalidate_cache(service)
+        # Could be any kind of error that fails the request, e.g. bad url, but let's test for auth key not found in param dict
+        m_log.debug.assert_called_with("Query error 'service_key'.")
 
 
 if __name__ == '__main__':

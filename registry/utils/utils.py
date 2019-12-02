@@ -234,7 +234,7 @@ async def invalidate_cache(service):
         try:
             # Aggregator URLs end with /service-info in the DB, replace them with /cache
             async with session.delete(service["service_url"].replace('service-info', 'cache'),
-                                      headers={'Beacon-Service-Key': service['service_key']},
+                                      headers={'Authorization': service['service_key']},
                                       ssl=await request_security()) as response:
                 if response.status in [200, 204]:
                     LOG.debug(f'Service received notification and responded with {response.status}.')
