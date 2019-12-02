@@ -5,7 +5,34 @@ from aiohttp import web
 
 from aggregator.utils.utils import http_get_service_urls, get_services, process_url
 from aggregator.utils.utils import remove_self, get_access_token, parse_results  # , query_service
-from aggregator.utils.utils import validate_service_key  # , clear_cache
+from aggregator.utils.utils import validate_service_key, clear_cache
+
+
+class BadCache:
+    """Malformed cache class."""
+
+    def __init__(self):
+        """Initialise object."""
+
+
+class MockCache:
+    """Mock cache for testing."""
+
+    def __init__(self, exists=True):
+        """Initialise object."""
+        self.real_exists = exists
+
+    async def exists(self, name):
+        """Check if cache exists."""
+        return self.real_exists
+
+    async def delete(self, name):
+        """Delete cache."""
+        return True
+
+    async def close(self):
+        """Close cache."""
+        return True
 
 
 class MockRequest:
@@ -170,6 +197,30 @@ class TestUtils(asynctest.TestCase):
         results = [{}, {}]
         parsed_results = await parse_results(results)
         self.assertEqual(parsed_results, [{}, {}])
+
+    @asynctest.mock.patch('aggregator.utils.utils.LOG')
+    @asynctest.mock.patch('aggregator.utils.utils.SimpleMemoryCache')
+    async def test_clear_cache_success(self, m_cache, m_log):
+        """Test clearing of cache."""
+        m_cache.return_value = MockCache()
+        await clear_cache()
+        m_log.debug.assert_called_with('Cache has been cleared.')
+
+    @asynctest.mock.patch('aggregator.utils.utils.LOG')
+    @asynctest.mock.patch('aggregator.utils.utils.SimpleMemoryCache')
+    async def test_clear_cache_none(self, m_cache, m_log):
+        """Test clearing of cache, no cache found."""
+        m_cache.return_value = MockCache(exists=False)
+        await clear_cache()
+        m_log.debug.assert_called_with('No old cache found.')
+
+    @asynctest.mock.patch('aggregator.utils.utils.LOG')
+    @asynctest.mock.patch('aggregator.utils.utils.SimpleMemoryCache')
+    async def test_clear_cache_error(self, m_cache, m_log):
+        """Test clearing of cache, error."""
+        m_cache.return_value = BadCache()  # no cache class
+        await clear_cache()
+        m_log.error.assert_called_with("Error at clearing cache: 'BadCache' object has no attribute 'exists'.")
 
 
 if __name__ == '__main__':
