@@ -5,7 +5,7 @@ from aiohttp import web
 
 from aggregator.utils.utils import http_get_service_urls, get_services, process_url
 from aggregator.utils.utils import remove_self, get_access_token, parse_results  # , query_service
-from aggregator.utils.utils import validate_service_key, clear_cache
+from aggregator.utils.utils import validate_service_key, clear_cache, ws_bundle_return
 
 
 class BadCache:
@@ -51,7 +51,7 @@ class MockWebsocket:
         """Initialise object."""
         self.data = None
 
-    def send_str(self, data):
+    async def send_str(self, data):
         """Receive data."""
         self.data = data
 
@@ -221,6 +221,12 @@ class TestUtils(asynctest.TestCase):
         m_cache.return_value = BadCache()  # no cache class
         await clear_cache()
         m_log.error.assert_called_with("Error at clearing cache: 'BadCache' object has no attribute 'exists'.")
+
+    async def test_ws_bundle_return(self):
+        """Test websocket return function."""
+        m_ws = MockWebsocket()
+        await ws_bundle_return({'something': 'here'}, m_ws)
+        self.assertEqual('{"something": "here"}', m_ws.data)
 
 
 if __name__ == '__main__':
