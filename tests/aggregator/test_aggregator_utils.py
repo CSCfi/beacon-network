@@ -3,8 +3,10 @@ import asynctest
 from aioresponses import aioresponses
 from aiohttp import web
 
+from unittest.mock import Mock
+
 from aggregator.utils.utils import http_get_service_urls, get_services, process_url
-from aggregator.utils.utils import remove_self, get_access_token, parse_results  # , query_service
+from aggregator.utils.utils import remove_self, get_access_token, parse_results, query_service
 from aggregator.utils.utils import validate_service_key, clear_cache, ws_bundle_return
 
 
@@ -148,33 +150,50 @@ class TestUtils(asynctest.TestCase):
         access_token = await get_access_token(request)
         self.assertEqual(None, access_token)
 
-    # find out why query_service returns None
+    @aioresponses()
+    @asynctest.mock.patch('aggregator.utils.utils.isinstance')
+    async def test_query_service_ws_success_aggregator(self, m, m_is):
+        """Test querying of service: websocket success, aggregator list."""
+        # Aggregators respond with list [{}]
+        m_is.return_value = True
+        data = [{'important': 'stuff'}]
+        m.get('https://beacon.fi/query', status=200, payload=data)
+        ws = MockWebsocket()
+        await query_service('https://beacon.fi/query', {}, None, ws=ws)
+        self.assertEqual(ws.data, '{"important": "stuff"}')
 
-    # @aioresponses()
-    # async def test_query_service_ws_success(self, m):
-    #     """Test querying of service: websocket success."""
-    #     data = {'important': 'stuff'}
-    #     m.get('https://beacon.fi/query', status=200, payload=data)
-    #     ws = MockWebsocket()
-    #     await query_service('https://beacon.fi/query', 'referenceName=1', 'json.web.token', ws=ws)
-    #     self.assertEqual(ws.data, data)
+    @aioresponses()
+    async def test_query_service_ws_success_beacon(self, m):
+        """Test querying of service: websocket success, beacon dict."""
+        # Beacons respond with dict {}
+        data = {'important': 'stuff'}
+        m.get('https://beacon.fi/query', status=200, payload=data)
+        ws = Mock(spec=web.WebSocketResponse, data='{"important": "stuff"}')
+        await query_service('https://beacon.fi/query', {}, None, ws=ws)
+        self.assertEqual(ws.data, '{"important": "stuff"}')
 
-    # async def test_query_service_ws_fail(self):
-    #     """Test querying of service: websocket fail."""
+    @aioresponses()
+    async def test_query_service_ws_fail(self, m):
+        """Test querying of service: websocket fail."""
+        m.get('https://beacon.fi/query', status=400)
+        ws = MockWebsocket()
+        await query_service('https://beacon.fi/query', {}, None, ws=ws)
+        self.assertTrue("'responseStatus': 400" in ws.data)
 
-    # @aioresponses()
-    # async def test_query_service_http_success(self, m):
-    #     """Test querying of service: http success."""
-    #     data = {'important': 'stuff'}
-    #     m.get('https://beacon.fi/query', status=200, payload=data)
-    #     response = await query_service('https://beacon.fi/query', 'referenceName=1', 'json.web.token')
-    #     self.assertEqual(response, data)
+    @aioresponses()
+    async def test_query_service_http_success(self, m):
+        """Test querying of service: http success."""
+        data = {'response': 'from beacon'}
+        m.get('https://beacon.fi/query', status=200, payload=data)
+        response = await query_service('https://beacon.fi/query', {}, 'token')
+        self.assertEqual(response, data)
 
-    # async def test_query_service_http_fail(self):
-    #     """Test querying of service: http fail."""
-
-    # async def test_query_service_error(self):
-    #     """Test querying of service: general fail."""
+    @aioresponses()
+    async def test_query_service_http_fail(self, m):
+        """Test querying of service: http fail."""
+        m.get('https://beacon.fi/query', status=400)
+        response = await query_service('https://beacon.fi/query', {}, None)
+        self.assertEqual(response['responseStatus'], 400)
 
     async def test_validate_service_key_success(self):
         """Successfully validate service key."""
