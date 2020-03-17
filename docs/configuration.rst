@@ -19,7 +19,7 @@ Configuration variables for defining the ``/service-info`` endpoint are found in
 
 .. literalinclude:: ../aggregator/config/config.ini
    :language: python
-   :lines: 23-52
+   :lines: 23-54
 
 Registries File
 ~~~~~~~~~~~~~~~
@@ -79,7 +79,7 @@ Configuration variables for defining the ``/service-info`` endpoint are found in
 
 .. literalinclude:: ../registry/config/config.ini
    :language: python
-   :lines: 33-62
+   :lines: 33-64
 
 Environment Variables
 ~~~~~~~~~~~~~~~~~~~~~
@@ -123,6 +123,8 @@ Environment Variables
 
 SSL
 ---
+
+Experimental!! In production a reverse proxy is recommended.
 
 Possible security levels for ``APPLICATION_SECURITY`` and ``REQUEST_SECURITY`` are 0-2.
 
