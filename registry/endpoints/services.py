@@ -46,10 +46,10 @@ async def register_service(request, db_pool):
         if CONFIG.api_otp:
             # Expire the OTP (delete the API key)
             await db_delete_api_key(connection, request.headers.get('Authorization'))
-        if r['type'] == 'org.ga4gh:beacon':
+        if r['type'] == 'beacon':
             response['message'] = 'Service has been registered. Service key and id for updating and deleting '\
                                   'registration included in this response, keep them safe.'
-        elif r['type'] == 'org.ga4gh:beacon-aggregator':
+        elif r['type'] == 'beacon-aggregator':
             response['message'] = 'Service has been registered. Service key and id for updating and deleting '\
                                   'registration included in this response, keep them safe. Add this key to '\
                                   '`registries.json` to allow this Registry to invalidate the cached Beacons '\
