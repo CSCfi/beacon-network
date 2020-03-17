@@ -27,7 +27,7 @@ class AppTestCase(AioHTTPTestCase):
         data = await resp.json()
         assert 200 == resp.status
         assert 'ELIXIR-FI Beacon Aggregator' == data['name']
-        assert data['type'].startswith('org.ga4gh:beacon-aggregator')
+        assert data['type']['artifact'] == 'beacon-aggregator'
 
     @unittest_run_loop
     async def test_delete_cache(self):

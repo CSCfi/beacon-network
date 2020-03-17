@@ -177,7 +177,11 @@ class TestDatabaseOperations(asynctest.TestCase):
         service_info = {
             'id': 'id',
             'name': 'name',
-            'type': 'type',
+            'type': {
+                'group': 'group',
+                'artifact': 'artifact',
+                'version': 'version'
+            },
             'description': 'desc',
             'url': 'url',
             'contact_url': 'contact',

@@ -99,7 +99,7 @@ class TestUtils(asynctest.TestCase):
     @asynctest.mock.patch('registry.endpoints.services.http_request_info')
     async def test_register_service_beacon_success(self, m_http, m_generate, m_check, m_parse, m_register, m_apikey):
         """Test service registration: beacon, success."""
-        m_request = MockRequest(json_to_dict={'type': 'org.ga4gh:beacon'})
+        m_request = MockRequest(json_to_dict={'type': 'beacon'})
         m_pool = asynctest.CoroutineMock()
         m_pool.acquire().__aenter__.return_value = True
         m_http.return_value = {}  # service info
@@ -122,7 +122,7 @@ class TestUtils(asynctest.TestCase):
     @asynctest.mock.patch('registry.endpoints.services.http_request_info')
     async def test_register_service_aggregator_success(self, m_http, m_generate, m_check, m_parse, m_register, m_apikey):
         """Test service registration: aggregator, success."""
-        m_request = MockRequest(json_to_dict={'type': 'org.ga4gh:beacon-aggregator'})
+        m_request = MockRequest(json_to_dict={'type': 'beacon-aggregator'})
         m_pool = asynctest.CoroutineMock()
         m_pool.acquire().__aenter__.return_value = True
         m_http.return_value = {}  # service info

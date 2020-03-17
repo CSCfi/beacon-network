@@ -49,7 +49,11 @@ class TestUtils(asynctest.TestCase):
         service_info = {
             'id': 'fi.beacon',
             'name': 'Finnish Beacon',
-            'type': 'org.ga4gh:beacon:1.0.0',
+            'type': {
+                'group': 'org.ga4gh',
+                'artifact': 'beacon',
+                'version': '1.0.0'
+            },
             'description': 'Finnish Data',
             'organization': {
                 'name': 'CSC',
@@ -67,7 +71,7 @@ class TestUtils(asynctest.TestCase):
         expected_info = {
             'id': 'fi.beacon',
             'name': 'Finnish Beacon',
-            'type': 'org.ga4gh:beacon',
+            'type': 'beacon',
             'description': 'Finnish Data',
             'url': 'https://beacon.fi/service-info',
             'contact_url': 'https://csc.fi/contact',
@@ -101,7 +105,7 @@ class TestUtils(asynctest.TestCase):
         expected_info = {
             'id': 'fi.beacon',
             'name': 'Finnish Beacon',
-            'type': 'org.ga4gh:beacon',
+            'type': 'beacon',
             'description': 'Finnish Data',
             'url': 'https://beacon.fi/',
             'contact_url': 'https://csc.fi/contact',
@@ -119,7 +123,7 @@ class TestUtils(asynctest.TestCase):
         data = {
             'id': 'fi.beacon',
             'name': 'Finnish Beacon',
-            'type': 'org.ga4gh:beacon',
+            'type': 'beacon',
             'api_version': '1.0.0',
             'description': 'Finnish Data',
             'organization': 'CSC',
@@ -136,7 +140,11 @@ class TestUtils(asynctest.TestCase):
         expected_format = {
             'id': 'fi.beacon',
             'name': 'Finnish Beacon',
-            'type': 'org.ga4gh:beacon:1.0.0',
+            'type': {
+                'group': 'org.ga4gh',
+                'artifact': 'beacon',
+                'version': '1.0.0'
+            },
             'description': 'Finnish Data',
             'organization': {
                 'name': 'CSC',
@@ -154,12 +162,12 @@ class TestUtils(asynctest.TestCase):
 
     async def test_query_params_all(self):
         """Test parsing of path query params."""
-        request = MockRequest(service_type='org.ga4gh:beacon',
+        request = MockRequest(service_type='beacon',
                               api_version='1.0.0',
                               service_id='fi.beacon')
         service_id, params = await query_params(request)
         self.assertEqual(service_id, 'fi.beacon')
-        self.assertEqual(params, {'type': 'org.ga4gh:beacon',
+        self.assertEqual(params, {'type': 'beacon',
                                   'apiVersion': '1.0.0'})
 
     async def test_query_params_none(self):
@@ -173,13 +181,13 @@ class TestUtils(asynctest.TestCase):
         """Test retrieval of service urls: urls found."""
         connection = Connection(return_value=[{'service_url': 'https://beacon1.fi/'},
                                               {'service_url': 'https://beacon2.fi/'}])
-        service_urls = await db_get_service_urls(connection, service_type='org.ga4gh:beacon')
+        service_urls = await db_get_service_urls(connection, service_type='beacon')
         self.assertEqual(len(service_urls), 2)
 
     async def test_get_service_urls_none(self):
         """Test retrieval of service urls: none found."""
         connection = Connection(return_value=[])
-        service_urls = await db_get_service_urls(connection, service_type='org.ga4gh:beacon')
+        service_urls = await db_get_service_urls(connection, service_type='beacon')
         self.assertEqual(len(service_urls), 0)
 
     async def test_get_recaching_credentials_found(self):
