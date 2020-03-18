@@ -33,14 +33,12 @@ async def http_get_service_urls(registry):
                 if response.status == 200:
                     result = await response.json()
                     for r in result:
-                        # Parse type `org.ga4gh:service:version`
-                        type_bundle = r.get('type').split(':')
-                        service_type = f'{type_bundle[0]}:{type_bundle[1]}'
+                        # Parse types: query beacons, or query aggregators, or both?
                         # Check if service has a type tag of Beacons
-                        if CONFIG.beacons and service_type == 'org.ga4gh:beacon':
+                        if CONFIG.beacons and r.get('type', {}).get('artifact') == 'beacon':
                             service_urls.append(r['url'])
                         # Check if service has a type tag of Aggregators
-                        if CONFIG.aggregators and service_type == 'org.ga4gh:beacon-aggregator':
+                        if CONFIG.aggregators and r.get('type', {}).get('artifact') == 'beacon-aggregator':
                             service_urls.append(r['url'])
         except Exception as e:
             LOG.debug(f'Query error {e}.')

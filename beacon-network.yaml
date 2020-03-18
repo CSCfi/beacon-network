@@ -102,20 +102,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ServiceTypes'
 
-  /services/status:
-    get:
-      tags:
-        - Registry Endpoints
-      summary: List statuses of registered services. (WIP)
-      description: Registry pings registered services and reports if they are up or down. (WIP, for example https://beacon-ui-beacon.rahtiapp.fi/#!/about)
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ServiceStatuses'
-
   /services/{id}:
     get:
       tags:
@@ -250,11 +236,11 @@ components:
 
     ServiceTypes:
       type: string
-      example: [org.ga4gh:service-registry, org.ga4gh:beacon-aggregator, org.ga4gh:beacon]
+      example: [service-registry, beacon-aggregator, beacon]
       enum:
-        - org.ga4gh:service-registry
-        - org.ga4gh:beacon-aggregator
-        - org.ga4gh:beacon
+        - service-registry
+        - beacon-aggregator
+        - beacon
       description: Different Beacon service types.
 
     ServiceInfo:
@@ -269,9 +255,20 @@ components:
           example: ELIXIR Beacon
           description: Name of the service.
         type:
-          type: string
-          example: org.ga4gh:beacon:1.0.0
-          description: Namespaced service typer with specification number. See GA4GH Discovery spec for more information.
+          type: object
+          properties:
+            group:
+              type: string
+              example: org.ga4gh
+              description: GA4GH service info group type, see GA4GH service info specification for more information
+            artifact:
+              type: string
+              example: beacon
+              description: GA4GH service info artifact type, see GA4GH service info specification for more information
+            version:
+              type: string
+              example: 1.0.0
+              description: GA4GH service info version type, see GA4GH service info specification for more information
         description:
           type: string
           example: Beacon service for ELIXIR node
@@ -328,9 +325,20 @@ components:
           example: ELIXIR Beacon
           description: Name of the service.
         type:
-          type: string
-          example: org.ga4gh:beacon:1.0.0
-          description: Namespaced service typer with specification number. See GA4GH Discovery spec for more information.
+          type: object
+          properties:
+            group:
+              type: string
+              example: org.ga4gh
+              description: GA4GH service info group type, see GA4GH service info specification for more information
+            artifact:
+              type: string
+              example: beacon
+              description: GA4GH service info artifact type, see GA4GH service info specification for more information
+            version:
+              type: string
+              example: 1.0.0
+              description: GA4GH service info version type, see GA4GH service info specification for more information
         description:
           type: string
           example: Beacon service for ELIXIR node
@@ -383,23 +391,14 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/RegistryServiceInfo'
-    
-    ServiceStatuses:
-      type: array
-      items:
-        $ref: '#/components/schemas/ServiceStatus'
-    
-    ServiceStatus:
-      type: object
-      description: |
-        (WIP!) Some kind of object to relay service status information, for example usage see https://beacon-ui-beacon.rahtiapp.fi/#!/about, or Opsview plugin -like status monitoring
+
     RequestBody:
       description: Registration form for adding a new service to the Registry. Information about the service is fetched from the `service-info` endpoint of the given URL. The fetched `service-info` from given URL must be valid, or the service will not be registered.
       type: object
       properties:
         type:
           type: string
-          example: org.ga4gh:beacon:1.0.0
+          example: beacon
           description:  Service type of this service.
         url:
           type: string

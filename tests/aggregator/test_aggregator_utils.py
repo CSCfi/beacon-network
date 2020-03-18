@@ -65,8 +65,8 @@ class TestUtils(asynctest.TestCase):
     async def test_http_get_service_urls_success(self, m):
         """Test successful request of service urls."""
         data = [
-            {'type': 'org.ga4gh:beacon:1.0.0', 'url': 'https://beacon.fi/'},
-            {'type': 'org.ga4gh:beacon-aggregator:1.0.0', 'url': 'https://beacon-aggregator.fi/'}
+            {'type': {'group': 'org.ga4gh', 'artifact': 'beacon', 'version': '1.0.0'}, 'url': 'https://beacon.fi/'},
+            {'type': {'group': 'org.ga4gh', 'artifact': 'beacon-aggregator', 'version': '1.0.0'}, 'url': 'https://beacon-aggregator.fi/'}
         ]
         m.get('https://beacon-registry.fi/services', status=200, payload=data)
         info = await http_get_service_urls('https://beacon-registry.fi/services')

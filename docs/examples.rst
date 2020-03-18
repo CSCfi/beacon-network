@@ -28,7 +28,11 @@ Response
     {
         "id": "localhost:5000",
         "name": "ELIXIR-FI Beacon Aggregator",
-        "type": "org.ga4gh:beacon-aggregator:1.0.0",
+        "type": {
+            "group": "org.ga4gh",
+            "artifact": "beacon-aggregator",
+            "version": "1.1.0",
+        },
         "description": "ELIXIR-FI Beacon Aggregator at CSC for Beacon network",
         "organization": {
             "name": "CSC - IT Center for Science Ltd.",
@@ -165,7 +169,11 @@ Response
     {
         "id": "localhost:8080",
         "name": "ELIXIR-FI Beacon Registry",
-        "type": "org.ga4gh:service-registry:1.0.0",
+        "type": {
+            "group": "org.ga4gh",
+            "artifact": "service-registry",
+            "version": "1.1.0",
+        },
         "description": "ELIXIR-FI Beacon Registry at CSC for Beacon network",
         "organization": {
             "name": "CSC - IT Center for Science Ltd.",
@@ -197,9 +205,9 @@ Response
 .. code-block:: javascript
 
     [
-        "org.ga4gh:service-registry",
-        "org.ga4gh:beacon-aggregator",
-        "org.ga4gh:beacon"
+        "service-registry",
+        "beacon-aggregator",
+        "beacon"
     ]
 
 Register a New Service
@@ -220,7 +228,7 @@ Request
     localhost:8080/services \
     -H 'Authorization: secret' \
     -d '{
-        "type": "org.ga4gh:beacon",
+        "type": "beacon",
         "url": "http://localhost:3000/"
     }'
 
@@ -257,7 +265,11 @@ Response
         {
             "id": "fi.rahtiapp.staging-elixirbeacon",
             "name": "GA4GHBeacon at CSC",
-            "type": "org.ga4gh:beacon",
+            "type": {
+                "group": "org.ga4gh",
+                "artifact": "beacon",
+                "version": "1.1.0",
+            },
             "description": "Beacon API Web Server based on the GA4GH Beacon API",
             "organization": {
                 "name": "CSC - IT Center for Science",
@@ -274,7 +286,11 @@ Response
         {
             "id": "fi.rahtiapp.beaconpy-elixirbeacon",
             "name": "GA4GHBeacon at CSC",
-            "type": "org.ga4gh:beacon",
+            "type": {
+                "group": "org.ga4gh",
+                "artifact": "beacon",
+                "version": "1.1.0",
+            },
             "description": "Beacon API Web Server based on the GA4GH Beacon API",
             "organization": {
                 "name": "CSC - IT Center for Science",
@@ -291,7 +307,11 @@ Response
         {
             "id": "fi.rahtiapp.dev-aggregator-beacon",
             "name": "ELIXIR-FI Beacon Aggregator",
-            "type": "org.ga4gh:beacon-aggregator",
+            "type": {
+                "group": "org.ga4gh",
+                "artifact": "beacon-aggregator",
+                "version": "1.1.0",
+            },
             "description": "ELIXIR-FI Beacon Aggregator at CSC for Beacon network",
             "organization": {
                 "name": "CSC - IT Center for Science",
@@ -327,7 +347,11 @@ Response
     {
         "id": "fi.rahtiapp.staging-elixirbeacon",
         "name": "GA4GHBeacon at CSC",
-        "type": "org.ga4gh:beacon",
+        "type": {
+            "group": "org.ga4gh",
+            "artifact": "beacon",
+            "version": "1.1.0",
+        },
         "description": "Beacon API Web Server based on the GA4GH Beacon API",
         "organization": {
             "name": "CSC - IT Center for Science",
@@ -360,7 +384,7 @@ Request
     localhost:8080/services/localhost:3000 \
     -H 'Beacon-Service-Key: secret' \
     -d '{
-        "type": "org.ga4gh:beacon",
+        "type": "beacon",
         "url": "http://localhost:3000/"
     }'
 
