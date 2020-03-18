@@ -13,13 +13,13 @@ Configuration variables for setting up the web application are found in the ``[a
 
 .. literalinclude:: ../aggregator/config/config.ini
    :language: python
-   :lines: 4-18
+   :lines: 4-21
 
 Configuration variables for defining the ``/service-info`` endpoint are found in the ``[info]`` section.
 
 .. literalinclude:: ../aggregator/config/config.ini
    :language: python
-   :lines: 20-49
+   :lines: 23-54
 
 Registries File
 ~~~~~~~~~~~~~~~
@@ -59,6 +59,9 @@ Environment Variables
 +-----------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | PATH_SSL_CA_FILE      | /etc/ssl/certs | Path to ca.pem file.                                                                                                                                        |
 +-----------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| APP_CORS              | *              | CORS domain, either a single domain or * for any domain.                                                                                                    |
++-----------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
 
 Registry
 --------
@@ -70,13 +73,13 @@ Configuration variables for setting up the web application and database connecti
 
 .. literalinclude:: ../registry/config/config.ini
    :language: python
-   :lines: 4-28
+   :lines: 4-31
 
 Configuration variables for defining the ``/service-info`` endpoint are found in the ``[info]`` section.
 
 .. literalinclude:: ../registry/config/config.ini
    :language: python
-   :lines: 30-59
+   :lines: 33-64
 
 Environment Variables
 ~~~~~~~~~~~~~~~~~~~~~
@@ -114,9 +117,14 @@ Environment Variables
 +-----------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | API_OTP               | True           | Boolean if API key at POST /services should be expired after use.                                                                                           |
 +-----------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| APP_CORS              | *              | CORS domain, either a single domain or * for any domain.                                                                                                    |
++-----------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
 
 SSL
 ---
+
+Experimental!! In production a reverse proxy is recommended.
 
 Possible security levels for ``APPLICATION_SECURITY`` and ``REQUEST_SECURITY`` are 0-2.
 

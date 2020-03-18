@@ -48,18 +48,14 @@ async def parse_service_info(id, service, req={}):
     if req.get('url', '').endswith('/service-info'):
         LOG.debug('Using GA4GH endpoint.')
         # Use GA4GH service-info notation
-        # Get type, which is of form `org.ga4gh:beacon:1.0.0`, separate type and version
-        type_bundle = service.get('type', '').split(':')
-        service_type = f'{type_bundle[0]}:{type_bundle[1]}'  # org.ga4gh:beacon
-        api_version = type_bundle[2]  # 1.0.0
         service_info = {
             'id': id,
             'name': service.get('name', ''),
-            'type': service_type,
+            'type': service.get('type', {}).get('artifact'),
             'description': service.get('description', ''),
             'url': req.get('url', '') or service.get('url', ''),
             'contact_url': service.get('contactUrl', ''),
-            'api_version': api_version,
+            'api_version': service.get('type', {}).get('version'),
             'service_version': service.get('version', ''),
             'environment': service.get('environment', ''),
             'organization': service.get('organization').get('name'),
@@ -74,7 +70,7 @@ async def parse_service_info(id, service, req={}):
         service_info = {
             'id': id,
             'name': service.get('name', ''),
-            'type': 'org.ga4gh:beacon',
+            'type': 'beacon',
             'description': service.get('description', ''),
             'url': req.get('url', '') or service.get('url', ''),
             'contact_url': service.get('organization', {}).get('contactUrl', ''),
@@ -122,10 +118,17 @@ async def validate_service_info(service, fetched_service_id):
 async def construct_json(data):
     """Construct proper JSON response from dictionary data."""
     LOG.debug('Construct JSON response from DB record.')
+    # With the final GA4GH service info 1.0.0 release type str was changed to type object
+    # we will keep the database unchanged, and assume that group is always org.ga4gh
+    # type will represent type artifact and api_version will represent type version
     response = {
         'id': data.get('id', ''),
         'name': data.get('name', ''),
-        'type': f"{data.get('type', '')}:{data.get('api_version', '')}",
+        'type': {
+            'group': 'org.ga4gh',
+            'artifact': data.get('type', ''),
+            'version': data.get('api_version', '')
+        },
         'description': data.get('description', ''),
         'organization': {
             'name': data.get('organization', ''),
@@ -190,7 +193,7 @@ async def db_get_recaching_credentials(connection):
         # Database query
         query = """SELECT a.url AS url, b.service_key AS service_key
                    FROM services a, service_keys b
-                   WHERE type='urn:ga4gh:aggregator'
+                   WHERE type='aggregator'
                    AND a.id=b.service_id"""
         statement = await connection.prepare(query)
         response = await statement.fetch()
@@ -234,7 +237,7 @@ async def invalidate_cache(service):
         try:
             # Aggregator URLs end with /service-info in the DB, replace them with /cache
             async with session.delete(service["service_url"].replace('service-info', 'cache'),
-                                      headers={'Beacon-Service-Key': service['service_key']},
+                                      headers={'Authorization': service['service_key']},
                                       ssl=await request_security()) as response:
                 if response.status in [200, 204]:
                     LOG.debug(f'Service received notification and responded with {response.status}.')

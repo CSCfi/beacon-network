@@ -31,5 +31,11 @@ exclude_lines =
     if __name__ == .__main__.:
     if not args:
 
+    # uncovered custom SSL/TLS functions
+    # we use a reverse proxy and these functions are not actually used
+    def load_certs
+    def application_security
+    async def request_security
+
 
 ignore_errors = True

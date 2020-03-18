@@ -37,7 +37,7 @@ class TestRegistryEndpoints(AioHTTPTestCase):
         data = await resp.json()
         assert 200 == resp.status
         assert 'ELIXIR-FI Beacon Registry' == data['name']
-        assert data['type'].startswith('org.ga4gh:service-registry')
+        assert data['type']['artifact'] == 'service-registry'
 
     @unittest_run_loop
     async def test_service_types(self):
@@ -45,9 +45,9 @@ class TestRegistryEndpoints(AioHTTPTestCase):
         resp = await self.client.request("GET", "/services/types")
         data = await resp.json()
         assert 200 == resp.status
-        assert 'org.ga4gh:service-registry' == data[0]
-        assert 'org.ga4gh:beacon-aggregator' == data[1]
-        assert 'org.ga4gh:beacon' == data[2]
+        assert 'service-registry' == data[0]
+        assert 'beacon-aggregator' == data[1]
+        assert 'beacon' == data[2]
 
     # @asynctest.mock.patch('registry.registry.invalidate_aggregator_caches')
     # @asynctest.mock.patch('registry.registry.register_service')

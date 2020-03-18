@@ -3,9 +3,38 @@ import asynctest
 from aioresponses import aioresponses
 from aiohttp import web
 
+from unittest.mock import Mock
+
 from aggregator.utils.utils import http_get_service_urls, get_services, process_url
-from aggregator.utils.utils import remove_self, get_access_token  # , query_service
-from aggregator.utils.utils import validate_service_key  # , clear_cache
+from aggregator.utils.utils import remove_self, get_access_token, parse_results, query_service
+from aggregator.utils.utils import validate_service_key, clear_cache, ws_bundle_return
+
+
+class BadCache:
+    """Malformed cache class."""
+
+    def __init__(self):
+        """Initialise object."""
+
+
+class MockCache:
+    """Mock cache for testing."""
+
+    def __init__(self, exists=True):
+        """Initialise object."""
+        self.real_exists = exists
+
+    async def exists(self, name):
+        """Check if cache exists."""
+        return self.real_exists
+
+    async def delete(self, name):
+        """Delete cache."""
+        return True
+
+    async def close(self):
+        """Close cache."""
+        return True
 
 
 class MockRequest:
@@ -24,7 +53,7 @@ class MockWebsocket:
         """Initialise object."""
         self.data = None
 
-    def send_str(self, data):
+    async def send_str(self, data):
         """Receive data."""
         self.data = data
 
@@ -36,8 +65,8 @@ class TestUtils(asynctest.TestCase):
     async def test_http_get_service_urls_success(self, m):
         """Test successful request of service urls."""
         data = [
-            {'type': 'org.ga4gh:beacon:1.0.0', 'url': 'https://beacon.fi/'},
-            {'type': 'org.ga4gh:beacon-aggregator:1.0.0', 'url': 'https://beacon-aggregator.fi/'}
+            {'type': {'group': 'org.ga4gh', 'artifact': 'beacon', 'version': '1.0.0'}, 'url': 'https://beacon.fi/'},
+            {'type': {'group': 'org.ga4gh', 'artifact': 'beacon-aggregator', 'version': '1.0.0'}, 'url': 'https://beacon-aggregator.fi/'}
         ]
         m.get('https://beacon-registry.fi/services', status=200, payload=data)
         info = await http_get_service_urls('https://beacon-registry.fi/services')
@@ -121,33 +150,50 @@ class TestUtils(asynctest.TestCase):
         access_token = await get_access_token(request)
         self.assertEqual(None, access_token)
 
-    # find out why query_service returns None
+    @aioresponses()
+    @asynctest.mock.patch('aggregator.utils.utils.isinstance')
+    async def test_query_service_ws_success_aggregator(self, m, m_is):
+        """Test querying of service: websocket success, aggregator list."""
+        # Aggregators respond with list [{}]
+        m_is.return_value = True
+        data = [{'important': 'stuff'}]
+        m.get('https://beacon.fi/query', status=200, payload=data)
+        ws = MockWebsocket()
+        await query_service('https://beacon.fi/query', {}, None, ws=ws)
+        self.assertEqual(ws.data, '{"important": "stuff"}')
 
-    # @aioresponses()
-    # async def test_query_service_ws_success(self, m):
-    #     """Test querying of service: websocket success."""
-    #     data = {'important': 'stuff'}
-    #     m.get('https://beacon.fi/query', status=200, payload=data)
-    #     ws = MockWebsocket()
-    #     await query_service('https://beacon.fi/query', 'referenceName=1', 'json.web.token', ws=ws)
-    #     self.assertEqual(ws.data, data)
+    @aioresponses()
+    async def test_query_service_ws_success_beacon(self, m):
+        """Test querying of service: websocket success, beacon dict."""
+        # Beacons respond with dict {}
+        data = {'important': 'stuff'}
+        m.get('https://beacon.fi/query', status=200, payload=data)
+        ws = Mock(spec=web.WebSocketResponse, data='{"important": "stuff"}')
+        await query_service('https://beacon.fi/query', {}, None, ws=ws)
+        self.assertEqual(ws.data, '{"important": "stuff"}')
 
-    # async def test_query_service_ws_fail(self):
-    #     """Test querying of service: websocket fail."""
+    @aioresponses()
+    async def test_query_service_ws_fail(self, m):
+        """Test querying of service: websocket fail."""
+        m.get('https://beacon.fi/query', status=400)
+        ws = MockWebsocket()
+        await query_service('https://beacon.fi/query', {}, None, ws=ws)
+        self.assertTrue("'responseStatus': 400" in ws.data)
 
-    # @aioresponses()
-    # async def test_query_service_http_success(self, m):
-    #     """Test querying of service: http success."""
-    #     data = {'important': 'stuff'}
-    #     m.get('https://beacon.fi/query', status=200, payload=data)
-    #     response = await query_service('https://beacon.fi/query', 'referenceName=1', 'json.web.token')
-    #     self.assertEqual(response, data)
+    @aioresponses()
+    async def test_query_service_http_success(self, m):
+        """Test querying of service: http success."""
+        data = {'response': 'from beacon'}
+        m.get('https://beacon.fi/query', status=200, payload=data)
+        response = await query_service('https://beacon.fi/query', {}, 'token')
+        self.assertEqual(response, data)
 
-    # async def test_query_service_http_fail(self):
-    #     """Test querying of service: http fail."""
-
-    # async def test_query_service_error(self):
-    #     """Test querying of service: general fail."""
+    @aioresponses()
+    async def test_query_service_http_fail(self, m):
+        """Test querying of service: http fail."""
+        m.get('https://beacon.fi/query', status=400)
+        response = await query_service('https://beacon.fi/query', {}, None)
+        self.assertEqual(response['responseStatus'], 400)
 
     async def test_validate_service_key_success(self):
         """Successfully validate service key."""
@@ -158,6 +204,48 @@ class TestUtils(asynctest.TestCase):
         """Successfully validate service key."""
         with self.assertRaises(web.HTTPUnauthorized):
             await validate_service_key('wrong key')
+
+    async def test_parse_results_found(self):
+        """Test parsing of nested results: found list."""
+        results = [{}, {}, [{}, {}]]
+        parsed_results = await parse_results(results)
+        self.assertEqual(parsed_results, [{}, {}, {}, {}])
+
+    async def test_parse_results_none_found(self):
+        """Test parsing of nested results: none found."""
+        results = [{}, {}]
+        parsed_results = await parse_results(results)
+        self.assertEqual(parsed_results, [{}, {}])
+
+    @asynctest.mock.patch('aggregator.utils.utils.LOG')
+    @asynctest.mock.patch('aggregator.utils.utils.SimpleMemoryCache')
+    async def test_clear_cache_success(self, m_cache, m_log):
+        """Test clearing of cache."""
+        m_cache.return_value = MockCache()
+        await clear_cache()
+        m_log.debug.assert_called_with('Cache has been cleared.')
+
+    @asynctest.mock.patch('aggregator.utils.utils.LOG')
+    @asynctest.mock.patch('aggregator.utils.utils.SimpleMemoryCache')
+    async def test_clear_cache_none(self, m_cache, m_log):
+        """Test clearing of cache, no cache found."""
+        m_cache.return_value = MockCache(exists=False)
+        await clear_cache()
+        m_log.debug.assert_called_with('No old cache found.')
+
+    @asynctest.mock.patch('aggregator.utils.utils.LOG')
+    @asynctest.mock.patch('aggregator.utils.utils.SimpleMemoryCache')
+    async def test_clear_cache_error(self, m_cache, m_log):
+        """Test clearing of cache, error."""
+        m_cache.return_value = BadCache()  # no cache class
+        await clear_cache()
+        m_log.error.assert_called_with("Error at clearing cache: 'BadCache' object has no attribute 'exists'.")
+
+    async def test_ws_bundle_return(self):
+        """Test websocket return function."""
+        m_ws = MockWebsocket()
+        await ws_bundle_return({'something': 'here'}, m_ws)
+        self.assertEqual('{"something": "here"}', m_ws.data)
 
 
 if __name__ == '__main__':

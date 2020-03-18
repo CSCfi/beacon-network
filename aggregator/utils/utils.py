@@ -6,6 +6,8 @@ import json
 import ssl
 
 import aiohttp
+import asyncio
+import uvloop
 
 from aiohttp import web
 from aiocache import cached, SimpleMemoryCache
@@ -13,6 +15,9 @@ from aiocache.serializers import JsonSerializer
 
 from ..config import CONFIG
 from .logging import LOG
+
+# Used by query_service() and ws_bundle_return() in a similar manner as ../endpoints/query.py
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
 async def http_get_service_urls(registry):
@@ -28,14 +33,12 @@ async def http_get_service_urls(registry):
                 if response.status == 200:
                     result = await response.json()
                     for r in result:
-                        # Parse type `org.ga4gh:service:version`
-                        type_bundle = r.get('type').split(':')
-                        service_type = f'{type_bundle[0]}:{type_bundle[1]}'
+                        # Parse types: query beacons, or query aggregators, or both?
                         # Check if service has a type tag of Beacons
-                        if CONFIG.beacons and service_type == 'org.ga4gh:beacon':
+                        if CONFIG.beacons and r.get('type', {}).get('artifact') == 'beacon':
                             service_urls.append(r['url'])
                         # Check if service has a type tag of Aggregators
-                        if CONFIG.aggregators and service_type == 'org.ga4gh:beacon-aggregator':
+                        if CONFIG.aggregators and r.get('type', {}).get('artifact') == 'beacon-aggregator':
                             service_urls.append(r['url'])
         except Exception as e:
             LOG.debug(f'Query error {e}.')
@@ -149,8 +152,19 @@ async def query_service(service, params, access_token, ws=None):
                 if response.status == 200:
                     result = await response.json()
                     if isinstance(ws, web.WebSocketResponse):
-                        # Send result to websocket (if using websockets)
-                        return await ws.send_str(json.dumps(result))
+                        # If the response comes from another aggregator, it's a list, and it needs to be broken down into dicts
+                        if isinstance(result, list):
+                            tasks = []
+                            # Prepare a websocket bundle return
+                            for sub_result in result:
+                                task = asyncio.ensure_future(ws_bundle_return(sub_result, ws))
+                                tasks.append(task)
+                            # Execute the bundle returns
+                            await asyncio.gather(*tasks)
+                        else:
+                            # The response came from a beacon and is a single object (dict {})
+                            # Send result to websocket
+                            return await ws.send_str(json.dumps(result))
                     else:
                         # Standard response
                         return result
@@ -168,6 +182,15 @@ async def query_service(service, params, access_token, ws=None):
         except Exception as e:
             LOG.debug(f'Query error {e}.')
             web.HTTPInternalServerError(text=f'An error occurred while attempting to query services: {e}')
+
+
+async def ws_bundle_return(result, ws):
+    """Create a bundle to be returned with websocket."""
+    LOG.debug('Creating websocket bundle item.')
+
+    # A simple function to bundle up websocket returns
+    # when broken down from an aggregator response list
+    return await ws.send_str(json.dumps(result))
 
 
 async def validate_service_key(key):
@@ -199,6 +222,31 @@ async def clear_cache():
         await cache.close()
     except Exception as e:
         LOG.error(f'Error at clearing cache: {e}.')
+
+
+async def parse_results(results):
+    """Break down lists in results if they exist."""
+    LOG.debug('Parsing results for lists.')
+
+    parsed_results = []
+
+    # Check if the results contain any lists before processing
+    if any(isinstance(result, list) for result in results):
+        # Iterate through the results array [...]
+        for result in results:
+            # If this aggregator is aggregating aggregators, there will be lists in the results
+            # Break the nested lists down into the same list [[{}, ...], {}, ...] --> [{}, {}, ...]
+            if isinstance(result, list):
+                for sub_result in result:
+                    parsed_results.append(sub_result)
+            else:
+                # For direct Beacon responses, no processing is required [{}, ...] --> [{}, ...]
+                parsed_results.append(result)
+    else:
+        # There were no lists in the results, so this processing can be skipped
+        return results
+
+    return parsed_results
 
 
 def load_certs(ssl_context):

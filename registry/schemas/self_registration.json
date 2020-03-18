@@ -11,8 +11,8 @@
       "title": "Service type of the application, must be one of the two allowed values",
       "type": "string",
       "enum": [
-        "org.ga4gh:beacon",
-        "org.ga4gh:beacon-aggregator"
+        "beacon",
+        "beacon-aggregator"
       ]
     },
     "url": {
