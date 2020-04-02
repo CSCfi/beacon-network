@@ -81,7 +81,8 @@ Aggregator and Registry can also be built into an image and then be deployed.
 First build the image. The same base image will be used for both services.
 
 Either ``s2i`` or ``docker`` can be used to build an image from the source code.
-``docker`` version of the image is required for use with ``docker-compose``, but ``s2i`` builds faster.
+``s2i`` builds very quickly, but is rather large in size ~700MB. ``docker`` builds the image with
+``Dockerfile`` and results in an image roughly half the size of ``s2i`` at ~370MB, but takes considerably longer to build.
 
 .. code-block:: console
 
