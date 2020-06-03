@@ -52,7 +52,7 @@ async def http_get_service_urls(registry):
 
 
 # Cache Beacon URLs if they're not already cached
-# @cached(ttl=86400, key="beacon_urls", serializer=JsonSerializer())
+@cached(ttl=86400, key="beacon_urls", serializer=JsonSerializer())
 async def get_services(url_self):
     """Return service urls."""
     LOG.debug('Fetch service urls.')
