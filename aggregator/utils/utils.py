@@ -5,6 +5,8 @@ import sys
 import json
 import ssl
 
+from urllib import parse
+
 import aiohttp
 import asyncio
 import uvloop
@@ -36,10 +38,12 @@ async def http_get_service_urls(registry):
                         # Parse types: query beacons, or query aggregators, or both?
                         # Check if service has a type tag of Beacons
                         if CONFIG.beacons and r.get('type', {}).get('artifact') == 'beacon':
-                            service_urls.append(r['url'])
+                            # For Beacon-2.0 support we also get the version for later filtering
+                            service_urls.append((r['url'], r.get('type').get('version')))
                         # Check if service has a type tag of Aggregators
                         if CONFIG.aggregators and r.get('type', {}).get('artifact') == 'beacon-aggregator':
-                            service_urls.append(r['url'])
+                            # For Aggregators we hard-code the version to 1.x.x, because it doesn't matter (it's just a proxy)
+                            service_urls.append((r['url'], '1.0.0'))
         except Exception as e:
             LOG.debug(f'Query error {e}.')
             web.HTTPInternalServerError(text=f'An error occurred while attempting to query services: {e}')
@@ -48,7 +52,7 @@ async def http_get_service_urls(registry):
 
 
 # Cache Beacon URLs if they're not already cached
-@cached(ttl=86400, key="beacon_urls", serializer=JsonSerializer())
+# @cached(ttl=86400, key="beacon_urls", serializer=JsonSerializer())
 async def get_services(url_self):
     """Return service urls."""
     LOG.debug('Fetch service urls.')
@@ -57,8 +61,8 @@ async def get_services(url_self):
     service_urls = set()
     for registry in CONFIG.registries:
         services = await http_get_service_urls(registry.get('url', ''))  # Request URLs from Registry
+        # services must be tuples as they are hashable; lists or dicts are not hashable
         service_urls.update(services)  # Add found URLs to set (eliminate duplicates)
-
     # Pre-process URLS
     service_urls = [await process_url(url) for url in service_urls]
     service_urls = await remove_self(url_self, service_urls)
@@ -74,16 +78,22 @@ async def process_url(url):
     """
     LOG.debug('Processing URLs.')
 
-    if url.endswith('/'):
-        url += 'query'
-    elif url.endswith('/service-info'):
-        url = url.replace('service-info', 'query')
+    # Convert tuple to list for processing
+    url = list(url)
+
+    if url[0].endswith('/'):
+        url[0] += 'query'
+    elif url[0].endswith('/service-info'):
+        url[0].replace('service-info', 'query')
     else:
         # Unknown case
         # One case is observed, where URL was similar to https://service.institution.org/beacon
         # For URLs where the info endpoint is /, but / is not present, let's add /query
-        url += '/query'
+        url[0] += '/query'
         pass
+
+    # Convert list back to tuple for returning
+    url = tuple(url)
 
     return url
 
@@ -97,7 +107,7 @@ async def remove_self(url_self, urls):
     LOG.debug('Look for self from service URLs.')
 
     for url in urls:
-        url_split = url.split('/')
+        url_split = url[0].split('/')
         if url_self in url_split:
             urls.remove(url)
             LOG.debug('Found and removed self from service URLs.')
@@ -128,9 +138,89 @@ async def get_access_token(request):
     else:
         LOG.debug('No auth.')
         # Otherwise send nothing
-        # pass
+        pass
 
     return access_token
+
+
+async def pre_process_payload(version, params):
+    """Pre-process query string params to JSON data for POST payload."""
+    LOG.debug(f'Processing payload structure version {version}.')
+
+    # Transform query string to dict, and convert string digits to integers
+    raw_data = dict(parse.parse_qsl(params))
+    raw_data = {k: int(v) if v.isdigit() else v for k, v in raw_data.items()}
+    # Process datasetIds string-list into an array
+    # e.g. {'datasetIds': '1,2,3'} becomes {'datasetIds': ['1', '2', '3']}
+    if 'datasetIds' in raw_data:
+        dataset_ids = raw_data['datasetIds'].split(',')
+        raw_data['datasetIds'] = []
+        for dataset_id in dataset_ids:
+            raw_data['datasetIds'].append(dataset_id)
+
+    # Check which payload structure to use, version 1 or 2
+    # Filter MAJOR semver version from version string, remove non-digits if they exist
+    if ''.join(filter(str.isdigit, version.split('.')[0])) == '2':
+        # Beacon-2.0
+        # SPECIFICATION: http://editor.swagger.io/?url=https://raw.githubusercontent.com/ga4gh-beacon/specification-v2/master/beacon.yaml
+        # Hardcoded meta-block
+        # Simple key passthrough for now, ignoring range coordinates (look into more sophisticated support later)
+        data = {
+            # Required payload
+            'meta': {
+                'requestedSchemas': {
+                    'Variant': [
+                        'ga4gh-variant-representation-v0.1',
+                        'ga4gh-schemablocks-beacon-variant-v0.1'
+                    ],
+                    'VariantAnnotation': [
+                        'beacon-variant-annotation-v0.1'
+                    ],
+                    'Individual': [
+                        'ga4gh-phenopacket-individual-v0.1',
+                        'ga4gh-schemablocks-individual-v0.1'
+                    ],
+                    'Biosample': [
+                        'ga4gh-phenopacket-biosample-v0.1',
+                        'ga4gh-schemablocks-biosample-v0.1'
+                    ]
+                },
+                'apiVersion': 'v2.0'
+            },
+            'query': {
+                'g_variant': {
+                    'assemblyId': raw_data.get('assemblyId'),
+                    'referenceName': raw_data.get('referenceName'),
+                    'referenceBases': raw_data.get('referenceBases')
+                }
+            }
+        }
+        # Optionals for query object
+        if raw_data.get('alternateBases'):
+            data['query']['g_variant']['alternateBases'] = raw_data.get('alternateBases')
+        if raw_data.get('variantType'):
+            data['query']['g_variant']['variantType'] = raw_data.get('variantType')
+        if raw_data.get('mateName'):
+            data['query']['g_variant']['mateName'] = raw_data.get('mateName')
+        if raw_data.get('start'):
+            data['query']['g_variant']['start'] = [raw_data.get('start')]
+        if raw_data.get('startMin') and raw_data.get('startMax'):
+            data['query']['g_variant']['start'] = [raw_data.get('startMin'), raw_data.get('startMax')]
+        if raw_data.get('end'):
+            data['query']['g_variant']['end'] = [raw_data.get('end')]
+        if raw_data.get('endMin') and raw_data.get('endMax'):
+            data['query']['g_variant']['end'] = [raw_data.get('endMin'), raw_data.get('endMax')]
+        if raw_data.get('datasetIds'):
+            data['query']['datasets']['datasetIds'] = raw_data.get('datasetIds')
+        if raw_data.get('includeDatasetResponses'):
+            data['query']['datasets']['includeDatasetResponses'] = raw_data.get('includeDatasetResponses')
+    else:
+        # Beacon-1.0
+        # Unmodified structure for version 1, straight parsing from GET query string to POST payload
+        data = raw_data
+        pass
+
+    return data
 
 
 async def query_service(service, params, access_token, ws=None):
@@ -138,16 +228,20 @@ async def query_service(service, params, access_token, ws=None):
     LOG.debug('Querying service.')
     headers = {}
 
+    # Pre-process params and create a payload structure for POST
+    data = await pre_process_payload(service[1], params)
+
     if access_token:
         headers.update({'Authorization': f'Bearer {access_token}'})
 
     # Query service in a session
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(service,
-                                   params=params,
-                                   headers=headers,
-                                   ssl=await request_security()) as response:
+            # GET changed to POST, as both Beacon 1.0 and 2.0 support POST, but 2.0 doesn't support GET, like 1.0 does
+            async with session.post(service[0],
+                                    json=data,
+                                    headers=headers,
+                                    ssl=await request_security()) as response:
                 # On successful response, forward response
                 if response.status == 200:
                     result = await response.json()
