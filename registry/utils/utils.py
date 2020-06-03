@@ -187,7 +187,7 @@ async def db_get_service_urls(connection, service_type=None):
 # db function temporarily placed here due to import-loop issues
 async def db_get_recaching_credentials(connection):
     """Return queryable service urls and service keys."""
-    LOG.debug(f'Querying database for service urls and keys.')
+    LOG.debug('Querying database for service urls and keys.')
     credentials = []
     try:
         # Database query
