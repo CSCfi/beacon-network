@@ -164,7 +164,6 @@ async def pre_process_payload(version, params):
         # Beacon-2.0
         # SPECIFICATION: http://editor.swagger.io/?url=https://raw.githubusercontent.com/ga4gh-beacon/specification-v2/master/beacon.yaml
         # Hardcoded meta-block
-        # Simple key passthrough for now, ignoring range coordinates (look into more sophisticated support later)
         data = {
             # Required payload
             'meta': {
