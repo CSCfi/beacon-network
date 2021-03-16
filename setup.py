@@ -27,7 +27,7 @@ setup(
         'jsonschema==3.0.2', 'gunicorn'
     ],
     extras_require={
-        'test': ['coverage', 'pytest<5.4', 'pytest-cov',
+        'test': ['coverage', 'pytest<6.3', 'pytest-cov',
                  'coveralls', 'testfixtures', 'tox',
                  'flake8', 'flake8-docstrings', 'asynctest', 'aioresponses'],
         'docs': [
