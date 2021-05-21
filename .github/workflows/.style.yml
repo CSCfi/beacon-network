@@ -1,4 +1,4 @@
-name: Python style check
+name: Style Checks
 
 on: [push]
 

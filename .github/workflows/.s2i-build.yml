@@ -1,4 +1,4 @@
-name: Check s2i build
+name: S2I Build Check
 
 on: [pull_request]
 
