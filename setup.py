@@ -28,7 +28,19 @@ setup(
         "registry/utils",
     ],
     package_data={"": ["*.json", "*.ini"]},
-    install_requires=["aiohttp", "asyncpg", "aiohttp_cors", "uvloop", "asyncio", "aiocache", "aiomcache", "ujson", "jsonschema", "gunicorn"],
+    install_requires=[
+        "asyncio==3.4.3",
+        "aiohttp==3.7.4.post0",
+        "aiohttp-cors==0.7.0",
+        "aiocache==0.11.1",
+        "aiomcache==0.6.0",
+        "ujson==4.0.2",
+        "uvloop==0.14.0; python_version < '3.7'",
+        "uvloop==0.15.2; python_version >= '3.7'",
+        "asyncpg==0.22.0",
+        "jsonschema==3.2.0",
+        "gunicorn==20.1.0",
+    ],
     extras_require={
         "test": [
             "coverage",
