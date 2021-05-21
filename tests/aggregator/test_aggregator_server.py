@@ -18,7 +18,7 @@ class AppTestCase(AioHTTPTestCase):
         """Test root endpoint."""
         resp = await self.client.request("GET", "/")
         assert 200 == resp.status
-        assert 'ELIXIR-FI Beacon Aggregator' == await resp.text()
+        assert "ELIXIR-FI Beacon Aggregator" == await resp.text()
 
     @unittest_run_loop
     async def test_service_info(self):
@@ -26,25 +26,25 @@ class AppTestCase(AioHTTPTestCase):
         resp = await self.client.request("GET", "/service-info")
         data = await resp.json()
         assert 200 == resp.status
-        assert 'ELIXIR-FI Beacon Aggregator' == data['name']
-        assert data['type']['artifact'] == 'beacon-aggregator'
+        assert "ELIXIR-FI Beacon Aggregator" == data["name"]
+        assert data["type"]["artifact"] == "beacon-aggregator"
 
     @unittest_run_loop
     async def test_delete_cache(self):
         """Test cache deletion endpoint."""
         resp = await self.client.request("DELETE", "/cache", headers={"Authorization": "secret"})
         assert 200 == resp.status
-        assert 'Cache has been deleted.' == await resp.text()
+        assert "Cache has been deleted." == await resp.text()
 
-    @asynctest.mock.patch('aggregator.aggregator.send_beacon_query')
+    @asynctest.mock.patch("aggregator.aggregator.send_beacon_query")
     @unittest_run_loop
     async def test_query_normal(self, m_query):
         """Test query endpoint, normal query."""
-        m_query.return_value = ['normal query']
+        m_query.return_value = ["normal query"]
         resp = await self.client.request("GET", "/query")
         data = await resp.json()
         assert 200 == resp.status
-        assert data == ['normal query']
+        assert data == ["normal query"]
 
     # Doesn't go to the websocket block at all even with the headers
     # fails with 'aiohttp.client_exceptions.ServerDisconnectedError'
@@ -61,5 +61,5 @@ class AppTestCase(AioHTTPTestCase):
     #     # assert data == 'websocket query'
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

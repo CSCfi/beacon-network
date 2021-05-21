@@ -14,7 +14,7 @@ asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 async def send_beacon_query(request):
     """Send Beacon queries and respond synchronously."""
-    LOG.debug('Normal response (sync).')
+    LOG.debug("Normal response (sync).")
 
     # Task variables
     params = request.query_string  # query parameters (variant search)
@@ -40,7 +40,7 @@ async def send_beacon_query(request):
 
 async def send_beacon_query_websocket(request):
     """Send Beacon queries and respond asynchronously via websocket."""
-    LOG.debug('Websocket response (async).')
+    LOG.debug("Websocket response (async).")
     # Prepare websocket connection
     ws = web.WebSocketResponse()
     await ws.prepare(request)
