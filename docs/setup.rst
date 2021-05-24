@@ -11,8 +11,8 @@ Instructions for setting up the Aggregator and Registry APIs and their database.
     * Docker
 
   Local
-    * Python 3.6+
-    * PostgreSQL 9.6+
+    * Python 3.8+
+    * PostgreSQL 12.6+
 
 Installation
 ~~~~~~~~~~~~
@@ -119,12 +119,12 @@ Database Container
 .. code-block:: console
 
     cd beacon-network/registry/db
-    docker run -d \
-    -e POSTGRES_USER=user \
-    -e POSTGRES_PASSWORD=pass \
-    -e POSTGRES_DB=registry \
-    -v "$PWD"/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/ \
-    -p 5432:5432 postgres:9.6
+      docker run -d --name registry-db \
+      -e POSTGRES_USER=user \
+      -e POSTGRES_PASSWORD=pass \
+      -e POSTGRES_DB=registry \
+      -v "$PWD"/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/ \
+      -p 5432:5432 postgres:12.6
 
 Docker Compose Deployment
 ~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -17,33 +17,33 @@ from .config import CONFIG
 routes = web.RouteTableDef()
 
 
-@routes.get('/', name='index')
+@routes.get("/", name="index")
 async def index(request):
     """Greeting endpoint.
 
     Returns name of the service, doubles as a healthcheck utility.
     """
-    LOG.debug('Greeting endpoint.')
+    LOG.debug("Greeting endpoint.")
     return web.Response(text=CONFIG.name)
 
 
-@routes.get('/service-info')
+@routes.get("/service-info")
 async def info(request):
     """Return service info."""
-    LOG.debug('GET /info received.')
+    LOG.debug("GET /info received.")
     return web.json_response(await get_info(request.host))
 
 
-@routes.get('/query')
+@routes.get("/query")
 async def query(request):
     """Forward variant query to Beacons."""
-    LOG.debug('GET /query received.')
+    LOG.debug("GET /query received.")
 
     # For websocket
-    connection_header = request.headers.get('Connection', 'default').lower().split(',')  # break down if multiple items
+    connection_header = request.headers.get("Connection", "default").lower().split(",")  # break down if multiple items
     connection_header = [value.strip() for value in connection_header]  # strip spaces
 
-    if 'upgrade' in connection_header and request.headers.get('Upgrade', 'default').lower() == 'websocket':
+    if "upgrade" in connection_header and request.headers.get("Upgrade", "default").lower() == "websocket":
         # Use asynchronous websocket connection
         # Send request for processing
         websocket = await send_beacon_query_websocket(request)
@@ -59,29 +59,32 @@ async def query(request):
         return web.json_response(response)
 
 
-@routes.delete('/cache')
+@routes.delete("/cache")
 async def cache(request):
     """Invalidate cached Beacons."""
-    LOG.debug('DELETE /beacons received.')
+    LOG.debug("DELETE /beacons received.")
 
     # Send request for processing
     await invalidate_cache()
 
     # Return confirmation
-    return web.Response(text='Cache has been deleted.')
+    return web.Response(text="Cache has been deleted.")
 
 
 def set_cors(app):
     """Set CORS rules."""
-    LOG.debug(f'Applying CORS rules: {CONFIG.cors}.')
+    LOG.debug(f"Applying CORS rules: {CONFIG.cors}.")
     # Configure CORS settings, allow all domains
-    cors = aiohttp_cors.setup(app, defaults={
-        CONFIG.cors: aiohttp_cors.ResourceOptions(
-            allow_credentials=True,
-            expose_headers="*",
-            allow_headers="*",
-        )
-    })
+    cors = aiohttp_cors.setup(
+        app,
+        defaults={
+            CONFIG.cors: aiohttp_cors.ResourceOptions(
+                allow_credentials=True,
+                expose_headers="*",
+                allow_headers="*",
+            )
+        },
+    )
     # Apply CORS to endpoints
     for route in list(app.router.routes()):
         cors.add(route)
@@ -89,7 +92,7 @@ def set_cors(app):
 
 async def init_app():
     """Initialise the web server."""
-    LOG.info('Initialising web server.')
+    LOG.info("Initialising web server.")
     app = web.Application(middlewares=[api_key()])
     app.router.add_routes(routes)
     if CONFIG.cors:
@@ -99,15 +102,11 @@ async def init_app():
 
 def main():
     """Run the web server."""
-    LOG.info('Starting server build.')
-    web.run_app(init_app(),
-                host=CONFIG.host,
-                port=CONFIG.port,
-                shutdown_timeout=0,
-                ssl_context=application_security())
+    LOG.info("Starting server build.")
+    web.run_app(init_app(), host=CONFIG.host, port=CONFIG.port, shutdown_timeout=0, ssl_context=application_security())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if sys.version_info < (3, 6):
         LOG.error("beacon-network:aggregator requires python 3.6 or higher")
         sys.exit(1)
