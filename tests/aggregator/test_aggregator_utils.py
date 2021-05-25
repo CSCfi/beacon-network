@@ -8,6 +8,7 @@ from unittest.mock import Mock
 from aggregator.utils.utils import http_get_service_urls, get_services, process_url
 from aggregator.utils.utils import remove_self, get_access_token, parse_results, query_service
 from aggregator.utils.utils import validate_service_key, clear_cache, ws_bundle_return
+from aggregator.utils.utils import parse_version, pre_process_payload
 
 
 class BadCache:
@@ -70,7 +71,7 @@ class TestUtils(asynctest.TestCase):
         ]
         m.get("https://beacon-registry.fi/services", status=200, payload=data)
         info = await http_get_service_urls("https://beacon-registry.fi/services")
-        self.assertEqual(["https://beacon.fi/"], info)
+        self.assertEqual([("https://beacon.fi/", 1)], info)
 
     @aioresponses()
     async def test_http_get_service_urls_empty(self, m):
@@ -102,23 +103,28 @@ class TestUtils(asynctest.TestCase):
 
     async def test_process_url_1(self):
         """Test url processing type 1."""
-        processed = await process_url("https://beacon.fi/")
-        self.assertEqual("https://beacon.fi/query", processed)
+        processed = await process_url(("https://beacon.fi/", 1))
+        self.assertEqual(("https://beacon.fi/query", 1), processed)
 
     async def test_process_url_2(self):
         """Test url processing type 2."""
-        processed = await process_url("https://beacon.fi/service-info")
-        self.assertEqual("https://beacon.fi/query", processed)
+        processed = await process_url(("https://beacon.fi/service-info", 1))
+        self.assertEqual(("https://beacon.fi/query", 1), processed)
 
     async def test_process_url_3(self):
         """Test url processing type 3."""
-        processed = await process_url("https://beacon.fi")
-        self.assertEqual("https://beacon.fi/query", processed)
+        processed = await process_url(("https://beacon.fi", 1))
+        self.assertEqual(("https://beacon.fi/query", 1), processed)
+
+    async def test_process_url_4(self):
+        """Test url processing type 4."""
+        processed = await process_url(("https://beacon.fi", 2))
+        self.assertEqual(("https://beacon.fi/g_variants", 2), processed)
 
     async def test_remove_self(self):
         """Test removal of host from list of urls."""
-        removed = await remove_self("https://thisisme.fi/", ["https://thisisyou.fi/", "https://thisisme.fi/", "https://thisisthem.fi/"])
-        self.assertEqual(["https://thisisyou.fi/", "https://thisisme.fi/", "https://thisisthem.fi/"], removed)
+        removed = await remove_self(("https://thisisme.fi/", 1), [("https://thisisyou.fi/", 1), ("https://thisisme.fi/", 1), ("https://thisisthem.fi/", 1)])
+        self.assertEqual([("https://thisisyou.fi/", 1), ("https://thisisme.fi/", 1), ("https://thisisthem.fi/", 1)], removed)
 
     async def test_get_access_token_header_ok(self):
         """Test successful retrieval of access token from request headers."""
@@ -157,9 +163,9 @@ class TestUtils(asynctest.TestCase):
         # Aggregators respond with list [{}]
         m_is.return_value = True
         data = [{"important": "stuff"}]
-        m.get("https://beacon.fi/query", status=200, payload=data)
+        m.post("https://beacon.fi/query", status=200, payload=data)
         ws = MockWebsocket()
-        await query_service("https://beacon.fi/query", {}, None, ws=ws)
+        await query_service(("https://beacon.fi/query", 1), {}, None, ws=ws)
         self.assertEqual(ws.data, '{"important": "stuff"}')
 
     @aioresponses()
@@ -167,32 +173,32 @@ class TestUtils(asynctest.TestCase):
         """Test querying of service: websocket success, beacon dict."""
         # Beacons respond with dict {}
         data = {"important": "stuff"}
-        m.get("https://beacon.fi/query", status=200, payload=data)
+        m.post("https://beacon.fi/query", status=200, payload=data)
         ws = Mock(spec=web.WebSocketResponse, data='{"important": "stuff"}')
-        await query_service("https://beacon.fi/query", {}, None, ws=ws)
+        await query_service(("https://beacon.fi/query", 1), {}, None, ws=ws)
         self.assertEqual(ws.data, '{"important": "stuff"}')
 
     @aioresponses()
     async def test_query_service_ws_fail(self, m):
         """Test querying of service: websocket fail."""
-        m.get("https://beacon.fi/query", status=400)
+        m.post("https://beacon.fi/query", status=400)
         ws = MockWebsocket()
-        await query_service("https://beacon.fi/query", {}, None, ws=ws)
+        await query_service(("https://beacon.fi/query", 1), {}, None, ws=ws)
         self.assertTrue("'responseStatus': 400" in ws.data)
 
     @aioresponses()
     async def test_query_service_http_success(self, m):
         """Test querying of service: http success."""
         data = {"response": "from beacon"}
-        m.get("https://beacon.fi/query", status=200, payload=data)
-        response = await query_service("https://beacon.fi/query", {}, "token")
+        m.post("https://beacon.fi/query", status=200, payload=data)
+        response = await query_service(("https://beacon.fi/query", 1), {}, "token")
         self.assertEqual(response, data)
 
     @aioresponses()
     async def test_query_service_http_fail(self, m):
         """Test querying of service: http fail."""
-        m.get("https://beacon.fi/query", status=400)
-        response = await query_service("https://beacon.fi/query", {}, None)
+        m.post("https://beacon.fi/query", status=400)
+        response = await query_service(("https://beacon.fi/query", 1), {}, None)
         self.assertEqual(response["responseStatus"], 400)
 
     async def test_validate_service_key_success(self):
@@ -246,6 +252,74 @@ class TestUtils(asynctest.TestCase):
         m_ws = MockWebsocket()
         await ws_bundle_return({"something": "here"}, m_ws)
         self.assertEqual('{"something": "here"}', m_ws.data)
+
+    async def test_parse_version(self):
+        """Test semver parsing."""
+        test_cases = ["1.0.0", "v2.0.0", ""]
+        self.assertEqual(await parse_version(test_cases[0]), 1)
+        self.assertEqual(await parse_version(test_cases[1]), 2)
+        self.assertEqual(await parse_version(test_cases[2]), 1)
+
+    async def test_pre_process_payload(self):
+        """Test payload pre-processing."""
+        query_strings = [
+            "assemblyId=GRCh38&referenceName=MT&start=9&referenceBases=T&alternateBases=C&includeDatasetResponses=HIT",
+            "assemblyId=GRCh38&referenceName=MT&start=9&end=10&referenceBases=T&alternateBases=C&includeDatasetResponses=HIT",
+            "assemblyId=GRCh38&referenceName=MT&startMin=5&startMax=10&endMin=5&endMax=15&referenceBases=T&alternateBases=C&variantType=SNP\
+&includeDatasetResponses=HIT",
+        ]
+        expected_v1 = [
+            {"assemblyId": "GRCh38", "referenceName": "MT", "start": 9, "referenceBases": "T", "alternateBases": "C", "includeDatasetResponses": "HIT"},
+            {
+                "assemblyId": "GRCh38",
+                "referenceName": "MT",
+                "start": 9,
+                "end": 10,
+                "referenceBases": "T",
+                "alternateBases": "C",
+                "includeDatasetResponses": "HIT",
+            },
+            {
+                "assemblyId": "GRCh38",
+                "referenceName": "MT",
+                "startMin": 5,
+                "startMax": 10,
+                "endMin": 5,
+                "endMax": 15,
+                "referenceBases": "T",
+                "alternateBases": "C",
+                "variantType": "SNP",
+                "includeDatasetResponses": "HIT",
+            },
+        ]
+        expected_v2 = [
+            {"assemblyId": "GRCh38", "referenceName": "MT", "start": "9", "referenceBases": "T", "alternateBases": "C", "includeDatasetResponses": "HIT"},
+            {
+                "assemblyId": "GRCh38",
+                "referenceName": "MT",
+                "start": "9",
+                "end": "10",
+                "referenceBases": "T",
+                "alternateBases": "C",
+                "includeDatasetResponses": "HIT",
+            },
+            {
+                "assemblyId": "GRCh38",
+                "referenceName": "MT",
+                "start": "5,10",
+                "end": "5,15",
+                "referenceBases": "T",
+                "alternateBases": "C",
+                "variantType": "SNP",
+                "includeDatasetResponses": "HIT",
+            },
+        ]
+        self.assertEqual(await pre_process_payload(1, query_strings[0]), expected_v1[0])
+        self.assertEqual(await pre_process_payload(1, query_strings[1]), expected_v1[1])
+        self.assertEqual(await pre_process_payload(1, query_strings[2]), expected_v1[2])
+        self.assertEqual(await pre_process_payload(2, query_strings[0]), expected_v2[0])
+        self.assertEqual(await pre_process_payload(2, query_strings[1]), expected_v2[1])
+        self.assertEqual(await pre_process_payload(2, query_strings[2]), expected_v2[2])
 
 
 if __name__ == "__main__":
