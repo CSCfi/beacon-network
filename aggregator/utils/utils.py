@@ -135,8 +135,8 @@ async def remove_self(url_self, urls):
 
     for url in urls:
         url_split = url[0].split("/")
-        if url_self[0] in url_split:
-            urls.remove(url_self)
+        if url_self in url_split:
+            urls.remove(url)
             LOG.debug("Found and removed self from service URLs.")
 
     return urls
