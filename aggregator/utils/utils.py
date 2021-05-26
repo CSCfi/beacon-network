@@ -5,6 +5,8 @@ import sys
 import json
 import ssl
 
+from urllib import parse
+
 import aiohttp
 import asyncio
 import uvloop
@@ -18,6 +20,26 @@ from .logging import LOG
 
 # Used by query_service() and ws_bundle_return() in a similar manner as ../endpoints/query.py
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
+
+async def parse_version(semver):
+    """
+    Parse the major version from a string semver.
+
+    This is required, because some services use `2.0.0` and some `v2.0.0`
+    """
+    LOG.debug("Parsing version number.")
+
+    # if the service is missing a version number, we expect it to be Beacon 1.0
+    if semver == "":
+        return 1
+
+    # parse the major version out of semver string and ignore any strings if they are present
+    # e.g.
+    # 1.0.0 -> 1
+    # v2.0.0 -> 2
+    if (version := "".join(filter(str.isdigit, semver.split(".")[0]))) != "":
+        return int(version)
 
 
 async def http_get_service_urls(registry):
@@ -35,10 +57,12 @@ async def http_get_service_urls(registry):
                         # Parse types: query beacons, or query aggregators, or both?
                         # Check if service has a type tag of Beacons
                         if CONFIG.beacons and r.get("type", {}).get("artifact") == "beacon":
-                            service_urls.append(r["url"])
+                            # Create a tuple of URL and service version
+                            # the version is used later in deciding the request body
+                            service_urls.append((r["url"], await parse_version(r.get("type").get("version"))))
                         # Check if service has a type tag of Aggregators
                         if CONFIG.aggregators and r.get("type", {}).get("artifact") == "beacon-aggregator":
-                            service_urls.append(r["url"])
+                            service_urls.append((r["url"], await parse_version(r.get("type").get("version"))))
         except Exception as e:
             LOG.debug(f"Query error {e}.")
             web.HTTPInternalServerError(text=f"An error occurred while attempting to query services: {e}")
@@ -70,19 +94,33 @@ async def process_url(url):
 
     Some URLs might end with `/service-info`, others with `/` and some even `` (empty).
     The Aggregator wants to use the `/query` endpoint, so the URLs must be pre-processed for queries.
+    New in Beacon 2.0: `/g_variants` endpoint replaces the 1.0 `/query` endpoint.
     """
     LOG.debug("Processing URLs.")
 
-    if url.endswith("/"):
-        url += "query"
-    elif url.endswith("/service-info"):
-        url = url.replace("service-info", "query")
+    # convert tuple to list for processing
+    url = list(url)
+
+    # Check which endpoint to use, Beacon 1.0 or 2.0
+    query_endpoint = "query"
+    if url[1] == 2:
+        query_endpoint = "g_variants"
+    LOG.debug(f"Using endpoint {query_endpoint}")
+
+    # Add endpoint
+    if url[0].endswith("/"):
+        url[0] += query_endpoint
+    elif url[0].endswith("/service-info"):
+        url[0] = url[0].replace("service-info", query_endpoint)
     else:
         # Unknown case
         # One case is observed, where URL was similar to https://service.institution.org/beacon
         # For URLs where the info endpoint is /, but / is not present, let's add /query
-        url += "/query"
+        url[0] += "/" + query_endpoint
         pass
+
+    # convert back to tuple after processing
+    url = tuple(url)
 
     return url
 
@@ -96,7 +134,7 @@ async def remove_self(url_self, urls):
     LOG.debug("Look for self from service URLs.")
 
     for url in urls:
-        url_split = url.split("/")
+        url_split = url[0].split("/")
         if url_self in url_split:
             urls.remove(url)
             LOG.debug("Found and removed self from service URLs.")
@@ -132,6 +170,53 @@ async def get_access_token(request):
     return access_token
 
 
+async def pre_process_payload(version, params):
+    """
+    Pre-process GET query string into POST payload.
+
+    This function serves as a translator between Beacon 1.0 and 2.0 specifications.
+    """
+    LOG.debug(f"Processing payload for version {str(version)}.")
+
+    # parse the query string into a dict
+    raw_data = dict(parse.parse_qsl(params))
+
+    if version == 2:
+        # default data which is always present
+        data = {"assemblyId": raw_data.get("assemblyId", "GRCh38"), "includeDatasetResponses": raw_data.get("includeDatasetResponses", "ALL")}
+
+        # optionals
+        if (rn := raw_data.get("referenceName")) is not None:
+            data["referenceName"] = rn
+        if (vt := raw_data.get("variantType")) is not None:
+            data["variantType"] = vt
+        if (rb := raw_data.get("referenceBases")) is not None:
+            data["referenceBases"] = rb
+        if (ab := raw_data.get("alternateBases")) is not None:
+            data["alternateBases"] = ab
+
+        # exact coordinates
+        if (s := raw_data.get("start")) is not None:
+            data["start"] = s
+        if (e := raw_data.get("end")) is not None:
+            data["end"] = e
+
+        # range coordinates
+        if (smin := raw_data.get("startMin")) is not None and (smax := raw_data.get("startMax")) is not None:
+            data["start"] = ",".join([smin, smax])
+        if (emin := raw_data.get("endMin")) is not None and (emax := raw_data.get("endMax")) is not None:
+            data["end"] = ",".join([emin, emax])
+    else:
+        # convert string digits into integers
+        # Beacon 1.0 uses integer coordinates, while Beacon 2.0 uses string coordinates
+        raw_data = {k: int(v) if v.isdigit() else v for k, v in raw_data.items()}
+        # Beacon 1.0
+        # Unmodified structure for version 1, straight parsing from GET query string to POST payload
+        data = raw_data
+
+    return data
+
+
 async def query_service(service, params, access_token, ws=None):
     """Query service with params."""
     LOG.debug("Querying service.")
@@ -140,10 +225,13 @@ async def query_service(service, params, access_token, ws=None):
     if access_token:
         headers.update({"Authorization": f"Bearer {access_token}"})
 
+    # Pre-process query string into payload format
+    data = await pre_process_payload(service[1], params)
+
     # Query service in a session
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(service, params=params, headers=headers, ssl=await request_security()) as response:
+            async with session.post(service[0], json=data, headers=headers, ssl=await request_security()) as response:
                 # On successful response, forward response
                 if response.status == 200:
                     result = await response.json()
@@ -166,7 +254,7 @@ async def query_service(service, params, access_token, ws=None):
                         return result
                 else:
                     # HTTP errors
-                    error = {"service": service, "queryParams": params, "responseStatus": response.status}
+                    error = {"service": service[0], "queryParams": params, "responseStatus": response.status}
                     LOG.error(f"Query to {service} failed: {response}.")
                     if ws:
                         return await ws.send_str(json.dumps(str(error)))
