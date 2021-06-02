@@ -254,10 +254,10 @@ async def query_service(service, params, access_token, ws=None):
                         return result
                 else:
                     # HTTP errors
-                    error = {"service": service[0], "queryParams": params, "responseStatus": response.status}
+                    error = {"service": service[0], "queryParams": params, "responseStatus": response.status, "exists": None}
                     LOG.error(f"Query to {service} failed: {response}.")
-                    if ws:
-                        return await ws.send_str(json.dumps(str(error)))
+                    if isinstance(ws, web.WebSocketResponse):
+                        return await ws.send_str(json.dumps(error))
                     else:
                         return error
 
