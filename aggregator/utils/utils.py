@@ -235,7 +235,7 @@ async def query_service(service, params, access_token, ws=None):
                 # On successful response, forward response
                 if response.status == 200:
                     result = await response.json()
-                    if isinstance(ws, web.WebSocketResponse):
+                    if ws is not None:
                         # If the response comes from another aggregator, it's a list, and it needs to be broken down into dicts
                         if isinstance(result, list):
                             tasks = []
@@ -256,7 +256,7 @@ async def query_service(service, params, access_token, ws=None):
                     # HTTP errors
                     error = {"service": service[0], "queryParams": params, "responseStatus": response.status, "exists": None}
                     LOG.error(f"Query to {service} failed: {response}.")
-                    if isinstance(ws, web.WebSocketResponse):
+                    if ws is not None:
                         return await ws.send_str(json.dumps(error))
                     else:
                         return error
