@@ -208,8 +208,8 @@ async def pre_process_payload(version, params):
             data["end"] = ",".join([emin, emax])
     else:
         # convert string digits into integers
-        # Beacon 1.0 uses integer coordinates, while Beacon 2.0 uses string coordinates
-        raw_data = {k: int(v) if v.isdigit() else v for k, v in raw_data.items()}
+        # Beacon 1.0 uses integer coordinates, while Beacon 2.0 uses string coordinates (ignore referenceName, it should stay as a string)
+        raw_data = {k: int(v) if v.isdigit() and k != "referenceName" else v for k, v in raw_data.items()}
         # Beacon 1.0
         # Unmodified structure for version 1, straight parsing from GET query string to POST payload
         data = raw_data
