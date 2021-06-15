@@ -15,7 +15,6 @@ updates:
       day: "monday"
     labels:
       - "github actions"
-    target-branch: "develop"
     open-pull-requests-limit: 10
   - package-ecosystem: docker
     directory: "/"
@@ -24,5 +23,4 @@ updates:
       day: "monday"
     labels:
       - "docker dependencies"
-    target-branch: "develop"
     open-pull-requests-limit: 10
