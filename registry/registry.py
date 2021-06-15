@@ -46,7 +46,7 @@ async def service_types(request):
 
 
 @routes.post("/services")
-@validate(load_schema("self_registration"))
+# @validate(load_schema("self_registration"))
 async def services_post(request):
     """POST request to the /services endpoint.
 

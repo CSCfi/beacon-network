@@ -5,6 +5,8 @@ version: '3.2'
 networks:
   net_registry:
     driver: bridge
+  apps:
+    driver: bridge
 
 services:
 
@@ -36,12 +38,14 @@ services:
       DB_PORT: 5432
       BEACON_RUN_APP: registry
       DEBUG: "true"
+      REQUEST_SECURITY: 0
     links:
       - db_registry
     ports:
       - 8080:8080
     networks:
       - net_registry
+      - apps
 
   # AGGREGATORAPP
 
@@ -55,3 +59,5 @@ services:
       DEBUG: "true"
     ports:
       - 5050:5050
+    networks:
+      - apps
