@@ -8,3 +8,21 @@ updates:
     labels:
       - "pip dependencies"
     open-pull-requests-limit: 10
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "github actions"
+    target-branch: "develop"
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "docker dependencies"
+    target-branch: "develop"
+    open-pull-requests-limit: 10
