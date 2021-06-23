@@ -70,9 +70,7 @@ if CONFIG.test is False:
         await invalidate_aggregator_caches(request, db_pool)
 
         # Return confirmation and service key if no problems occurred during processing
-        return web.HTTPCreated(
-            body=json.dumps(response), content_type="application/json"
-        )
+        return web.HTTPCreated(body=json.dumps(response), content_type="application/json")
 
 
 else:
@@ -94,9 +92,7 @@ else:
         await invalidate_aggregator_caches(request, db_pool)
 
         # Return confirmation and service key if no problems occurred during processing
-        return web.HTTPCreated(
-            body=json.dumps(response), content_type="application/json"
-        )
+        return web.HTTPCreated(body=json.dumps(response), content_type="application/json")
 
 
 @routes.get("/services")
@@ -170,9 +166,7 @@ async def update_services(request):
     fail, total = await update_service_infos(request, db_pool)
 
     # Return confirmation
-    return web.Response(
-        text=f"{total - fail} successful update(s). {fail} failed update(s)."
-    )
+    return web.Response(text=f"{total - fail} successful update(s). {fail} failed update(s).")
 
 
 async def init_db(app):
