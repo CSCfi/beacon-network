@@ -2,7 +2,6 @@
 
 import sys
 import json
-import os
 
 import aiohttp_cors
 
@@ -46,15 +45,14 @@ async def service_types(request):
     return web.json_response(await get_service_types())
 
 
-if CONFIG.testEnv == False:
+if CONFIG.test is False:
     @routes.post("/services")
     @validate(load_schema("self_registration"))
     async def services_post(request):
         """POST request to the /services endpoint.
-
         Register a new service at host.
         """
-        
+
         LOG.debug("POST /services received.")
         # Tap into the database pool
         db_pool = request.app["pool"]
@@ -71,10 +69,9 @@ else:
     @routes.post("/services")
     async def services_post(request):
         """POST request to the /services endpoint.
-
         Register a new service at host.
         """
-        
+
         LOG.debug("POST /services received.")
         # Tap into the database pool
         db_pool = request.app["pool"]

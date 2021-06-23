@@ -13,8 +13,8 @@ from aiohttp import web
 from aiocache import cached
 
 from .logging import LOG
-from urllib.parse import urlparse
 from ..config import CONFIG
+
 
 async def http_request_info(url):
     """Request service info of given URL."""
@@ -83,7 +83,7 @@ async def parse_service_info(id, service, req={}):
         }
 
     # Validate service info, raise a fatal exception on any issue
-    if CONFIG.testEnv == False:
+    if CONFIG.test is False:
         await validate_service_info(service_info, service.get("id"))
 
     return service_info
@@ -107,7 +107,7 @@ async def validate_service_info(service, fetched_service_id):
             + f'when expected "{service["id"]}". Service ID must follow reverse domain name notation '
             + "according to Beacon API specification."
         )
-    
+
     if not service["url"].startswith("https://"):
         raise web.HTTPBadRequest(text=f'Service URL was rejected. Received "{service["url"]}". Service URL must begin with https://.')
     if service["contact_url"] != "" and not service["contact_url"].startswith(("https://", "mailto:")) and not re.search(regex, service["contact_url"]):
