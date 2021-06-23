@@ -9,7 +9,12 @@ from aiohttp import web
 
 from .endpoints.info import get_info
 from .endpoints.service_types import get_service_types
-from .endpoints.services import register_service, get_services, update_service, delete_services
+from .endpoints.services import (
+    register_service,
+    get_services,
+    update_service,
+    delete_services,
+)
 from .endpoints.update import update_service_infos
 from .schemas import load_schema
 from .utils.utils import invalidate_aggregator_caches, application_security
@@ -46,6 +51,7 @@ async def service_types(request):
 
 
 if CONFIG.test is False:
+
     @routes.post("/services")
     @validate(load_schema("self_registration"))
     async def services_post(request):
@@ -64,8 +70,13 @@ if CONFIG.test is False:
         await invalidate_aggregator_caches(request, db_pool)
 
         # Return confirmation and service key if no problems occurred during processing
-        return web.HTTPCreated(body=json.dumps(response), content_type="application/json")
+        return web.HTTPCreated(
+            body=json.dumps(response), content_type="application/json"
+        )
+
+
 else:
+
     @routes.post("/services")
     async def services_post(request):
         """POST request to the /services endpoint.
@@ -83,7 +94,9 @@ else:
         await invalidate_aggregator_caches(request, db_pool)
 
         # Return confirmation and service key if no problems occurred during processing
-        return web.HTTPCreated(body=json.dumps(response), content_type="application/json")
+        return web.HTTPCreated(
+            body=json.dumps(response), content_type="application/json"
+        )
 
 
 @routes.get("/services")
@@ -157,13 +170,21 @@ async def update_services(request):
     fail, total = await update_service_infos(request, db_pool)
 
     # Return confirmation
-    return web.Response(text=f"{total - fail} successful update(s). {fail} failed update(s).")
+    return web.Response(
+        text=f"{total - fail} successful update(s). {fail} failed update(s)."
+    )
 
 
 async def init_db(app):
     """Initialise a database connection pool."""
     LOG.info("Creating database connection pool.")
-    app["pool"] = await init_db_pool(host=CONFIG.db_host, port=CONFIG.db_port, user=CONFIG.db_user, passwd=CONFIG.db_pass, db=CONFIG.db_name)
+    app["pool"] = await init_db_pool(
+        host=CONFIG.db_host,
+        port=CONFIG.db_port,
+        user=CONFIG.db_user,
+        passwd=CONFIG.db_pass,
+        db=CONFIG.db_name,
+    )
 
 
 async def close_db(app):
@@ -207,7 +228,13 @@ async def init_app():
 def main():
     """Run the web server."""
     LOG.info("Starting server build.")
-    web.run_app(init_app(), host=CONFIG.host, port=CONFIG.port, shutdown_timeout=0, ssl_context=application_security())
+    web.run_app(
+        init_app(),
+        host=CONFIG.host,
+        port=CONFIG.port,
+        shutdown_timeout=0,
+        ssl_context=application_security(),
+    )
 
 
 if __name__ == "__main__":
