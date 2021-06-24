@@ -36,7 +36,7 @@ def parse_config_file(path):
         "version": config.get("info", "version"),
         "create_time": config.get("info", "create_time"),
         "environment": config.get("info", "environment"),
-        "test": bool(strtobool(config.get("app", "test"))) or False,
+        "dev": bool(strtobool(os.environ.get("DEVELOPMENT", config.get("app", "dev")))) or False,
     }
     return namedtuple("Config", config_vars.keys())(*config_vars.values())
 

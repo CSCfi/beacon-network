@@ -83,7 +83,7 @@ async def parse_service_info(id, service, req={}):
         }
 
     # Validate service info, raise a fatal exception on any issue
-    if CONFIG.test is False:
+    if CONFIG.dev is False:
         await validate_service_info(service_info, service.get("id"))
 
     return service_info
