@@ -51,6 +51,7 @@ async def service_types(request):
 
 
 if CONFIG.dev is False:
+
     @routes.post("/services")
     @validate(load_schema("self_registration"))
     async def services_post(request):
