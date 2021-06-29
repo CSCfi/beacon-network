@@ -165,6 +165,17 @@ class TestUtils(asynctest.TestCase):
         self.assertEqual(ws.data, '{"important": "stuff"}')
 
     @aioresponses()
+    async def test_query_service_ws_success_aggregator_get_request(self, m):
+        """Test querying of service: websocket success, aggregator list."""
+        # Aggregators respond with list [{}]
+        data = [{"important": "stuff"}]
+        m.post("https://beacon.fi/query", status=405)
+        m.get("https://beacon.fi/query", status=200, payload=data)
+        ws = MockWebsocket()
+        await query_service(("https://beacon.fi/query", 1), "", None, ws=ws)
+        self.assertEqual(ws.data, '{"important": "stuff"}')
+
+    @aioresponses()
     async def test_query_service_ws_success_beacon(self, m):
         """Test querying of service: websocket success, beacon dict."""
         # Beacons respond with dict {}
