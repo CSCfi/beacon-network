@@ -30,7 +30,7 @@ async def http_request_info(url):
                     raise web.HTTPNotFound(text=f"{url} not found.")
         except Exception as e:
             LOG.debug(f"Query error {e}.")
-            raise web.HTTPInternalServerError(text=f"An error occurred while attempting to contact service: {e}")
+            raise web.HTTPInternalServerError(text="An error occurred while attempting to contact service.")
 
 
 async def parse_service_info(id, service, req={}):

@@ -65,7 +65,7 @@ async def http_get_service_urls(registry):
                             service_urls.append((r["url"], await parse_version(r.get("type").get("version"))))
         except Exception as e:
             LOG.debug(f"Query error {e}.")
-            web.HTTPInternalServerError(text=f"An error occurred while attempting to query services: {e}")
+            web.HTTPInternalServerError(text="An error occurred while attempting to query services.")
 
     return service_urls
 
@@ -277,7 +277,7 @@ async def query_service(service, params, access_token, ws=None):
 
         except Exception as e:
             LOG.debug(f"Query error {e}.")
-            web.HTTPInternalServerError(text=f"An error occurred while attempting to query services: {e}")
+            web.HTTPInternalServerError(text="An error occurred while attempting to query services.")
 
 
 async def ws_bundle_return(result, ws):
