@@ -218,7 +218,7 @@ async def pre_process_payload(version, params):
 
 
 async def _service_response(response, ws):
-    """Process response to web socket"""
+    """Process response to web socket."""
     result = await response.json()
     if ws is not None:
         # If the response comes from another aggregator, it's a list, and it needs to be broken down into dicts
