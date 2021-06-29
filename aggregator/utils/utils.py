@@ -252,6 +252,32 @@ async def query_service(service, params, access_token, ws=None):
                     else:
                         # Standard response
                         return result
+
+                # This is not 100% ideal and will only work for Beacon 1.0 that have implemented GET and not POST
+                elif response.status == 405:
+
+                    async with session.get(service, params=params, headers=headers, ssl=await request_security()) as response:
+                        # On successful response, forward response
+                        if response.status == 200:
+                            result = await response.json()
+                            if isinstance(ws, web.WebSocketResponse):
+                                # If the response comes from another aggregator, it's a list, and it needs to be broken down into dicts
+                                if isinstance(result, list):
+                                    tasks = []
+                                    # Prepare a websocket bundle return
+                                    for sub_result in result:
+                                        task = asyncio.ensure_future(ws_bundle_return(sub_result, ws))
+                                        tasks.append(task)
+                                    # Execute the bundle returns
+                                    await asyncio.gather(*tasks)
+                                else:
+                                    # The response came from a beacon and is a single object (dict {})
+                                    # Send result to websocket
+                                    return await ws.send_str(json.dumps(result))
+                            else:
+                                # Standard response
+                                return result
+
                 else:
                     # HTTP errors
                     error = {"service": service[0], "queryParams": params, "responseStatus": response.status, "exists": None}
