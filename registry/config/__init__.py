@@ -36,8 +36,14 @@ def parse_config_file(path):
         "version": config.get("info", "version"),
         "create_time": config.get("info", "create_time"),
         "environment": config.get("info", "environment"),
+        "dev": bool(strtobool(os.environ.get("DEVELOPMENT", config.get("app", "dev")))) or False,
     }
     return namedtuple("Config", config_vars.keys())(*config_vars.values())
 
 
-CONFIG = parse_config_file(os.environ.get("CONFIG_FILE", os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini")))
+CONFIG = parse_config_file(
+    os.environ.get(
+        "CONFIG_FILE",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini"),
+    )
+)
