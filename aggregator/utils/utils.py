@@ -270,24 +270,23 @@ async def query_service(service, params, access_token, ws=None):
     # Query service in a session
     async with aiohttp.ClientSession() as session:
         try:
-            if service[2] == "beacon":
-                async with session.post(service[0], json=data, headers=headers, ssl=await request_security()) as response:
-                    # On successful response, forward response
-                    if response.status == 200:
-                        return await _service_response(response, ws)
+            async with session.post(service[0], json=data, headers=headers, ssl=await request_security()) as response:
+                # On successful response, forward response
+                if response.status == 200:
+                    return await _service_response(response, ws)
 
-                    # This is not 100% ideal and will only work for Beacon 1.0 that have implemented GET and not POST
-                    elif response.status == 405 and service[1] in [0, 1]:
-                        return await _get_request(session, service, params, headers, ws)
+                # This is not 100% ideal and will only work for Beacon 1.0 that have implemented GET and not POST
+                elif response.status == 405 and service[1] in [0, 1] and service[2] == "beacon":
+                    return await _get_request(session, service, params, headers, ws)
 
+                else:
+                    # HTTP errors
+                    error = {"service": service[0], "queryParams": params, "responseStatus": response.status, "exists": None}
+                    LOG.error(f"Query to {service} failed: {response}.")
+                    if ws is not None:
+                        return await ws.send_str(json.dumps(error))
                     else:
-                        # HTTP errors
-                        error = {"service": service[0], "queryParams": params, "responseStatus": response.status, "exists": None}
-                        LOG.error(f"Query to {service} failed: {response}.")
-                        if ws is not None:
-                            return await ws.send_str(json.dumps(error))
-                        else:
-                            return error
+                        return error
 
         except Exception as e:
             LOG.debug(f"Query error {e}.")
