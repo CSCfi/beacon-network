@@ -260,11 +260,19 @@ async def query_service(service, params, access_token, ws=None):
 
                 # This is not 100% ideal and will only work for Beacon 1.0 that have implemented GET and not POST
                 elif response.status == 405:
-
                     async with session.get(service[0], params=params, headers=headers, ssl=await request_security()) as response:
                         # On successful response, forward response
                         if response.status == 200:
                             return await _service_response(response, ws)
+
+                        else:
+                            # HTTP errors
+                            error = {"service": service[0], "queryParams": params, "responseStatus": response.status, "exists": None}
+                            LOG.error(f"Query to {service} failed: {response}.")
+                            if ws is not None:
+                                return await ws.send_str(json.dumps(error))
+                            else:
+                                return error
 
                 else:
                     # HTTP errors
