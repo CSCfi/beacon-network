@@ -69,7 +69,7 @@ class TestUtils(asynctest.TestCase):
         ]
         m.get("https://beacon-registry.fi/services", status=200, payload=data)
         info = await http_get_service_urls("https://beacon-registry.fi/services")
-        self.assertEqual([("https://beacon.fi/", 1)], info)
+        self.assertEqual([("https://beacon.fi/", 1, "beacon")], info)
 
     @aioresponses()
     async def test_http_get_service_urls_empty(self, m):
@@ -161,7 +161,7 @@ class TestUtils(asynctest.TestCase):
         data = [{"important": "stuff"}]
         m.post("https://beacon.fi/query", status=200, payload=data)
         ws = MockWebsocket()
-        await query_service(("https://beacon.fi/query", 1), "", None, ws=ws)
+        await query_service(("https://beacon.fi/query", 1, "beacon"), "", None, ws=ws)
         self.assertEqual(ws.data, '{"important": "stuff"}')
 
     @aioresponses()
@@ -172,7 +172,7 @@ class TestUtils(asynctest.TestCase):
         m.post("https://beacon.fi/query", status=405)
         m.get("https://beacon.fi/query", status=200, payload=data)
         ws = MockWebsocket()
-        await query_service(("https://beacon.fi/query", 1), "", None, ws=ws)
+        await query_service(("https://beacon.fi/query", 1, "beacon"), "", None, ws=ws)
         self.assertEqual(ws.data, '{"important": "stuff"}')
 
     @aioresponses()
@@ -182,7 +182,7 @@ class TestUtils(asynctest.TestCase):
         data = {"important": "stuff"}
         m.post("https://beacon.fi/query", status=200, payload=data)
         ws = MockWebsocket()
-        await query_service(("https://beacon.fi/query", 1), "", None, ws=ws)
+        await query_service(("https://beacon.fi/query", 1, "beacon"), "", None, ws=ws)
         self.assertEqual(ws.data, '{"important": "stuff"}')
 
     @aioresponses()
@@ -190,7 +190,7 @@ class TestUtils(asynctest.TestCase):
         """Test querying of service: websocket fail."""
         m.post("https://beacon.fi/query", status=400)
         ws = MockWebsocket()
-        await query_service(("https://beacon.fi/query", 1), "", None, ws=ws)
+        await query_service(("https://beacon.fi/query", 1, "beacon"), "", None, ws=ws)
         self.assertEqual(ws.data, '{"service": "https://beacon.fi/query", "queryParams": "", "responseStatus": 400, "exists": null}')
 
     @aioresponses()
@@ -198,14 +198,14 @@ class TestUtils(asynctest.TestCase):
         """Test querying of service: http success."""
         data = {"response": "from beacon"}
         m.post("https://beacon.fi/query", status=200, payload=data)
-        response = await query_service(("https://beacon.fi/query", 1), "", "token")
+        response = await query_service(("https://beacon.fi/query", 1, "beacon"), "", "token")
         self.assertEqual(response, data)
 
     @aioresponses()
     async def test_query_service_http_fail(self, m):
         """Test querying of service: http fail."""
         m.post("https://beacon.fi/query", status=400)
-        response = await query_service(("https://beacon.fi/query", 1), "", None)
+        response = await query_service(("https://beacon.fi/query", 1, "beacon"), "", None)
         self.assertEqual(response["responseStatus"], 400)
 
     async def test_validate_service_key_success(self):

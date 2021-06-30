@@ -59,10 +59,10 @@ async def http_get_service_urls(registry):
                         if CONFIG.beacons and r.get("type", {}).get("artifact") == "beacon":
                             # Create a tuple of URL and service version
                             # the version is used later in deciding the request body
-                            service_urls.append((r["url"], await parse_version(r.get("type").get("version"))))
+                            service_urls.append((r["url"], await parse_version(r.get("type").get("version")), "beacon"))
                         # Check if service has a type tag of Aggregators
                         if CONFIG.aggregators and r.get("type", {}).get("artifact") == "beacon-aggregator":
-                            service_urls.append((r["url"], await parse_version(r.get("type").get("version"))))
+                            service_urls.append((r["url"], await parse_version(r.get("type").get("version")), "beacon-aggregator"))
         except Exception as e:
             LOG.debug(f"Query error {e}.")
             web.HTTPInternalServerError(text="An error occurred while attempting to query services.")
@@ -239,6 +239,23 @@ async def _service_response(response, ws):
         return result
 
 
+async def _get_request(session, service, params, headers, ws):
+    """Get request for 1.0 beacons."""
+    async with session.get(service[0], params=params, headers=headers, ssl=await request_security()) as response:
+        # On successful response, forward response
+        if response.status == 200:
+            return await _service_response(response, ws)
+
+        else:
+            # HTTP errors
+            error = {"service": service[0], "queryParams": params, "responseStatus": response.status, "exists": None}
+            LOG.error(f"Query to {service} failed: {response}.")
+            if ws is not None:
+                return await ws.send_str(json.dumps(error))
+            else:
+                return error
+
+
 async def query_service(service, params, access_token, ws=None):
     """Query service with params."""
     LOG.debug("Querying service.")
@@ -253,35 +270,24 @@ async def query_service(service, params, access_token, ws=None):
     # Query service in a session
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.post(service[0], json=data, headers=headers, ssl=await request_security()) as response:
-                # On successful response, forward response
-                if response.status == 200:
-                    return await _service_response(response, ws)
+            if service[2] == "beacon":
+                async with session.post(service[0], json=data, headers=headers, ssl=await request_security()) as response:
+                    # On successful response, forward response
+                    if response.status == 200:
+                        return await _service_response(response, ws)
 
-                # This is not 100% ideal and will only work for Beacon 1.0 that have implemented GET and not POST
-                elif response.status == 405:
-                    async with session.get(service[0], params=params, headers=headers, ssl=await request_security()) as response:
-                        # On successful response, forward response
-                        if response.status == 200:
-                            return await _service_response(response, ws)
+                    # This is not 100% ideal and will only work for Beacon 1.0 that have implemented GET and not POST
+                    elif response.status == 405 and service[1] in [0, 1]:
+                        return await _get_request(session, service, params, headers, ws)
 
-                        else:
-                            # HTTP errors
-                            error = {"service": service[0], "queryParams": params, "responseStatus": response.status, "exists": None}
-                            LOG.error(f"Query to {service} failed: {response}.")
-                            if ws is not None:
-                                return await ws.send_str(json.dumps(error))
-                            else:
-                                return error
-
-                else:
-                    # HTTP errors
-                    error = {"service": service[0], "queryParams": params, "responseStatus": response.status, "exists": None}
-                    LOG.error(f"Query to {service} failed: {response}.")
-                    if ws is not None:
-                        return await ws.send_str(json.dumps(error))
                     else:
-                        return error
+                        # HTTP errors
+                        error = {"service": service[0], "queryParams": params, "responseStatus": response.status, "exists": None}
+                        LOG.error(f"Query to {service} failed: {response}.")
+                        if ws is not None:
+                            return await ws.send_str(json.dumps(error))
+                        else:
+                            return error
 
         except Exception as e:
             LOG.debug(f"Query error {e}.")
