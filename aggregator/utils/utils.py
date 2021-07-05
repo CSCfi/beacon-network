@@ -275,7 +275,7 @@ async def query_service(service, params, access_token, ws=None):
                 if response.status == 200:
                     return await _service_response(response, ws)
 
-                elif response.status == 405 and service[2] in ["beacon", "beacon-aggregator"]:
+                elif response.status == 405 and service[2] == "beacon":
                     return await _get_request(session, service, params, headers, ws)
 
                 else:
