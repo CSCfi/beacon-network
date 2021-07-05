@@ -13,7 +13,7 @@ services:
 
   db_registry:
     hostname: db_registry
-    image: postgres:9.6
+    image: postgres:13
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
@@ -27,11 +27,11 @@ services:
 
   app_registry:
     hostname: app_registry
-    image: cscfi/beacon-network
+    image: localhost:5000/beacon-network
     depends_on:
       - db_registry
     volumes: 
-      - ./testconfig:/testconfig
+      - ./tests/test_files:/testconfig
     environment:
       APP_HOST: "0.0.0.0"
       APP_PORT: 8080
@@ -52,9 +52,9 @@ services:
 
   app_aggregator:
     hostname: app_aggregator
-    image: cscfi/beacon-network
+    image: localhost:5000/beacon-network
     volumes: 
-      - ./testconfig:/testconfig
+      - ./tests/test_files:/testconfig
     environment:
       APP_HOST: "0.0.0.0"
       APP_PORT: 5050
