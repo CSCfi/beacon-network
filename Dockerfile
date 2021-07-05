@@ -26,7 +26,7 @@ LABEL maintainer "CSC Developers"
 LABEL org.label-schema.schema-version="1.0"
 LABEL org.label-schema.vcs-url="https://github.com/CSCFI/beacon-network"
 
-COPY --from=BUILD usr/local/lib/python3.8/ usr/local/lib/python3.8/
+COPY --from=BUILD /usr/local/lib/python3.8/ usr/local/lib/python3.8/
 
 COPY --from=BUILD /usr/local/bin/gunicorn /usr/local/bin/
 

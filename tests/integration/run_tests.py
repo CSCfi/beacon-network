@@ -16,6 +16,7 @@ REGISTRY = "http://localhost:8080"
 
 async def test_service_info(endpoint, name, artifact):
     """Test service info endpoint."""
+    LOG.debug(f"Checking service info endpoint for: {artifact}")
     response = await SESSION.get(f"{endpoint}/service-info")
     assert response.status_code == 200, "HTTP status code error service info"
     data = response.json()

@@ -13,7 +13,6 @@ from aiohttp import web
 from aiocache import cached
 
 from .logging import LOG
-from ..config import CONFIG
 from urllib.parse import urlparse
 
 
@@ -107,41 +106,23 @@ async def validate_service_info(service, fetched_service_id):
             + f'when expected "{service["id"]}". Service ID must follow reverse domain name notation '
             + "according to Beacon API specification."
         )
+    allowed = set(["https"])
+    allowedMail = set(["https", "mailto"])
+    if int(os.environ.get("REQUEST_SECURITY", 0)) == 0:
+        allowedMail.add("http")
+        allowed.add("http")
 
-    if CONFIG.dev is not True:
-        allowedMail = set(("https", "mailto"))
-        if not urlparse(service["url"]).scheme == "https":
-            raise web.HTTPBadRequest(text=f'Service URL was rejected. Received "{service["url"]}". Service URL must begin with https.')
-        if (
-            service["contact_url"] != ""
-            and not urlparse(service["contact_url"]).scheme == ("https" or "mailto")
-            and not re.search(regex, service["contact_url"])
-        ):
-            raise web.HTTPBadRequest(
-                text=f'Contact URL was rejected. Received "{service["contact_url"]}". Contact URL must begin with httpsor mailto '
-                "or be a valid email address."
-            )
-        if service["organization_url"] != "" and not urlparse(service["organization_url"]).scheme == "https":
-            raise web.HTTPBadRequest(text=f'Organization URL was rejected. Received "{service["organization_url"]}". Organization URL must begin with https')
-        if service["organization_logo"] != "" and not urlparse(service["organization_logo"]).scheme == "https":
-            raise web.HTTPBadRequest(text=f'Logo URL was rejected. Received "{service["organization_logo"]}". Logo URL must begin with https')
-    else:
-        print(urlparse(service["url"]).scheme)
-        allowed = set(("https", "http"))
-        allowedMail = set(("https", "http", "mailto"))
-        if not urlparse(service["url"]).scheme in allowed:
-            raise web.HTTPBadRequest(text=f'Service URL was rejected. Received "{service["url"]}". Service URL must begin with http or https')
-        if service["contact_url"] != "" and not urlparse(service["contact_url"]).scheme in allowedMail and not re.search(regex, service["contact_url"]):
-            raise web.HTTPBadRequest(
-                text=f'Contact URL was rejected. Received "{service["contact_url"]}". Contact URL must begin with http, https or mailto: '
-                "or be a valid email address."
-            )
-        if service["organization_url"] != "" and not urlparse(service["organization_url"]).scheme in allowed:
-            raise web.HTTPBadRequest(
-                text=f'Organization URL was rejected. Received "{service["organization_url"]}". Organization URL must begin with http or https.'
-            )
-        if service["organization_logo"] != "" and not urlparse(service["organization_logo"]).scheme in allowed:
-            raise web.HTTPBadRequest(text=f'Logo URL was rejected. Received "{service["organization_logo"]}". Logo URL must begin with http or https.')
+    print(allowed)
+    if urlparse(service["url"]).scheme not in allowed:
+        raise web.HTTPBadRequest(text=f'Service URL was rejected. Received {service["url"]}. Service URL must begin with {allowed}')
+    if service["contact_url"] != "" and not urlparse(service["contact_url"]).scheme in allowedMail and not re.search(regex, service["contact_url"]):
+        raise web.HTTPBadRequest(
+            text=f'Contact URL was rejected. Received "{service["contact_url"]}". Contact URL must begin with {allowedMail}: ' "or be a valid email address."
+        )
+    if service["organization_url"] != "" and not urlparse(service["organization_url"]).scheme in allowed:
+        raise web.HTTPBadRequest(text=f'Organization URL was rejected. Received "{service["organization_url"]}". Organization URL must begin with {allowed}.')
+    if service["organization_logo"] != "" and not urlparse(service["organization_logo"]).scheme in allowed:
+        raise web.HTTPBadRequest(text=f'Logo URL was rejected. Received "{service["organization_logo"]}". Logo URL must begin with {allowed}.')
 
 
 async def construct_json(data):
