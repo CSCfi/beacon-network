@@ -7,13 +7,15 @@ networks:
     driver: bridge
   apps:
     driver: bridge
+  other_net_registry:
+    driver: bridge
 services:
 
   # REGISTRY DB AND APP
 
   db_registry:
     hostname: db_registry
-    image: postgres:9.6
+    image: postgres:13
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
@@ -27,11 +29,11 @@ services:
 
   app_registry:
     hostname: app_registry
-    image: cscfi/beacon-network
+    image: localhost:5000/beacon-network
     depends_on:
       - db_registry
     volumes: 
-      - ./testconfig:/testconfig
+      - ./tests/test_files:/testconfig
     environment:
       APP_HOST: "0.0.0.0"
       APP_PORT: 8080
@@ -39,7 +41,7 @@ services:
       DB_PORT: 5432
       BEACON_RUN_APP: registry
       DEBUG: "true"
-      CONFIG_FILE: /testconfig/config.ini
+      CONFIG_FILE: /testconfig/registry.ini
     links:
       - db_registry
     ports:
@@ -52,16 +54,87 @@ services:
 
   app_aggregator:
     hostname: app_aggregator
-    image: cscfi/beacon-network
+    image: localhost:5000/beacon-network
     volumes: 
-      - ./testconfig:/testconfig
+      - ./tests/test_files:/testconfig
     environment:
       APP_HOST: "0.0.0.0"
       APP_PORT: 5050
       BEACON_RUN_APP: aggregator
       DEBUG: "true"
-      CONFIG_FILE: /testconfig/aggregatorConfig.ini
+      CONFIG_FILE: /testconfig/aggregator.ini
     ports:
       - 5050:5050
     networks:
+      - apps
+
+  other_db_registry:
+    hostname: other_db_registry
+    image: postgres:13
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: registry
+    ports:
+      - 5433:5432
+    volumes:
+      - ./registry/db/docker-entrypoint-initdb.d/init.sql:/docker-entrypoint-initdb.d/init.sql:z
+    networks:
+      - other_net_registry
+
+  other_registry:
+    hostname: other_registry
+    image: localhost:5000/beacon-network
+    depends_on:
+      - other_db_registry
+    volumes: 
+      - ./tests/test_files:/testconfig
+    environment:
+      APP_HOST: "0.0.0.0"
+      APP_PORT: 8082
+      DB_HOST: other_db_registry
+      DB_PORT: 5432
+      BEACON_RUN_APP: registry
+      DEBUG: "true"
+      CONFIG_FILE: /testconfig/other_registry.ini
+    links:
+      - other_db_registry
+    ports:
+      - 8082:8082
+    networks:
+      - other_net_registry
+      - apps
+
+  # AGGREGATORAPP
+
+  other_aggregator:
+    hostname: other_aggregator
+    image: localhost:5000/beacon-network
+    volumes: 
+      - ./tests/test_files:/testconfig
+    environment:
+      APP_HOST: "0.0.0.0"
+      APP_PORT: 5051
+      BEACON_RUN_APP: aggregator
+      DEBUG: "true"
+      CONFIG_FILE: /testconfig/other_aggregator.ini
+    ports:
+      - 5051:5051
+    networks:
+      - apps
+
+  bad_beacon:
+    hostname: bad_beacon
+    image: cscfi/beacon-python
+    environment:
+      HOST: "0.0.0.0"
+      PORT: 5052
+      DATABASE_URL: other_db_registry
+      DATABASE_USER: user
+      DATABASE_PASSWORD: pass
+      DATABASE_NAME: registry
+    ports:
+      - 5052:5052
+    networks:
+      - other_net_registry
       - apps

@@ -22,7 +22,7 @@ def parse_config_file(path):
         "db_user": os.environ.get("DB_USER", config.get("app", "db_user")) or "user",
         "db_pass": os.environ.get("DB_PASS", config.get("app", "db_pass")) or "pass",
         "db_name": os.environ.get("DB_NAME", config.get("app", "db_name")) or "db",
-        "api_otp": bool(strtobool(os.environ.get("API_OTP", config.get("app", "api_otp")))) or True,
+        "api_otp": bool(strtobool(os.environ.get("API_OTP", config.get("app", "api_otp")))),
         "cors": os.environ.get("APP_CORS", config.get("app", "cors")) or "*",
         "name": config.get("info", "name"),
         "type_group": config.get("info", "type_group"),
@@ -36,7 +36,6 @@ def parse_config_file(path):
         "version": config.get("info", "version"),
         "create_time": config.get("info", "create_time"),
         "environment": config.get("info", "environment"),
-        "dev": bool(strtobool(os.environ.get("DEVELOPMENT", config.get("app", "dev")))) or False,
     }
     return namedtuple("Config", config_vars.keys())(*config_vars.values())
 

@@ -53,6 +53,7 @@ async def send_beacon_query_websocket(request):
 
     for service in services:
         # Generate task queue
+        LOG.debug(f"Query service: {service}")
         task = asyncio.ensure_future(query_service(service, params, access_token, ws=ws))
         tasks.append(task)
 
