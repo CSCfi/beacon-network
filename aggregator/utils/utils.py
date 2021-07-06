@@ -218,8 +218,9 @@ async def pre_process_payload(version, params):
 
 
 async def _service_response(response, ws):
-    """Process response to web socket."""
+    """Process response to web socket or HTTP."""
     result = await response.json()
+    LOG.debug(f"result: {result}")
     if ws is not None:
         # If the response comes from another aggregator, it's a list, and it needs to be broken down into dicts
         if isinstance(result, list):
@@ -242,6 +243,7 @@ async def _service_response(response, ws):
 async def _get_request(session, service, params, headers, ws):
     """Get request for 1.0 beacons."""
     async with session.get(service[0], params=params, headers=headers, ssl=await request_security()) as response:
+        LOG.info(f"GET query to service: {service[0]}")
         # On successful response, forward response
         if response.status == 200:
             return await _service_response(response, ws)
@@ -271,11 +273,12 @@ async def query_service(service, params, access_token, ws=None):
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(service[0], json=data, headers=headers, ssl=await request_security()) as response:
+                LOG.info(f"POST query to service: {service[0]}")
                 # On successful response, forward response
                 if response.status == 200:
                     return await _service_response(response, ws)
 
-                elif response.status == 405 and service[2] == "beacon":
+                elif response.status == 405:
                     return await _get_request(session, service, params, headers, ws)
 
                 else:
