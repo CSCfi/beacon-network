@@ -1,4 +1,4 @@
-FROM python:3.8-alpine3.13 as BUILD
+FROM python:3.9.6-alpine3.13 as BUILD
 
 LABEL maintainer "CSC Developers"
 
@@ -18,7 +18,7 @@ RUN pip install --upgrade pip && \
     pip install -r requirements.txt && \
     pip install .
 
-FROM python:3.8-alpine3.13
+FROM python:3.9.6-alpine3.13
 
 RUN apk add --no-cache --update bash
 
