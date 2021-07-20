@@ -11,14 +11,14 @@ from registry.registry import main, init_app
 
 async def create_db_mock(app):
     """Mock the db connection pool."""
-    app['pool'] = asynctest.mock.Mock(asyncpg.create_pool())
+    app["pool"] = asynctest.mock.Mock(asyncpg.create_pool())
     return app
 
 
 class TestRegistryEndpoints(AioHTTPTestCase):
     """Test registry endpoints."""
 
-    @asynctest.mock.patch('registry.registry.init_db', side_effect=create_db_mock)
+    @asynctest.mock.patch("registry.registry.init_db", side_effect=create_db_mock)
     async def get_application(self, mock_db):
         """Retrieve web application for test."""
         return await init_app()
@@ -28,7 +28,7 @@ class TestRegistryEndpoints(AioHTTPTestCase):
         """Test root endpoint."""
         resp = await self.client.request("GET", "/")
         assert 200 == resp.status
-        assert 'ELIXIR-FI Beacon Registry' == await resp.text()
+        assert "ELIXIR-FI Beacon Registry" == await resp.text()
 
     @unittest_run_loop
     async def test_service_info(self):
@@ -36,8 +36,8 @@ class TestRegistryEndpoints(AioHTTPTestCase):
         resp = await self.client.request("GET", "/service-info")
         data = await resp.json()
         assert 200 == resp.status
-        assert 'ELIXIR-FI Beacon Registry' == data['name']
-        assert data['type']['artifact'] == 'service-registry'
+        assert "ELIXIR-FI Beacon Registry" == data["name"]
+        assert data["type"]["artifact"] == "service-registry"
 
     @unittest_run_loop
     async def test_service_types(self):
@@ -45,9 +45,9 @@ class TestRegistryEndpoints(AioHTTPTestCase):
         resp = await self.client.request("GET", "/services/types")
         data = await resp.json()
         assert 200 == resp.status
-        assert 'service-registry' == data[0]
-        assert 'beacon-aggregator' == data[1]
-        assert 'beacon' == data[2]
+        assert "service-registry" == data[0]
+        assert "beacon-aggregator" == data[1]
+        assert "beacon" == data[2]
 
     # @asynctest.mock.patch('registry.registry.invalidate_aggregator_caches')
     # @asynctest.mock.patch('registry.registry.register_service')
@@ -70,25 +70,25 @@ class TestRegistryEndpoints(AioHTTPTestCase):
     #     # assert 'Service has been registered.' == data['message']
     #     # assert 'fi.beacon' == data['serviceId']
 
-    @asynctest.mock.patch('registry.registry.get_services')
+    @asynctest.mock.patch("registry.registry.get_services")
     @unittest_run_loop
     async def test_get_services(self, mock_get):
         """Test services endpoint: get list of services."""
-        mock_get.return_value = {'id': 'fi.beacon'}
+        mock_get.return_value = {"id": "fi.beacon"}
         resp = await self.client.request("GET", "/services")
         data = await resp.json()
         assert 200 == resp.status
-        assert 'fi.beacon' == data['id']
+        assert "fi.beacon" == data["id"]
 
-    @asynctest.mock.patch('registry.registry.get_services')
+    @asynctest.mock.patch("registry.registry.get_services")
     @unittest_run_loop
     async def test_get_service_id(self, mock_get):
         """Test services endpoint: get service by id."""
-        mock_get.return_value = {'id': 'fi.beacon'}
+        mock_get.return_value = {"id": "fi.beacon"}
         resp = await self.client.request("GET", "/services/fi.beacon")
         data = await resp.json()
         assert 200 == resp.status
-        assert 'fi.beacon' == data['id']
+        assert "fi.beacon" == data["id"]
 
 
 class TestRegistryStartUp(asynctest.TestCase):
@@ -102,7 +102,7 @@ class TestRegistryStartUp(asynctest.TestCase):
         """Remove setup variables."""
         pass
 
-    @asynctest.mock.patch('registry.registry.web')
+    @asynctest.mock.patch("registry.registry.web")
     def test_main(self, mock_web):
         """Test starting of web app."""
         main()
@@ -114,5 +114,5 @@ class TestRegistryStartUp(asynctest.TestCase):
         self.assertIs(type(server), web.Application)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

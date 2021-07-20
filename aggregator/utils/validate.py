@@ -8,21 +8,21 @@ from .logging import LOG
 
 def api_key():
     """Check if API key is valid."""
-    LOG.debug('Validate API key.')
+    LOG.debug("Validate API key.")
 
     @web.middleware
     async def api_key_middleware(request, handler):
-        LOG.debug('Start API key check')
+        LOG.debug("Start API key check")
 
         if not isinstance(request, web.Request):
-            raise web.HTTPBadRequest(text='Invalid HTTP Request.')
+            raise web.HTTPBadRequest(text="Invalid HTTP Request.")
 
         # This is the only endpoint which requires authentication
-        if '/cache' in request.path:
-            LOG.debug('At /cache endpoint.')
+        if "/cache" in request.path:
+            LOG.debug("At /cache endpoint.")
             try:
-                service_key = request.headers['Authorization']
-                LOG.debug('Authorization received.')
+                service_key = request.headers["Authorization"]
+                LOG.debug("Authorization received.")
             except Exception:
                 LOG.debug('Missing "Authorization" from headers.')
                 raise web.HTTPBadRequest(text='Missing header "Authorization".')
@@ -33,7 +33,7 @@ def api_key():
 
         # For all other endpoints
         else:
-            LOG.debug('No API key required at this endpoint.')
+            LOG.debug("No API key required at this endpoint.")
             return await handler(request)
 
     return api_key_middleware

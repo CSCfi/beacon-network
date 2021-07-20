@@ -1,6 +1,14 @@
 # Beacon Network
 
-[![Build Status](https://travis-ci.org/CSCfi/beacon-network.svg?branch=master)](https://travis-ci.org/CSCfi/beacon-network)
+### Github Actions
+[![CodeQL](https://github.com/CSCfi/beacon-network/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/CSCfi/beacon-network/actions/workflows/codeql-analysis.yml)
+[![S2I Build](https://github.com/CSCfi/beacon-network/actions/workflows/.s2i-build.yml/badge.svg)](https://github.com/CSCfi/beacon-network/actions/workflows/.s2i-build.yml)
+[![Style Checks](https://github.com/CSCfi/beacon-network/actions/workflows/.style.yml/badge.svg)](https://github.com/CSCfi/beacon-network/actions/workflows/.style.yml)
+[![Registry Unit Tests](https://github.com/CSCfi/beacon-network/actions/workflows/.unit-reg.yml/badge.svg)](https://github.com/CSCfi/beacon-network/actions/workflows/.unit-reg.yml)
+[![Aggregator Unit Tests](https://github.com/CSCfi/beacon-network/actions/workflows/.unit-agg.yml/badge.svg)](https://github.com/CSCfi/beacon-network/actions/workflows/.unit-agg.yml)
+[![Documentation Checks](https://github.com/CSCfi/beacon-network/actions/workflows/.docs.yml/badge.svg)](https://github.com/CSCfi/beacon-network/actions/workflows/.docs.yml)
+
+### External CI
 [![Coverage Status](https://coveralls.io/repos/github/CSCfi/beacon-network/badge.svg?branch=master)](https://coveralls.io/github/CSCfi/beacon-network?branch=master)
 [![Documentation Status](https://readthedocs.org/projects/beacon-network/badge/?version=latest)](https://beacon-network.readthedocs.io/en/latest/?badge=latest)
 
