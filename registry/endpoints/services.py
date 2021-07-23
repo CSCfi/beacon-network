@@ -105,7 +105,7 @@ async def update_service(request, db_pool):
             if new_id_found_service and service_id != new_service_id:
                 response["message"] = "Service update failed, see error.."
                 response["error"] = "Another service has already been registered with the new service id."
-                raise web.HTTPConflict(body=json.dumps(response), content_type="application/json")
+                raise web.HTTPConflict(text=json.dumps(response), content_type="application/json")
             # Request service info from given url
             service_info = await http_request_info(url)
             # Parse and validate service info object
