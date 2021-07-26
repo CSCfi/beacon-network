@@ -138,3 +138,19 @@ services:
     networks:
       - other_net_registry
       - apps
+  
+  extra_bad_beacon:
+    hostname: extra_bad_beacon
+    image: cscfi/beacon-python
+    environment:
+      HOST: "0.0.0.0"
+      PORT: 5053
+      DATABASE_URL: other_db_registry
+      DATABASE_USER: user
+      DATABASE_PASSWORD: pass
+      DATABASE_NAME: registry
+    ports:
+      - 5053:5053
+    networks:
+      - other_net_registry
+      - apps

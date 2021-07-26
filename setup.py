@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="beacon_network",
-    version="0.2.dev",
+    version="1.2.0",
     description="Beacon Network services",
     long_description_content_type="text/markdown",
     project_urls={
@@ -10,7 +10,7 @@ setup(
     },
     author="CSC - IT Center for Science",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 3 - Beta",
         "Intended Audience :: Developers",
         "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
         "License :: OSI Approved :: Apache Software License",
