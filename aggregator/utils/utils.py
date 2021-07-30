@@ -97,32 +97,36 @@ async def process_url(url):
     New in Beacon 2.0: `/g_variants` endpoint replaces the 1.0 `/query` endpoint.
     """
     LOG.debug("Processing URLs.")
-
     # convert tuple to list for processing
     url = list(url)
-
     # Check which endpoint to use, Beacon 1.0 or 2.0
-    query_endpoint = "query"
+    query_endpoints = ["query"]
     if url[1] == 2:
-        query_endpoint = "g_variants"
-    LOG.debug(f"Using endpoint {query_endpoint}")
+        query_endpoints = ["individuals", "g_variants", "biosamples", "runs", "analyses", "interactors", "cohorts"]
 
+    LOG.debug(f"Using endpoint {query_endpoints}")
+    urls = []
     # Add endpoint
     if url[0].endswith("/"):
-        url[0] += query_endpoint
+        for endpoint in query_endpoints:
+            urls.append([url[0] + endpoint, url[1]])
     elif url[0].endswith("/service-info"):
-        url[0] = url[0].replace("service-info", query_endpoint)
+        for endpoint in query_endpoints:
+            urls.append([url[0].replace("service-info", endpoint), url[1]])
     else:
         # Unknown case
         # One case is observed, where URL was similar to https://service.institution.org/beacon
         # For URLs where the info endpoint is /, but / is not present, let's add /query
-        url[0] += "/" + query_endpoint
+        for endpoint in query_endpoints:
+            urls.append([url[0] + "/" + endpoint, url[1]])
+
         pass
 
     # convert back to tuple after processing
-    url = tuple(url)
-
-    return url
+    urlTuples = []
+    for url in urls:
+        urlTuples.append(tuple(url))
+    return urlTuples
 
 
 async def remove_self(url_self, urls):
@@ -134,10 +138,12 @@ async def remove_self(url_self, urls):
     LOG.debug("Look for self from service URLs.")
 
     for url in urls:
-        url_split = url[0].split("/")
-        if url_self in url_split:
-            urls.remove(url)
-            LOG.debug("Found and removed self from service URLs.")
+        url = list(url)
+        for u in url[0]:
+            url_split = str(u).split("/")
+            if url_self in url_split:
+                urls.remove(url)
+                LOG.debug("Found and removed self from service URLs.")
 
     return urls
 
@@ -180,32 +186,37 @@ async def pre_process_payload(version, params):
 
     # parse the query string into a dict
     raw_data = dict(parse.parse_qsl(params))
-
     if version == 2:
-        # default data which is always present
-        data = {"assemblyId": raw_data.get("assemblyId", "GRCh38"), "includeDatasetResponses": raw_data.get("includeDatasetResponses", "ALL")}
+        # checks if a query is a listing search
+        if (raw_data.get("referenceName")) is not None:
+            # default data which is always present
+            data = {"assemblyId": raw_data.get("assemblyId"), "includeDatasetResponses": raw_data.get("includeDatasetResponses")}
 
-        # optionals
-        if (rn := raw_data.get("referenceName")) is not None:
-            data["referenceName"] = rn
-        if (vt := raw_data.get("variantType")) is not None:
-            data["variantType"] = vt
-        if (rb := raw_data.get("referenceBases")) is not None:
-            data["referenceBases"] = rb
-        if (ab := raw_data.get("alternateBases")) is not None:
-            data["alternateBases"] = ab
+            # optionals
+            if (rn := raw_data.get("referenceName")) is not None:
+                data["referenceName"] = rn
+            if (vt := raw_data.get("variantType")) is not None:
+                data["variantType"] = vt
+            if (rb := raw_data.get("referenceBases")) is not None:
+                data["referenceBases"] = rb
+            if (ab := raw_data.get("alternateBases")) is not None:
+                data["alternateBases"] = ab
 
-        # exact coordinates
-        if (s := raw_data.get("start")) is not None:
-            data["start"] = s
-        if (e := raw_data.get("end")) is not None:
-            data["end"] = e
+            # exact coordinates
+            if (s := raw_data.get("start")) is not None:
+                data["start"] = s
+            if (e := raw_data.get("end")) is not None:
+                data["end"] = e
 
-        # range coordinates
-        if (smin := raw_data.get("startMin")) is not None and (smax := raw_data.get("startMax")) is not None:
-            data["start"] = ",".join([smin, smax])
-        if (emin := raw_data.get("endMin")) is not None and (emax := raw_data.get("endMax")) is not None:
-            data["end"] = ",".join([emin, emax])
+            # range coordinates
+            if (smin := raw_data.get("startMin")) is not None and (smax := raw_data.get("startMax")) is not None:
+                data["start"] = ",".join([smin, smax])
+            if (emin := raw_data.get("endMin")) is not None and (emax := raw_data.get("endMax")) is not None:
+                data["end"] = ",".join([emin, emax])
+        else:
+            # beaconV2 expects some data but in listing search these are not needed thus they are empty
+            data = {"assemblyId": "", "includeDatasetResponses": ""}
+
     else:
         # convert string digits into integers
         # Beacon 1.0 uses integer coordinates, while Beacon 2.0 uses string coordinates (ignore referenceName, it should stay as a string)
@@ -215,6 +226,33 @@ async def pre_process_payload(version, params):
         data = raw_data
 
     return data
+
+
+async def find_query_endpoint(service, params):
+    """Find endpoint for queries by parameters."""
+    # since beaconV2 has multiple endpoints this method is used to define those endpoints from parameters
+    endpoints = service
+    # if lenght is 1 then beacon is v1
+    raw_data = dict(parse.parse_qsl(params))
+    if len(endpoints) <= 1 and raw_data.get("searchInInput") is None:
+        return service[0]
+    else:
+        for endpoint in endpoints:
+            if raw_data.get("searchInInput") is not None:
+                if raw_data.get("searchInInput") in endpoint[0]:
+                    if raw_data.get("id") != "0" and raw_data.get("id") is not None:
+                        if raw_data.get("searchByInput") != "" and raw_data.get("searchByInput") is not None:
+
+                            url = list(endpoint)
+                            url[0] += "/" + raw_data.get("id") + "/" + raw_data.get("searchByInput")
+                            endpoint = tuple(url)
+                            return endpoint
+
+                        url = list(endpoint)
+                        url[0] += "/" + raw_data.get("id")
+                        endpoint = tuple(url)
+                        return endpoint
+                    return endpoint
 
 
 async def _service_response(response, ws):
@@ -262,37 +300,34 @@ async def query_service(service, params, access_token, ws=None):
     """Query service with params."""
     LOG.debug("Querying service.")
     headers = {}
-
     if access_token:
         headers.update({"Authorization": f"Bearer {access_token}"})
-
+    endpoint = await find_query_endpoint(service, params)
     # Pre-process query string into payload format
-    data = await pre_process_payload(service[1], params)
+    if endpoint is not None:
+        data = await pre_process_payload(endpoint[1], params)
 
-    # Query service in a session
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.post(service[0], json=data, headers=headers, ssl=await request_security()) as response:
-                LOG.info(f"POST query to service: {service[0]}")
-                # On successful response, forward response
-                if response.status == 200:
-                    return await _service_response(response, ws)
-
-                elif response.status == 405:
-                    return await _get_request(session, service, params, headers, ws)
-
-                else:
-                    # HTTP errors
-                    error = {"service": service[0], "queryParams": params, "responseStatus": response.status, "exists": None}
-                    LOG.error(f"Query to {service} failed: {response}.")
-                    if ws is not None:
-                        return await ws.send_str(json.dumps(error))
+        # Query service in a session
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.post(endpoint[0], json=data, headers=headers, ssl=await request_security()) as response:
+                    LOG.info(f"POST query to service: {endpoint}")
+                    # On successful response, forward response
+                    if response.status == 200:
+                        return await _service_response(response, ws)
+                    elif response.status == 405:
+                        return await _get_request(session, endpoint, params, headers, ws)
                     else:
-                        return error
-
-        except Exception as e:
-            LOG.debug(f"Query error {e}.")
-            web.HTTPInternalServerError(text="An error occurred while attempting to query services.")
+                        # HTTP errors
+                        error = {"service": endpoint, "queryParams": params, "responseStatus": response.status, "exists": None}
+                        LOG.error(f"Query to {service} failed: {response}.")
+                        if ws is not None:
+                            return await ws.send_str(json.dumps(error))
+                        else:
+                            return error
+            except Exception as e:
+                LOG.debug(f"Query error {e}.")
+                web.HTTPInternalServerError(text="An error occurred while attempting to query services.")
 
 
 async def ws_bundle_return(result, ws):
