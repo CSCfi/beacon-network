@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="beacon_network",
-    version="0.2.dev",
+    version="1.2.0",
     description="Beacon Network services",
     long_description_content_type="text/markdown",
     project_urls={
@@ -10,7 +10,7 @@ setup(
     },
     author="CSC - IT Center for Science",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 3 - Beta",
         "Intended Audience :: Developers",
         "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
         "License :: OSI Approved :: Apache Software License",
@@ -46,7 +46,7 @@ setup(
             "coverage==5.5",
             "pytest<6.3",
             "pytest-cov==2.12.1",
-            "coveralls==3.1.0",
+            "coveralls==3.2.0",
             "testfixtures==6.18.0",
             "tox==3.24.0",
             "flake8==3.9.2",
