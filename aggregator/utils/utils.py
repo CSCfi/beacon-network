@@ -319,7 +319,8 @@ async def query_service(service, params, access_token, ws=None):
                         return await _get_request(session, endpoint, params, headers, ws)
                     else:
                         # HTTP errors
-                        error = {"service": endpoint, "queryParams": params, "responseStatus": response.status, "exists": None}
+                        error = {"service": endpoint[0], "queryParams": params, "responseStatus": response.status, "exists": None}
+
                         LOG.error(f"Query to {service} failed: {response}.")
                         if ws is not None:
                             return await ws.send_str(json.dumps(error))
