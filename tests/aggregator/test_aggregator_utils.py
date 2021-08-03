@@ -198,7 +198,7 @@ class TestUtils(asynctest.TestCase):
         ws = MockWebsocket()
         processed = await process_url(("https://beacon.fi/", 1))
         await query_service(processed, "", None, ws=ws)
-        self.assertEqual(ws.data, '{"service": ["https://beacon.fi/query", 1], "queryParams": "", "responseStatus": 400, "exists": null}')
+        self.assertEqual(ws.data, '{"service": "https://beacon.fi/query", "queryParams": "", "responseStatus": 400, "exists": null}')
 
     @aioresponses()
     async def test_query_service_http_success(self, m):
