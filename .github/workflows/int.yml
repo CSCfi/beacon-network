@@ -70,6 +70,9 @@ jobs:
           context: ./beacon2.0
           push: true
           file: ./beacon2.0/Dockerfile
+          tags: localhost:5000/beacon2.0:latest
+          cache-from: localhost:5000/beacon2.0:latest
+          cache-to: type=local,dest=/tmp/.buildx-cache
 
       - name: Run beacon 2.0 database
         run: |
