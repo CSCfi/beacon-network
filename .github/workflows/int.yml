@@ -74,13 +74,13 @@ jobs:
           cache-from: localhost:5001/beacon2.0:latest
           cache-to: type=local,dest=/tmp/.buildx-cache
 
-      -name: Run beacon 2.0 database
+      - name: Run beacon 2.0 database
         run: |
           cd beacon2.0/deploy
           docker-compose up -d db
 
-      -name: Run beacon2.0
-          run: |
+      - name: Run beacon2.0
+        run: |
           cd beacon2.0
           docker-compose up -d
 
