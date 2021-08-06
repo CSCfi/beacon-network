@@ -105,7 +105,7 @@ async def main():
     await test_service_operations(REGISTRY)
 
     LOG.debug("=== Test Aggregator Endpoint ===")
-    await test_query_aggregator(AGGREGATOR, 6, "http://bad_beacon:5052/query")
+    await test_query_aggregator(AGGREGATOR, 8, "http://bad_beacon:5052/query")
 
 
 if __name__ == "__main__":
