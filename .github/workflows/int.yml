@@ -70,19 +70,18 @@ jobs:
           context: ./beacon2.0
           push: true
           file: ./beacon2.0/Dockerfile
-          tags: localhost:5001/beacon2.0:latest
-          cache-from: localhost:5001/beacon2.0:latest
-          cache-to: type=local,dest=/tmp/.buildx-cache
 
       - name: Run beacon 2.0 database
         run: |
           cd beacon2.0/deploy
           docker-compose up -d db
+          sleep 30
 
       - name: Run beacon2.0
         run: |
           cd beacon2.0
           docker-compose up -d
+          sleep 30
 
       - name: Set up external services for integration
         run: ./tests/test_files/add_fixtures.sh
