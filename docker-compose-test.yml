@@ -114,12 +114,12 @@ services:
       - ./tests/test_files:/testconfig
     environment:
       APP_HOST: "0.0.0.0"
-      APP_PORT: 5051
+      APP_PORT: 5055
       BEACON_RUN_APP: aggregator
       DEBUG: "true"
       CONFIG_FILE: /testconfig/other_aggregator.ini
     ports:
-      - 5051:5051
+      - 5055:5055
     networks:
       - apps
 

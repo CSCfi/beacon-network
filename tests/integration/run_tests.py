@@ -11,7 +11,7 @@ LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.DEBUG)
 
 AGGREGATOR = "http://localhost:5054"
-REGISTRY = "http://localhost:8080"
+REGISTRY = "http://localhost:8083"
 REGISTRY_KEY = "07b4e8ed58a6f97897b03843474c8cc981d154ffe45b10ef88a9f127b15c5c56"
 
 

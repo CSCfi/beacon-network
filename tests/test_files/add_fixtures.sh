@@ -47,7 +47,7 @@ curl -X 'POST' \
     -H 'Content-Type: application/json' \
     -d '{
     "type": "beacon-aggregator",
-    "url": "http://other_aggregator:5051/service-info"
+    "url": "http://other_aggregator:5055/service-info"
     }'
 
 curl -X 'POST' \
