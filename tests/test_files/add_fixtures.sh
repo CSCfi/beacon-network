@@ -67,5 +67,5 @@ curl -X 'POST' \
     -H 'Content-Type: application/json' \
     -d '{
     "type": "beacon",
-    "url": "http://localhost:5050/service-info"
+    "url": "http://localhost:5050/api/service-info"
     }'
