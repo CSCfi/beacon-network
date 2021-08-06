@@ -39,8 +39,8 @@ jobs:
             BRANCH=dev
           fi
           echo "BUILD_BRANCH=$BRANCH" >> $GITHUB_ENV
-
-       - name: Clone beacon 2.0
+          
+      - name: Clone beacon 2.0
         uses: actions/checkout@v2
         with:
           repository: 'EGA-archive/beacon-2.x'
