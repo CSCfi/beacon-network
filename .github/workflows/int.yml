@@ -82,7 +82,7 @@ jobs:
 
       - name: Run beacon2.0
         run: |
-          cd beacon2.0
+          cd beacon2.0/
           docker-compose up -d
           sleep 30
 
