@@ -56,7 +56,34 @@ jobs:
         run: |
           docker-compose -f docker-compose-test.yml up -d
           sleep 30
+
+      - name: Clone beacon 2.0
+        uses: actions/checkout@v2
+        with:
+          repository: 'EGA-archive/beacon-2.x'
+          ref: 'master'
+          path: beacon2.0
       
+      - name: Build beacon 2.0
+        uses: docker/build-push-action@v2
+        with:
+          context: ./beacon2.0
+          push: true
+          file: ./beacon2.0/Dockerfile
+          tags: localhost:5001/beacon2.0:latest
+          cache-from: localhost:5001/beacon2.0:latest
+          cache-to: type=local,dest=/tmp/.buildx-cache
+
+      -name: Run beacon 2.0 database
+        run: |
+          cd beacon2.0/deploy
+          docker-compose up -d db
+
+      -name: Run beacon2.0
+          run: |
+          cd beacon2.0
+          docker-compose up -d
+
       - name: Set up external services for integration
         run: ./tests/test_files/add_fixtures.sh
 
