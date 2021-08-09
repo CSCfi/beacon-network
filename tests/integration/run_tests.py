@@ -81,12 +81,13 @@ async def test_service_operations(endpoint):
 
 
 async def test_query_aggregator(endpoint, expected_nb, expected_beacon):
-    """Test Aggregatpr query operation."""
+    """Test Aggregator query operation."""
     LOG.debug("make a query over the aggregator")
     params = {"includeDatasetResponses": "HIT", "assemblyId": "GRCh38", "referenceName": "MT", "start": "9", "referenceBases": "T", "alternateBases": "C"}
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{endpoint}/query", params=params)
         data = response.json()
+        print('\x1b[6;30;42m' + str(len(data)) + '\x1b[0m')
         assert response.status_code == 200, "HTTP status code error aggregator query"
         assert len(data) == expected_nb, "We did not find the expected number of responses"
         assert re.search(f'"service": "{expected_beacon}"', json.dumps(data), re.M), "We did not find the expected beacon"

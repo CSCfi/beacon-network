@@ -156,7 +156,7 @@ services:
       - apps
 
   beacon2.0:
-    hostname: beacon2.0
+    hostname: beacon
     image: localhost:5000/beacon2.0
     environment:
       HOST: "0.0.0.0"
