@@ -87,7 +87,7 @@ async def test_query_aggregator(endpoint, expected_nb, expected_beacon):
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{endpoint}/query", params=params)
         data = response.json()
-        print('\x1b[6;30;42m' + str(len(data)) + '\x1b[0m')
+        print("\x1b[6;30;42m" + str(len(data)) + "\x1b[0m")
         assert response.status_code == 200, "HTTP status code error aggregator query"
         assert len(data) == expected_nb, "We did not find the expected number of responses"
         assert re.search(f'"service": "{expected_beacon}"', json.dumps(data), re.M), "We did not find the expected beacon"
