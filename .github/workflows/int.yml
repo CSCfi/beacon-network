@@ -43,8 +43,8 @@ jobs:
       - name: Clone beacon 2.0
         uses: actions/checkout@v2
         with:
-          repository: 'EGA-archive/beacon-2.x'
-          ref: 'master'
+          repository: 'CSCfi/beacon-2.x'
+          ref: 'test'
           path: beacon2.0
       
       - name: Build beacon 2.0
