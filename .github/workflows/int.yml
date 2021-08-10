@@ -46,6 +46,7 @@ jobs:
           repository: 'CSCfi/beacon-2.x'
           ref: 'test'
           path: beacon2
+          lfs: true
       
       - name: Build beacon 2
         uses: docker/build-push-action@v2
@@ -62,6 +63,7 @@ jobs:
           cd beacon2/deploy
           docker-compose up -d db
           sleep 30
+          docker-compose logs db
 
       - name: Run beacon 2
         run: |
