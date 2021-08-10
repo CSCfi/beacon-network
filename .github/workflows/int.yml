@@ -58,18 +58,13 @@ jobs:
           cache-from: localhost:5000/beacon2:latest
           cache-to: type=local,dest=/tmp/.buildx-cache
 
-      - name: Run beacon 2 db
+      - name: Run beacon 2
         run: |
           cd beacon2/deploy
           docker network create beacon-network_apps
           docker-compose up -d db
           sleep 30
-          docker-compose logs db
-
-      - name: Run beacon 2
-        run: |
-          cd beacon2/deploy
-          docker-compose up -d
+          docker-compose up -d --no-build
           sleep 30
           
       - name: Build
