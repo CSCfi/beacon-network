@@ -1,6 +1,6 @@
 [
     {
-        "url": "http://app_registry:8080/services",
+        "url": "http://app_registry:8083/services",
         "key": "secret"
     }
 ]
