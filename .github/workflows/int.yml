@@ -61,6 +61,7 @@ jobs:
       - name: Run beacon 2 db
         run: |
           cd beacon2/deploy
+          docker network create beacon-network_apps
           docker-compose up -d db
           sleep 30
           docker-compose logs db
