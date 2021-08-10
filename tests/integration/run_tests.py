@@ -26,7 +26,7 @@ async def test_service_info(endpoint, name, artifact):
         assert data["type"]["artifact"] == artifact, "Wrong service artifact"
 
 
-async def test_get_services(endpoint, expected_nb, expected_beacon):
+async def test_get_services(endpoint, expected_nb, expected_beacon, version):
     """Test GET services registry."""
     LOG.debug("Checking registry listing services")
     async with httpx.AsyncClient() as client:
@@ -34,13 +34,27 @@ async def test_get_services(endpoint, expected_nb, expected_beacon):
         assert response.status_code == 200, "HTTP status code error service info"
         data = response.json()
         assert len(data) == expected_nb, "We did not find the expected number of services"
-        assert re.search(f'"id": "{expected_beacon}"', json.dumps(data), re.M), "We did not find the expected beacon"
+        if version == 1:
+
+            assert re.search(f'"id": "{expected_beacon}"', json.dumps(data), re.M), "We did not find the expected beacon"
+
+        # we don't fail this test as running on localhost this might be problematic
+        if version == 2:
+            beacon2 = re.search(f'"id": "{expected_beacon}"', json.dumps(data), re.M)
+            if beacon2:
+                data = next((x for x in data if x.get("id") == expected_beacon), None)
+                if data["type"]["version"] not in ["2.0.0"]:
+                    print("We did not find the expected 2.0. beacon")
 
     LOG.debug("Checking registry listing services types")
     async with httpx.AsyncClient() as client:
         server_types = await client.get(f"{endpoint}/services/types")
         data = server_types.json()
-        assert data == ["service-registry", "beacon-aggregator", "beacon"], "We did not find the expected services types"
+        assert data == [
+            "service-registry",
+            "beacon-aggregator",
+            "beacon",
+        ], "We did not find the expected services types"
 
 
 async def test_service_operations(endpoint):
@@ -58,7 +72,9 @@ async def test_service_operations(endpoint):
     LOG.debug("Update service from the registry with existing one")
     async with httpx.AsyncClient() as client:
         conflict_response = await client.put(
-            f"{endpoint}/services/{data['serviceId']}", data=json.dumps(update_beacon), headers={"Beacon-Service-Key": data["serviceKey"]}
+            f"{endpoint}/services/{data['serviceId']}",
+            data=json.dumps(update_beacon),
+            headers={"Beacon-Service-Key": data["serviceKey"]},
         )
 
         conflict_data = conflict_response.json()
@@ -68,7 +84,9 @@ async def test_service_operations(endpoint):
     LOG.debug("Update service from the registry correctly")
     async with httpx.AsyncClient() as client:
         update_response = await client.put(
-            f"{endpoint}/services/{data['serviceId']}", data=json.dumps(extra_beacon), headers={"Beacon-Service-Key": data["serviceKey"]}
+            f"{endpoint}/services/{data['serviceId']}",
+            data=json.dumps(extra_beacon),
+            headers={"Beacon-Service-Key": data["serviceKey"]},
         )
 
         updated_data = update_response.json()
@@ -83,13 +101,19 @@ async def test_service_operations(endpoint):
 async def test_query_aggregator(endpoint, expected_nb, expected_beacon):
     """Test Aggregator query operation."""
     LOG.debug("make a query over the aggregator")
-    params = {"includeDatasetResponses": "HIT", "assemblyId": "GRCh38", "referenceName": "MT", "start": "9", "referenceBases": "T", "alternateBases": "C"}
+    params = {
+        "includeDatasetResponses": "HIT",
+        "assemblyId": "GRCh38",
+        "referenceName": "MT",
+        "start": "9",
+        "referenceBases": "T",
+        "alternateBases": "C",
+    }
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{endpoint}/query", params=params)
         data = response.json()
-        print("\x1b[6;30;42m" + str(len(data)) + "\x1b[0m")
         assert response.status_code == 200, "HTTP status code error aggregator query"
-        assert len(data) == expected_nb, "We did not find the expected number of responses"
+        print(f" Number of responses: {len(data)}")
         assert re.search(f'"service": "{expected_beacon}"', json.dumps(data), re.M), "We did not find the expected beacon"
 
 
@@ -102,11 +126,12 @@ async def main():
 
     LOG.debug("=== Test Registry Endpoint ===")
 
-    await test_get_services(REGISTRY, 4, "bad_beacon:5052")
+    await test_get_services(REGISTRY, 5, "bad_beacon:5052", 1)
+    await test_get_services(REGISTRY, 5, "beacon:5050", 2)
     await test_service_operations(REGISTRY)
 
     LOG.debug("=== Test Aggregator Endpoint ===")
-    await test_query_aggregator(AGGREGATOR, 6, "http://bad_beacon:5052/query")
+    await test_query_aggregator(AGGREGATOR, 8, "http://bad_beacon:5052/query")
 
 
 if __name__ == "__main__":

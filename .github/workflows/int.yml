@@ -46,26 +46,14 @@ jobs:
           repository: 'CSCfi/beacon-2.x'
           ref: 'test'
           path: beacon2
-      
-      - name: Build beacon 2
-        uses: docker/build-push-action@v2
-        with:
-          context: ./beacon2
-          push: true
-          file: ./beacon2/Dockerfile
-          tags: localhost:5000/beacon2:latest
-          cache-from: localhost:5000/beacon2:latest
-          cache-to: type=local,dest=/tmp/.buildx-cache
-
-      - name: Run beacon 2 db
-        run: |
-          cd beacon2/deploy
-          docker-compose up -d db
-          sleep 30
+          lfs: true
 
       - name: Run beacon 2
         run: |
           cd beacon2/deploy
+          docker network create beacon-network_apps
+          docker-compose up -d db
+          sleep 30
           docker-compose up -d
           sleep 30
           
