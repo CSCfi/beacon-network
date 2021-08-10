@@ -102,7 +102,7 @@ async def main():
 
     LOG.debug("=== Test Registry Endpoint ===")
 
-    await test_get_services(REGISTRY, 4, "bad_beacon:5052")
+    await test_get_services(REGISTRY, 5, "bad_beacon:5052")
     await test_service_operations(REGISTRY)
 
     LOG.debug("=== Test Aggregator Endpoint ===")
