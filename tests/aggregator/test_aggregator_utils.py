@@ -166,7 +166,7 @@ class TestUtils(asynctest.TestCase):
         ws = MockWebsocket()
         processed = await process_url(("https://beacon.fi/", 1))
         await query_service(processed, "", None, ws=ws)
-        self.assertEqual(ws.data, '{"important": "stuff"}')
+        self.assertEqual(ws.data, '{"important":"stuff"}')
 
     @aioresponses()
     async def test_query_service_ws_success_aggregator_get_request(self, m):
@@ -178,7 +178,7 @@ class TestUtils(asynctest.TestCase):
         ws = MockWebsocket()
         processed = await process_url(("https://beacon.fi/", 1))
         await query_service(processed, "", None, ws=ws)
-        self.assertEqual(ws.data, '{"important": "stuff"}')
+        self.assertEqual(ws.data, '{"important":"stuff"}')
 
     @aioresponses()
     async def test_query_service_ws_success_beacon(self, m):
@@ -189,7 +189,7 @@ class TestUtils(asynctest.TestCase):
         ws = MockWebsocket()
         processed = await process_url(("https://beacon.fi/", 1))
         await query_service(processed, "", None, ws=ws)
-        self.assertEqual(ws.data, '{"important": "stuff"}')
+        self.assertEqual(ws.data, '{"important":"stuff"}')
 
     @aioresponses()
     async def test_query_service_ws_fail(self, m):
@@ -198,7 +198,7 @@ class TestUtils(asynctest.TestCase):
         ws = MockWebsocket()
         processed = await process_url(("https://beacon.fi/", 1))
         await query_service(processed, "", None, ws=ws)
-        self.assertEqual(ws.data, '{"service": "https://beacon.fi/query", "queryParams": "", "responseStatus": 400, "exists": null}')
+        self.assertEqual(ws.data, '{"service":"https://beacon.fi/query","queryParams":"","responseStatus":400,"exists":null}')
 
     @aioresponses()
     async def test_query_service_http_success(self, m):
@@ -267,7 +267,7 @@ class TestUtils(asynctest.TestCase):
         """Test websocket return function."""
         m_ws = MockWebsocket()
         await ws_bundle_return({"something": "here"}, m_ws)
-        self.assertEqual('{"something": "here"}', m_ws.data)
+        self.assertEqual('{"something":"here"}', m_ws.data)
 
     async def test_parse_version(self):
         """Test semver parsing."""

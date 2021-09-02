@@ -2,7 +2,7 @@
 
 import os
 import sys
-import json
+import ujson
 import ssl
 
 from urllib import parse
@@ -190,7 +190,10 @@ async def pre_process_payload(version, params):
         # checks if a query is a listing search
         if (raw_data.get("referenceName")) is not None:
             # default data which is always present
-            data = {"assemblyId": raw_data.get("assemblyId"), "includeDatasetResponses": raw_data.get("includeDatasetResponses")}
+            data = {
+                "assemblyId": raw_data.get("assemblyId"),
+                "includeDatasetResponses": raw_data.get("includeDatasetResponses"),
+            }
 
             # optionals
             if (rn := raw_data.get("referenceName")) is not None:
@@ -272,7 +275,7 @@ async def _service_response(response, ws):
         else:
             # The response came from a beacon and is a single object (dict {})
             # Send result to websocket
-            return await ws.send_str(json.dumps(result))
+            return await ws.send_str(ujson.dumps(result, escape_forward_slashes=False))
     else:
         # Standard response
         return result
@@ -291,7 +294,7 @@ async def _get_request(session, service, params, headers, ws):
             error = {"service": service[0], "queryParams": params, "responseStatus": response.status, "exists": None}
             LOG.error(f"Query to {service} failed: {response}.")
             if ws is not None:
-                return await ws.send_str(json.dumps(error))
+                return await ws.send_str(ujson.dumps(error, escape_forward_slashes=False))
             else:
                 return error
 
@@ -319,11 +322,16 @@ async def query_service(service, params, access_token, ws=None):
                         return await _get_request(session, endpoint, params, headers, ws)
                     else:
                         # HTTP errors
-                        error = {"service": endpoint[0], "queryParams": params, "responseStatus": response.status, "exists": None}
+                        error = {
+                            "service": endpoint[0],
+                            "queryParams": params,
+                            "responseStatus": response.status,
+                            "exists": None,
+                        }
 
                         LOG.error(f"Query to {service} failed: {response}.")
                         if ws is not None:
-                            return await ws.send_str(json.dumps(error))
+                            return await ws.send_str(ujson.dumps(error, escape_forward_slashes=False))
                         else:
                             return error
             except Exception as e:
@@ -337,7 +345,7 @@ async def ws_bundle_return(result, ws):
 
     # A simple function to bundle up websocket returns
     # when broken down from an aggregator response list
-    return await ws.send_str(json.dumps(result))
+    return await ws.send_str(ujson.dumps(result, escape_forward_slashes=False))
 
 
 async def validate_service_key(key):
@@ -402,7 +410,8 @@ def load_certs(ssl_context):
 
     try:
         ssl_context.load_cert_chain(
-            os.environ.get("PATH_SSL_CERT_FILE", "/etc/ssl/certs/cert.pem"), keyfile=os.environ.get("PATH_SSL_KEY_FILE", "/etc/ssl/certs/key.pem")
+            os.environ.get("PATH_SSL_CERT_FILE", "/etc/ssl/certs/cert.pem"),
+            keyfile=os.environ.get("PATH_SSL_KEY_FILE", "/etc/ssl/certs/key.pem"),
         )
         ssl_context.load_verify_locations(cafile=os.environ.get("PATH_SSL_CA_FILE", "/etc/ssl/certs/ca.pem"))
     except Exception as e:
