@@ -1,7 +1,7 @@
 """Beacon Registry API."""
 
 import sys
-import json
+import ujson
 
 import aiohttp_cors
 
@@ -68,7 +68,7 @@ async def services_post(request):
     await invalidate_aggregator_caches(request, db_pool)
 
     # Return confirmation and service key if no problems occurred during processing
-    return web.HTTPCreated(body=json.dumps(response), content_type="application/json")
+    return web.HTTPCreated(body=ujson.dumps(response, escape_forward_slashes=False), content_type="application/json")
 
 
 @routes.get("/services")

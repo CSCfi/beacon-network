@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 THE_HOST=${APP_HOST:="0.0.0.0"}
 THE_PORT=${APP_PORT:="8080"}

@@ -94,7 +94,7 @@ jobs:
         run: ./tests/test_files/add_fixtures.sh
 
       - name: Install integration tests dependencies
-        run: pip install asyncio httpx
+        run: pip install asyncio httpx ujson
       
       - name: Run Integration tests
         run:  python tests/integration/run_tests.py
