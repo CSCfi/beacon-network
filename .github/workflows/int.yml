@@ -47,22 +47,13 @@ jobs:
           ref: 'test'
           path: beacon2
 
-      - name: Create LFS file list
+      - name: Download beacon 2 data
+        env:
+          BEACON_2_DATA_URL: ${{ secrets.BEACON_2_DATA_URL }}
         run: |
-          cd beacon2
-          git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
-
-      - name: Restore LFS cache
-        uses: actions/cache@v2
-        id: lfs-cache
-        with:
-          path: beacon2/.git/lfs
-          key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}-v1
-
-      - name: Git LFS Pull
-        run: |
-          cd beacon2
-          git lfs pull
+          cd beacon2/deploy/db
+          rm data.sql.gz
+          wget $BEACON_2_DATA_URL
 
       - name: Run beacon 2
         run: |
