@@ -3,7 +3,7 @@ import asynctest
 from aioresponses import aioresponses
 from aiohttp import web
 
-from aggregator.utils.utils import http_get_service_urls, get_services, process_url
+from aggregator.utils.utils import http_get_service_urls, get_services, process_url, find_query_endpoint
 from aggregator.utils.utils import remove_self, get_access_token, parse_results, query_service
 from aggregator.utils.utils import validate_service_key, clear_cache, ws_bundle_return
 from aggregator.utils.utils import parse_version, pre_process_payload
@@ -102,22 +102,25 @@ class TestUtils(asynctest.TestCase):
     async def test_process_url_1(self):
         """Test url processing type 1."""
         processed = await process_url(("https://beacon.fi/", 1))
-        self.assertEqual(("https://beacon.fi/query", 1), processed)
+        self.assertEqual(("https://beacon.fi/query", 1), processed[0])
 
     async def test_process_url_2(self):
         """Test url processing type 2."""
         processed = await process_url(("https://beacon.fi/service-info", 1))
-        self.assertEqual(("https://beacon.fi/query", 1), processed)
+        self.assertEqual(("https://beacon.fi/query", 1), processed[0])
 
     async def test_process_url_3(self):
         """Test url processing type 3."""
         processed = await process_url(("https://beacon.fi", 1))
-        self.assertEqual(("https://beacon.fi/query", 1), processed)
+        self.assertEqual(("https://beacon.fi/query", 1), processed[0])
 
     async def test_process_url_4(self):
         """Test url processing type 4."""
+        params = "searchInInput=g_variants&id=0&searchByInput="
         processed = await process_url(("https://beacon.fi", 2))
-        self.assertEqual(("https://beacon.fi/g_variants", 2), processed)
+        findQuery = await find_query_endpoint(processed, params)
+        print("\x1b[6;30;42m" + str(findQuery) + "\x1b[0m")
+        self.assertEqual("https://beacon.fi/g_variants", findQuery[0])
 
     async def test_remove_self(self):
         """Test removal of host from list of urls."""
@@ -161,8 +164,9 @@ class TestUtils(asynctest.TestCase):
         data = [{"important": "stuff"}]
         m.post("https://beacon.fi/query", status=200, payload=data)
         ws = MockWebsocket()
-        await query_service(("https://beacon.fi/query", 1, "beacon"), "", None, ws=ws)
-        self.assertEqual(ws.data, '{"important": "stuff"}')
+        processed = await process_url(("https://beacon.fi/", 1))
+        await query_service(processed, "", None, ws=ws)
+        self.assertEqual(ws.data, '{"important":"stuff"}')
 
     @aioresponses()
     async def test_query_service_ws_success_aggregator_get_request(self, m):
@@ -172,8 +176,9 @@ class TestUtils(asynctest.TestCase):
         m.post("https://beacon.fi/query", status=405)
         m.get("https://beacon.fi/query", status=200, payload=data)
         ws = MockWebsocket()
-        await query_service(("https://beacon.fi/query", 1, "beacon"), "", None, ws=ws)
-        self.assertEqual(ws.data, '{"important": "stuff"}')
+        processed = await process_url(("https://beacon.fi/", 1))
+        await query_service(processed, "", None, ws=ws)
+        self.assertEqual(ws.data, '{"important":"stuff"}')
 
     @aioresponses()
     async def test_query_service_ws_success_beacon(self, m):
@@ -182,30 +187,34 @@ class TestUtils(asynctest.TestCase):
         data = {"important": "stuff"}
         m.post("https://beacon.fi/query", status=200, payload=data)
         ws = MockWebsocket()
-        await query_service(("https://beacon.fi/query", 1, "beacon"), "", None, ws=ws)
-        self.assertEqual(ws.data, '{"important": "stuff"}')
+        processed = await process_url(("https://beacon.fi/", 1))
+        await query_service(processed, "", None, ws=ws)
+        self.assertEqual(ws.data, '{"important":"stuff"}')
 
     @aioresponses()
     async def test_query_service_ws_fail(self, m):
         """Test querying of service: websocket fail."""
         m.post("https://beacon.fi/query", status=400)
         ws = MockWebsocket()
-        await query_service(("https://beacon.fi/query", 1, "beacon"), "", None, ws=ws)
-        self.assertEqual(ws.data, '{"service": "https://beacon.fi/query", "queryParams": "", "responseStatus": 400, "exists": null}')
+        processed = await process_url(("https://beacon.fi/", 1))
+        await query_service(processed, "", None, ws=ws)
+        self.assertEqual(ws.data, '{"service":"https://beacon.fi/query","queryParams":"","responseStatus":400,"exists":null}')
 
     @aioresponses()
     async def test_query_service_http_success(self, m):
         """Test querying of service: http success."""
         data = {"response": "from beacon"}
         m.post("https://beacon.fi/query", status=200, payload=data)
-        response = await query_service(("https://beacon.fi/query", 1, "beacon"), "", "token")
+        processed = await process_url(("https://beacon.fi/", 1))
+        response = await query_service(processed, "", "token")
         self.assertEqual(response, data)
 
     @aioresponses()
     async def test_query_service_http_fail(self, m):
         """Test querying of service: http fail."""
         m.post("https://beacon.fi/query", status=400)
-        response = await query_service(("https://beacon.fi/query", 1, "beacon"), "", None)
+        processed = await process_url(("https://beacon.fi/", 1))
+        response = await query_service(processed, "", None)
         self.assertEqual(response["responseStatus"], 400)
 
     async def test_validate_service_key_success(self):
@@ -258,7 +267,7 @@ class TestUtils(asynctest.TestCase):
         """Test websocket return function."""
         m_ws = MockWebsocket()
         await ws_bundle_return({"something": "here"}, m_ws)
-        self.assertEqual('{"something": "here"}', m_ws.data)
+        self.assertEqual('{"something":"here"}', m_ws.data)
 
     async def test_parse_version(self):
         """Test semver parsing."""

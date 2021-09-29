@@ -1,7 +1,7 @@
 """Aggregator Configuration."""
 
 import os
-import json
+import ujson
 
 from configparser import ConfigParser
 from collections import namedtuple
@@ -16,7 +16,7 @@ def load_json(json_file):
     data = {}
     if os.path.isfile(json_file):
         with open(json_file, "r") as contents:
-            data = json.loads(contents.read())
+            data = ujson.loads(contents.read())
     return data
 
 

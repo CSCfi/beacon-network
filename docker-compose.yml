@@ -12,7 +12,7 @@ services:
 
   db_registry:
     hostname: db_registry
-    image: postgres:9.6
+    image: postgres:13
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass

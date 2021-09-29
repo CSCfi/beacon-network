@@ -4,7 +4,7 @@ LABEL maintainer "CSC Developers"
 
 RUN apk add --update \
     && apk add --no-cache build-base curl-dev linux-headers bash git \
-    && apk add --no-cache libressl-dev libffi-dev \
+    && apk add --no-cache libressl-dev libffi-dev libstdc++ \
     && apk add --no-cache supervisor \
     && rm -rf /var/cache/apk/*
 
@@ -20,7 +20,7 @@ RUN pip install --upgrade pip && \
 
 FROM python:3.8-alpine3.13
 
-RUN apk add --no-cache --update bash
+RUN apk add --no-cache --update libstdc++
 
 LABEL maintainer "CSC Developers"
 LABEL org.label-schema.schema-version="1.0"

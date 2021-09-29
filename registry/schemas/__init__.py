@@ -1,7 +1,7 @@
 """Load JSON Schemas."""
 
 import os
-import json
+import ujson
 
 
 def load_schema(name):
@@ -10,4 +10,4 @@ def load_schema(name):
     path = os.path.join(module_path, f"{name}.json")
     with open(os.path.abspath(path), "r") as fp:
         data = fp.read()
-    return json.loads(data)
+    return ujson.loads(data)
