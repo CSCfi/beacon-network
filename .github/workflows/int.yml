@@ -48,12 +48,13 @@ jobs:
           path: beacon2
 
       - name: Download beacon 2 data
+        shell: bash
         env:
-          BEACON_2_DATA_URL: ${{ secrets.BEACON_2_DATA_URL }}
+          DATA_URL: ${{ secrets.BEACON_2_DATA_URL }}
         run: |
           cd beacon2/deploy/db
           rm data.sql.gz
-          wget $BEACON_2_DATA_URL
+          wget "$DATA_URL"
 
       - name: Run beacon 2
         run: |
