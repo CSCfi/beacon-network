@@ -43,7 +43,7 @@ setup(
     ],
     extras_require={
         "test": [
-            "coverage==6.0",
+            "coverage==6.0.1",
             "pytest<6.3",
             "pytest-cov==3.0.0",
             "testfixtures==6.18.3",
