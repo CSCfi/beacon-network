@@ -204,6 +204,8 @@ async def pre_process_payload(version, params):
                 data["referenceBases"] = rb
             if (ab := raw_data.get("alternateBases")) is not None:
                 data["alternateBases"] = ab
+            if (di := raw_data.get("datasetIds")) is not None:
+                data["datasetIds"] = di.split(",")
 
             # exact coordinates
             if (s := raw_data.get("start")) is not None:
@@ -227,6 +229,9 @@ async def pre_process_payload(version, params):
         # Beacon 1.0
         # Unmodified structure for version 1, straight parsing from GET query string to POST payload
         data = raw_data
+        # datasetIds must be a list instead of a string
+        if "datasetIds" in data:
+            data["datasetIds"] = data["datasetIds"].split(",")
 
     return data
 
