@@ -38,7 +38,7 @@ setup(
         "uvloop==0.14.0; python_version < '3.7'",
         "uvloop==0.16.0; python_version >= '3.7'",
         "asyncpg==0.24.0",
-        "jsonschema==4.1.0",
+        "jsonschema==4.1.2",
         "gunicorn==20.1.0",
     ],
     extras_require={
