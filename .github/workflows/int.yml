@@ -48,12 +48,12 @@ jobs:
           path: beacon2
 
       - name: Download beacon 2 data
-        env:
-          BEACON_2_DATA_URL: ${{ secrets.BEACON_2_DATA_URL }}
-        run: |
-          cd beacon2/deploy/db
-          rm data.sql.gz
-          wget $BEACON_2_DATA_URL
+        uses: carlosperate/download-file-action@v1.0.3
+        id: download-data
+        with:
+          file-url:  'https://drive.google.com/uc?export=download&id=1PLv5F54a5pqR_ts5fL68jtmmkuJjDxMA'
+          file-name: 'data.sql.gz'
+          location: './beacon2/deploy/db'
 
       - name: Run beacon 2
         run: |
