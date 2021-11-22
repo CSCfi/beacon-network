@@ -37,7 +37,7 @@ setup(
         "ujson==4.2.0",
         "uvloop==0.14.0; python_version < '3.7'",
         "uvloop==0.16.0; python_version >= '3.7'",
-        "asyncpg==0.24.0",
+        "asyncpg==0.25.0",
         "jsonschema==4.2.1",
         "gunicorn==20.1.0",
     ],
