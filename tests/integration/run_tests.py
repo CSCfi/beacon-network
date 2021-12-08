@@ -102,7 +102,7 @@ async def test_service_operations(endpoint):
         assert update_response.status_code == 200, "HTTP status code error service delete"
 
 
-async def test_query_aggregator(endpoint, expected_nb, expected_beacon):
+async def test_query_aggregator(endpoint, expected_beacon):
     """Test Aggregator query operation."""
     LOG.debug("make a query over the aggregator")
     params = {
@@ -117,7 +117,6 @@ async def test_query_aggregator(endpoint, expected_nb, expected_beacon):
         response = await client.get(f"{endpoint}/query", params=params)
         data = response.json()
         assert response.status_code == 200, "HTTP status code error aggregator query"
-        print(f" Number of responses: {len(data)}")
         assert re.search(f'"service":"{expected_beacon}"', ujson.dumps(data, escape_forward_slashes=False), re.M), "We did not find the expected beacon"
 
 
@@ -135,7 +134,7 @@ async def main():
     await test_service_operations(REGISTRY)
 
     LOG.debug("=== Test Aggregator Endpoint ===")
-    await test_query_aggregator(AGGREGATOR, 8, "http://bad_beacon:5052/query")
+    await test_query_aggregator(AGGREGATOR, "http://bad_beacon:5052/query")
 
 
 if __name__ == "__main__":
