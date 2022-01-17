@@ -51,7 +51,7 @@ setup(
             "flake8==4.0.1",
             "flake8-docstrings==1.6.0",
             "asynctest==0.13.0",
-            "aioresponses==0.7.2",
+            "aioresponses==0.7.3",
             "black==21.12b0",
         ],
         "docs": ["sphinx >= 1.4", "sphinx_rtd_theme==1.0.0"],
