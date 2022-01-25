@@ -28,7 +28,7 @@ class TestRegistryEndpoints(AioHTTPTestCase):
         """Test root endpoint."""
         resp = await self.client.request("GET", "/")
         assert 200 == resp.status
-        assert "ELIXIR-FI Beacon Registry" == await resp.text()
+        assert "ELIXIR-FI Beacon Test" == await resp.text()
 
     @unittest_run_loop
     async def test_service_info(self):
@@ -36,8 +36,8 @@ class TestRegistryEndpoints(AioHTTPTestCase):
         resp = await self.client.request("GET", "/service-info")
         data = await resp.json()
         assert 200 == resp.status
-        assert "ELIXIR-FI Beacon Registry" == data["name"]
-        assert data["type"]["artifact"] == "service-registry"
+        assert "ELIXIR-FI Beacon Test" == data["name"]
+        assert data["type"]["artifact"] == "beacon-test"
 
     @unittest_run_loop
     async def test_service_types(self):

@@ -47,22 +47,13 @@ jobs:
           ref: 'test'
           path: beacon2
 
-      - name: Create LFS file list
-        run: |
-          cd beacon2
-          git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
-
-      - name: Restore LFS cache
-        uses: actions/cache@v2
-        id: lfs-cache
+      - name: Download beacon 2 data
+        uses: carlosperate/download-file-action@v1.1.0
+        id: download-data
         with:
-          path: beacon2/.git/lfs
-          key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}-v1
-
-      - name: Git LFS Pull
-        run: |
-          cd beacon2
-          git lfs pull
+          file-url:  'https://drive.google.com/uc?export=download&id=1PLv5F54a5pqR_ts5fL68jtmmkuJjDxMA'
+          file-name: 'data.sql.gz'
+          location: './beacon2/deploy/db'
 
       - name: Run beacon 2
         run: |
@@ -94,7 +85,7 @@ jobs:
         run: ./tests/test_files/add_fixtures.sh
 
       - name: Install integration tests dependencies
-        run: pip install asyncio httpx
+        run: pip install asyncio httpx ujson
       
       - name: Run Integration tests
         run:  python tests/integration/run_tests.py
