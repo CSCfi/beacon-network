@@ -59,6 +59,31 @@ async def query(request):
         return web.json_response(response)
 
 
+@routes.get("/filteringTerms")
+async def queryFilteringTerms(request):
+    """Forward filtering terms query to Beacons."""
+    LOG.debug("GET /filteringTerms received.")
+
+    # For websocket
+    connection_header = request.headers.get("Connection", "default").lower().split(",")  # break down if multiple items
+    connection_header = [value.strip() for value in connection_header]  # strip spaces
+
+    if "upgrade" in connection_header and request.headers.get("Upgrade", "default").lower() == "websocket":
+        # Use asynchronous websocket connection
+        # Send request for processing
+        websocket = await send_beacon_query_websocket(request)
+
+        # Return websocket connection
+        return websocket
+    else:
+        # Use standard synchronous http
+        # Send request for processing
+        response = await send_beacon_query(request)
+
+        # Return results
+        return web.json_response(response)
+
+
 @routes.delete("/cache")
 async def cache(request):
     """Invalidate cached Beacons."""

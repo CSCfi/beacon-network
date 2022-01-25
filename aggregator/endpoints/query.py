@@ -18,6 +18,10 @@ async def send_beacon_query(request):
 
     # Task variables
     params = request.query_string  # query parameters (variant search)
+
+    # gets filteringterms
+    if "filteringTerms" in str(request):
+        params = "filter"
     tasks = []  # requests to be done
     services = await get_services(request.host)  # service urls (beacons, aggregators) to be queried
     access_token = await get_access_token(request)  # Get access token if one exists
@@ -47,6 +51,9 @@ async def send_beacon_query_websocket(request):
 
     # Task variables
     params = request.query_string  # query parameters (variant search)
+    # sets params to filter for filteringTerms to work
+    if "filteringTerms" in str(request):
+        params = "filter"
     tasks = []  # requests to be done
     services = await get_services(request.host)  # service urls (beacons, aggregators) to be queried
     access_token = await get_access_token(request)  # Get access token if one exists
