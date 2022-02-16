@@ -28,9 +28,16 @@ async def send_beacon_query(request):
 
     for service in services:
         # Generate task queue
-        task = asyncio.ensure_future(query_service(service, params, access_token))
-        tasks.append(task)
-
+        if "&filters=filter" in params:
+            task = asyncio.ensure_future(query_service(service, params.replace("&filters=filter" , ""), access_token))
+            
+            tasks.append(task)
+            
+            task = asyncio.ensure_future(query_service(service, "filter", access_token))
+            tasks.append(task)
+        else:
+            task = asyncio.ensure_future(query_service(service, params, access_token))
+            tasks.append(task)
     # Prepare and initiate co-routines
     results = await asyncio.gather(*tasks)
 
@@ -52,8 +59,6 @@ async def send_beacon_query_websocket(request):
     # Task variables
     params = request.query_string  # query parameters (variant search)
     # sets params to filter for filteringTerms to work
-    if "filteringTerms" in str(request):
-        params = "filter"
     tasks = []  # requests to be done
     services = await get_services(request.host)  # service urls (beacons, aggregators) to be queried
     access_token = await get_access_token(request)  # Get access token if one exists
@@ -61,9 +66,14 @@ async def send_beacon_query_websocket(request):
     for service in services:
         # Generate task queue
         LOG.debug(f"Query service: {service}")
-        task = asyncio.ensure_future(query_service(service, params, access_token, ws=ws))
-        tasks.append(task)
-
+        if "&filters=filter" in params:
+            task = asyncio.ensure_future(query_service(service, params.replace("&filters=filter" , ""), access_token, ws=ws))
+            tasks.append(task)
+            task = asyncio.ensure_future(query_service(service, "filter", access_token, ws=ws))
+            tasks.append(task)
+        else:
+            task = asyncio.ensure_future(query_service(service, params, access_token, ws=ws))
+            tasks.append(task)
     # Prepare and initiate co-routines
     await asyncio.gather(*tasks)
     # Close websocket after all results have been sent
