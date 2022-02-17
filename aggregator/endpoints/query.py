@@ -29,10 +29,10 @@ async def send_beacon_query(request):
     for service in services:
         # Generate task queue
         if "&filters=filter" in params:
-            task = asyncio.ensure_future(query_service(service, params.replace("&filters=filter" , ""), access_token))
-            
+            task = asyncio.ensure_future(query_service(service, params.replace("&filters=filter", ""), access_token))
+
             tasks.append(task)
-            
+
             task = asyncio.ensure_future(query_service(service, "filter", access_token))
             tasks.append(task)
         else:
@@ -67,7 +67,7 @@ async def send_beacon_query_websocket(request):
         # Generate task queue
         LOG.debug(f"Query service: {service}")
         if "&filters=filter" in params:
-            task = asyncio.ensure_future(query_service(service, params.replace("&filters=filter" , ""), access_token, ws=ws))
+            task = asyncio.ensure_future(query_service(service, params.replace("&filters=filter", ""), access_token, ws=ws))
             tasks.append(task)
             task = asyncio.ensure_future(query_service(service, "filter", access_token, ws=ws))
             tasks.append(task)
