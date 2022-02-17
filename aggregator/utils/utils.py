@@ -191,7 +191,7 @@ async def pre_process_payload(version, params):
         if (raw_data.get("referenceName")) is not None:
             data = pre_process_beacon2(raw_data)
         else:
-            # beaconV2 expects some data but in listing search these are not needed thus they are empty
+            # beaconV2 expects some data but in listing search these are not needed and therefore they are empty
             data = {"assemblyId": "", "includeDatasetResponses": ""}
             if (filter := raw_data.get("filters")) != "None" and (raw_data.get("filters")) != "null":
                 data["filters"] = filter

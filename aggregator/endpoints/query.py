@@ -30,9 +30,7 @@ async def send_beacon_query(request):
         # Generate task queue
         if "&filters=filter" in params:
             task = asyncio.ensure_future(query_service(service, params.replace("&filters=filter", ""), access_token))
-
             tasks.append(task)
-
             task = asyncio.ensure_future(query_service(service, "filter", access_token))
             tasks.append(task)
         else:

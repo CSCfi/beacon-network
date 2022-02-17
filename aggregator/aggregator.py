@@ -48,7 +48,6 @@ async def query(request):
         # Use asynchronous websocket connection
         # Send request for processing
         websocket = await send_beacon_query_websocket(request)
-
         # Return websocket connection
         return websocket
     else:
