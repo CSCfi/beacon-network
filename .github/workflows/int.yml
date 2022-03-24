@@ -23,7 +23,7 @@ jobs:
           - 5000:5000
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         name: Get sources
 
       - name: Set up Docker Buildx
@@ -41,14 +41,14 @@ jobs:
           echo "BUILD_BRANCH=$BRANCH" >> $GITHUB_ENV
           
       - name: Clone beacon 2
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: 'CSCfi/beacon-2.x'
           ref: 'test'
           path: beacon2
 
       - name: Download beacon 2 data
-        uses: carlosperate/download-file-action@v1.1.0
+        uses: carlosperate/download-file-action@v1.1.1
         id: download-data
         with:
           file-url:  'https://drive.google.com/uc?export=download&id=1PLv5F54a5pqR_ts5fL68jtmmkuJjDxMA'
