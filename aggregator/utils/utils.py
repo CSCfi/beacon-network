@@ -102,7 +102,7 @@ async def process_url(url):
     # Check which endpoint to use, Beacon 1.0 or 2.0
     query_endpoints = ["query"]
     if url[1] == 2:
-        query_endpoints = ["individuals", "g_variants", "biosamples", "runs", "analyses", "interactors", "cohorts"]
+        query_endpoints = ["individuals", "g_variants", "biosamples", "runs", "analyses", "interactors", "cohorts", "filtering_terms"]
 
     LOG.debug(f"Using endpoint {query_endpoints}")
     urls = []
@@ -189,37 +189,13 @@ async def pre_process_payload(version, params):
     if version == 2:
         # checks if a query is a listing search
         if (raw_data.get("referenceName")) is not None:
-            # default data which is always present
-            data = {
-                "assemblyId": raw_data.get("assemblyId"),
-                "includeDatasetResponses": raw_data.get("includeDatasetResponses"),
-            }
-
-            # optionals
-            if (rn := raw_data.get("referenceName")) is not None:
-                data["referenceName"] = rn
-            if (vt := raw_data.get("variantType")) is not None:
-                data["variantType"] = vt
-            if (rb := raw_data.get("referenceBases")) is not None:
-                data["referenceBases"] = rb
-            if (ab := raw_data.get("alternateBases")) is not None:
-                data["alternateBases"] = ab
-
-            # exact coordinates
-            if (s := raw_data.get("start")) is not None:
-                data["start"] = s
-            if (e := raw_data.get("end")) is not None:
-                data["end"] = e
-
-            # range coordinates
-            if (smin := raw_data.get("startMin")) is not None and (smax := raw_data.get("startMax")) is not None:
-                data["start"] = ",".join([smin, smax])
-            if (emin := raw_data.get("endMin")) is not None and (emax := raw_data.get("endMax")) is not None:
-                data["end"] = ",".join([emin, emax])
+            data = pre_process_beacon2(raw_data)
         else:
-            # beaconV2 expects some data but in listing search these are not needed thus they are empty
+            # beaconV2 expects some data but in listing search these are not needed and therefore they are empty
             data = {"assemblyId": "", "includeDatasetResponses": ""}
-
+            if (filter := raw_data.get("filters")) != "None" and (raw_data.get("filters")) != "null":
+                data["filters"] = filter
+        return data
     else:
         # convert string digits into integers
         # Beacon 1.0 uses integer coordinates, while Beacon 2.0 uses string coordinates (ignore referenceName, it should stay as a string)
@@ -227,7 +203,39 @@ async def pre_process_payload(version, params):
         # Beacon 1.0
         # Unmodified structure for version 1, straight parsing from GET query string to POST payload
         data = raw_data
+        # datasetIds must be a list instead of a string
+        if "datasetIds" in data:
+            data["datasetIds"] = data["datasetIds"].split(",")
+    return data
 
+
+def pre_process_beacon2(raw_data):
+    """Pre-process GET query string into POST payload for beacon2."""
+    # default data which is always present
+    data = {"assemblyId": raw_data.get("assemblyId"), "includeDatasetResponses": raw_data.get("includeDatasetResponses")}
+    # optionals
+    if (rn := raw_data.get("referenceName")) is not None:
+        data["referenceName"] = rn
+    if (vt := raw_data.get("variantType")) is not None:
+        data["variantType"] = vt
+    if (rb := raw_data.get("referenceBases")) is not None:
+        data["referenceBases"] = rb
+    if (ab := raw_data.get("alternateBases")) is not None:
+        data["alternateBases"] = ab
+    if (di := raw_data.get("datasetIds")) is not None:
+        data["datasetIds"] = di.split(",")
+    # exact coordinates
+    if (s := raw_data.get("start")) is not None:
+        data["start"] = s
+    if (e := raw_data.get("end")) is not None:
+        data["end"] = e
+    # range coordinates
+    if (smin := raw_data.get("startMin")) is not None and (smax := raw_data.get("startMax")) is not None:
+        data["start"] = ",".join([smin, smax])
+    if (emin := raw_data.get("endMin")) is not None and (emax := raw_data.get("endMax")) is not None:
+        data["end"] = ",".join([emin, emax])
+    if (filter := raw_data.get("filters")) is not None:
+        data["filters"] = filter
     return data
 
 
@@ -241,6 +249,8 @@ async def find_query_endpoint(service, params):
         return service[0]
     else:
         for endpoint in endpoints:
+            if params == "filter" and "filtering_terms" in endpoint[0]:
+                return endpoint
             if raw_data.get("searchInInput") is not None:
                 if raw_data.get("searchInInput") in endpoint[0]:
                     if raw_data.get("id") != "0" and raw_data.get("id") is not None:
@@ -309,7 +319,6 @@ async def query_service(service, params, access_token, ws=None):
     # Pre-process query string into payload format
     if endpoint is not None:
         data = await pre_process_payload(endpoint[1], params)
-
         # Query service in a session
         async with aiohttp.ClientSession() as session:
             try:
