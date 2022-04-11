@@ -34,7 +34,7 @@ setup(
         "aiohttp-cors==0.7.0",
         "aiocache==0.11.1",
         "aiomcache==0.7.0",
-        "ujson==5.1.0",
+        "ujson==5.2.0",
         "uvloop==0.14.0; python_version < '3.7'",
         "uvloop==0.16.0; python_version >= '3.7'",
         "asyncpg==0.25.0",
