@@ -34,7 +34,7 @@ setup(
         "aiohttp-cors==0.7.0",
         "aiocache==0.11.1",
         "aiomcache==0.7.0",
-        "ujson==5.2.0",
+        "ujson==5.3.0",
         "uvloop==0.14.0; python_version < '3.7'",
         "uvloop==0.16.0; python_version >= '3.7'",
         "asyncpg==0.25.0",
@@ -43,7 +43,7 @@ setup(
     ],
     extras_require={
         "test": [
-            "coverage==6.3.2",
+            "coverage==6.4",
             "pytest<7.2",
             "pytest-cov==3.0.0",
             "testfixtures==6.18.5",
