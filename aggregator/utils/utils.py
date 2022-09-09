@@ -320,32 +320,67 @@ async def query_service(service, params, access_token, ws=None):
     if endpoint is not None:
         data = await pre_process_payload(endpoint[1], params)
         # Query service in a session
-        async with aiohttp.ClientSession() as session:
-            try:
-                async with session.post(endpoint[0], json=data, headers=headers, ssl=await request_security()) as response:
-                    LOG.info(f"POST query to service: {endpoint}")
-                    # On successful response, forward response
-                    if response.status == 200:
-                        return await _service_response(response, ws)
-                    elif response.status == 405:
-                        return await _get_request(session, endpoint, params, headers, ws)
-                    else:
-                        # HTTP errors
-                        error = {
-                            "service": endpoint[0],
-                            "queryParams": params,
-                            "responseStatus": response.status,
-                            "exists": None,
-                        }
+        endpoints = endpoint[0]
+        if"getSearchTerms" in data:
+            if(data["getSearchTerms"] == "true"):
+   
+                endpoints = endpoint[0].replace("/query", "/getSearchTerms")
+             
+                async with aiohttp.ClientSession() as session:
+                    try:
+                        #Get
+                        async with session.get(endpoints, headers=headers, ssl=await request_security()) as response:
+                            LOG.info(f"POST query to service: {endpoint}")
+                            # On successful response, forward response
+                            if response.status == 200:
+                                return await _service_response(response, ws)
+                            elif response.status == 405:
+                                return await _get_request(session, endpoint, params, headers, ws)
+                            else:
+                                # HTTP errors
+                                error = {
+                                    "service": endpoint[0],
+                                    "queryParams": params,
+                                    "responseStatus": response.status,
+                                    "exists": None,
+                                }
 
-                        LOG.error(f"Query to {service} failed: {response}.")
-                        if ws is not None:
-                            return await ws.send_str(ujson.dumps(error, escape_forward_slashes=False))
+                                LOG.error(f"Query to {service} failed: {response}.")
+                                if ws is not None:
+                                    return await ws.send_str(ujson.dumps(error, escape_forward_slashes=False))
+                                else:
+                                    return error
+                    except Exception as e:
+                        LOG.debug(f"Query error {e}.")
+                    web.HTTPInternalServerError(text="An error occurred while attempting to query services.")
+        else:
+            async with aiohttp.ClientSession() as session:
+                try:
+                    #Post
+                    async with session.post( endpoint[0], json=data, headers=headers, ssl=await request_security()) as response:
+                        LOG.info(f"POST query to service: {endpoint}")
+                        # On successful response, forward response
+                        if response.status == 200:
+                            return await _service_response(response, ws)
+                        elif response.status == 405:
+                            return await _get_request(session, endpoint, params, headers, ws)
                         else:
-                            return error
-            except Exception as e:
-                LOG.debug(f"Query error {e}.")
-                web.HTTPInternalServerError(text="An error occurred while attempting to query services.")
+                            # HTTP errors
+                            error = {
+                                "service": endpoint[0],
+                                "queryParams": params,
+                                "responseStatus": response.status,
+                                "exists": None,
+                            }
+
+                            LOG.error(f"Query to {service} failed: {response}.")
+                            if ws is not None:
+                                return await ws.send_str(ujson.dumps(error, escape_forward_slashes=False))
+                            else:
+                                return error
+                except Exception as e:
+                    LOG.debug(f"Query error {e}.")
+                    web.HTTPInternalServerError(text="An error occurred while attempting to query services.")
 
 
 async def ws_bundle_return(result, ws):
