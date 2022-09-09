@@ -321,40 +321,40 @@ async def query_service(service, params, access_token, ws=None):
         data = await pre_process_payload(endpoint[1], params)
         # Query service in a session
         endpoints = endpoint[0]
-             
+
         async with aiohttp.ClientSession() as session:
             payload = session.post(endpoints, json=data, headers=headers, ssl=await request_security())
-            if"getSearchTerms" in data:
-                if(data["getSearchTerms"] == "true"):
+            if "getSearchTerms" in data:
+                if data["getSearchTerms"] == "true":
                     endpoints = endpoint[0].replace("/query", "/getSearchTerms")
                     payload = session.get(endpoints, headers=headers, ssl=await request_security())
-                
-            try:
-                    #Post
-                    async with payload as response:
-                        LOG.info(f"POST query to service: {endpoint}")
-                        # On successful response, forward response
-                        if response.status == 200:
-                            return await _service_response(response, ws)
-                        elif response.status == 405:
-                            return await _get_request(session, endpoint, params, headers, ws)
-                        else:
-                            # HTTP errors
-                            error = {
-                                "service": endpoint[0],
-                                "queryParams": params,
-                                "responseStatus": response.status,
-                                "exists": None,
-                            }
 
-                            LOG.error(f"Query to {service} failed: {response}.")
-                            if ws is not None:
-                                return await ws.send_str(ujson.dumps(error, escape_forward_slashes=False))
-                            else:
-                                return error
+            try:
+                # Post
+                async with payload as response:
+                    LOG.info(f"POST query to service: {endpoint}")
+                    # On successful response, forward response
+                    if response.status == 200:
+                        return await _service_response(response, ws)
+                    elif response.status == 405:
+                        return await _get_request(session, endpoint, params, headers, ws)
+                    else:
+                        # HTTP errors
+                        error = {
+                            "service": endpoint[0],
+                            "queryParams": params,
+                            "responseStatus": response.status,
+                            "exists": None,
+                        }
+
+                        LOG.error(f"Query to {service} failed: {response}.")
+                        if ws is not None:
+                            return await ws.send_str(ujson.dumps(error, escape_forward_slashes=False))
+                        else:
+                            return error
             except Exception as e:
-                    LOG.debug(f"Query error {e}.")
-                    web.HTTPInternalServerError(text="An error occurred while attempting to query services.")
+                LOG.debug(f"Query error {e}.")
+                web.HTTPInternalServerError(text="An error occurred while attempting to query services.")
 
 
 async def ws_bundle_return(result, ws):
