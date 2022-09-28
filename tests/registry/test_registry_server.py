@@ -24,6 +24,13 @@ class TestRegistryEndpoints(AioHTTPTestCase):
         return await init_app()
 
     @unittest_run_loop
+    async def test_response_headers(self):
+        """Test response headers are set correctly in on_prepare_response."""
+        resp = await self.client.request("GET", "/")
+        assert 200 == resp.status
+        assert "" == resp.headers.get("Server", "")
+
+    @unittest_run_loop
     async def test_index(self):
         """Test root endpoint."""
         resp = await self.client.request("GET", "/")
