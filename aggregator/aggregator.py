@@ -90,10 +90,16 @@ def set_cors(app):
         cors.add(route)
 
 
+async def response_headers(_, res):
+    """Modify response headers before returning response."""
+    res.headers["Server"] = "Beacon-Network"
+
+
 async def init_app():
     """Initialise the web server."""
     LOG.info("Initialising web server.")
     app = web.Application(middlewares=[api_key()])
+    app.on_response_prepare.append(response_headers)
     app.router.add_routes(routes)
     if CONFIG.cors:
         set_cors(app)
