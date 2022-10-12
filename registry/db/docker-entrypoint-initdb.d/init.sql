@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS services (
 --These service keys are used at PUT and DELETE /services endpoints
 CREATE TABLE service_keys (
     service_id VARCHAR(64),
-    service_key VARCHAR(128)
+    service_key VARCHAR(128),
+    PRIMARY KEY (service_id)
 );
 
 CREATE UNIQUE INDEX unique_service ON service_keys (service_id);
@@ -28,11 +29,14 @@ CREATE UNIQUE INDEX unique_service ON service_keys (service_id);
 --Api key used in "Authorization" header at POST /services endpoint
 CREATE TABLE api_keys (
     api_key VARCHAR(64),
-    comment VARCHAR(256)
+    comment VARCHAR(256),
+    PRIMARY KEY (api_key)
 );
 
 --Admin key used to poll /update/services endpoint
 CREATE TABLE admin_keys (
     admin_key VARCHAR(64),
-    comment VARCHAR(256)
+    comment VARCHAR(256),
+    PRIMARY KEY (admin_key)
+
 );

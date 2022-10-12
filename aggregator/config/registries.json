@@ -1,6 +1,6 @@
 [
     {
-        "url": "http://localhost:9090/services",
+        "url": "http://localhost:9050/services",
         "key": "secret"
     }
 ]
