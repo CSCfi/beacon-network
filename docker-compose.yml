@@ -12,13 +12,13 @@ services:
 
   db_registry:
     hostname: db_registry
-    image: postgres:13
+    image: postgres:12.6
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: registry
     ports:
-      - 5432
+      - 5432:5432
     volumes:
       - ./registry/db/docker-entrypoint-initdb.d/init.sql:/docker-entrypoint-initdb.d/init.sql:z
     networks:
@@ -30,8 +30,8 @@ services:
     depends_on:
       - db_registry
     environment:
-      APP_HOST: "0.0.0.0"
-      APP_PORT: 8080
+      APP_HOST: "localhost"
+      APP_PORT: 9090
       DB_HOST: db_registry
       DB_PORT: 5432
       BEACON_RUN_APP: registry
@@ -39,7 +39,7 @@ services:
     links:
       - db_registry
     ports:
-      - 8080:8080
+      - 9050:8080
     networks:
       - net_registry
 
@@ -50,8 +50,8 @@ services:
     image: cscfi/beacon-network
     environment:
       APP_HOST: "0.0.0.0"
-      APP_PORT: 5050
+      APP_PORT: 9050
       BEACON_RUN_APP: aggregator
       DEBUG: "true"
     ports:
-      - 5050:5050
+      - 9090:5050

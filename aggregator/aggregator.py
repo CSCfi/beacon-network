@@ -1,6 +1,5 @@
 """Beacon Aggregator API."""
 
-
 import sys
 
 import aiohttp_cors
@@ -8,7 +7,7 @@ import aiohttp_cors
 from aiohttp import web
 
 from .endpoints.info import get_info
-from .endpoints.query import send_beacon_query, send_beacon_query_websocket
+from .endpoints.query import send_beacon_query, post_beacon_query, send_beacon_query_websocket
 from .endpoints.cache import invalidate_cache
 from .utils.utils import application_security
 from .utils.validate import api_key
@@ -39,6 +38,7 @@ async def info(request):
 async def query(request):
     """Forward variant query to Beacons."""
     LOG.debug("GET /query received.")
+    LOG.info("GET /query received.")
 
     # For websocket
     connection_header = request.headers.get("Connection", "default").lower().split(",")  # break down if multiple items
@@ -48,21 +48,52 @@ async def query(request):
         # Use asynchronous websocket connection
         # Send request for processing
         websocket = await send_beacon_query_websocket(request)
+
         # Return websocket connection
         return websocket
     else:
         # Use standard synchronous http
         # Send request for processing
+        LOG.info("Use standard synchronous http. Send request for processing")
         response = await send_beacon_query(request)
 
         # Return results
         return web.json_response(response)
 
 
+@routes.post("/query")
+async def query(request):
+    """Forward variant query to Beacons."""
+    LOG.debug("GET /query received.")
+    LOG.info("GET /query received.")
+
+    # For websocket
+    connection_header = request.headers.get("Connection", "default").lower().split(",")  # break down if multiple items
+    connection_header = [value.strip() for value in connection_header]  # strip spaces
+
+    if "upgrade" in connection_header and request.headers.get("Upgrade", "default").lower() == "websocket":
+        # Use asynchronous websocket connection
+        # Send request for processing
+        websocket = await send_beacon_query_websocket(request)
+
+        # Return websocket connection
+        return websocket
+    else:
+        # Use standard synchronous http
+        # Send request for processing
+        LOG.info("Use standard synchronous http. Send request for processing")
+        response = await post_beacon_query(request)
+
+        # Return results
+        return web.json_response(response)
+
+
+
 @routes.delete("/cache")
 async def cache(request):
     """Invalidate cached Beacons."""
     LOG.debug("DELETE /beacons received.")
+    LOG.info("DELETE /beacons received.")
 
     # Send request for processing
     await invalidate_cache()

@@ -11,20 +11,29 @@ from ..utils.logging import LOG
 
 
 def load_json(json_file):
+    json_file = os.environ.get("CONFIG_FILE", os.path.join(os.path.dirname(os.path.abspath(__file__)), "registries.json"))
     """Load data from an external JSON file."""
     LOG.debug(f"Loading data from file: {json_file}.")
+    LOG.info(f"Loading data from registries json file:"+json_file)
     data = {}
     if os.path.isfile(json_file):
         with open(json_file, "r") as contents:
             data = ujson.loads(contents.read())
+    else:
+        LOG.info("could not find registries json file.....:"+json_file)
     return data
 
 
 def parse_config_file(path):
     """Parse configuration file."""
     LOG.debug("Reading configuration file.")
+    LOG.info("Reading configuration file:"+path)
+
     config = ConfigParser()
     config.read(path)
+
+    LOG.info("app registries.......:"+config.get("app", "registries"))
+    LOG.info("json from app registries....:"+str(load_json(config.get("app", "registries"))))
     config_vars = {
         "host": os.environ.get("APP_HOST", config.get("app", "host")) or "0.0.0.0",
         "port": int(os.environ.get("APP_PORT", config.get("app", "port")) or 8080),
@@ -47,5 +56,5 @@ def parse_config_file(path):
     }
     return namedtuple("Config", config_vars.keys())(*config_vars.values())
 
-
+LOG.info("CONFIG_FILE:"+os.environ.get("CONFIG_FILE", os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini")))
 CONFIG = parse_config_file(os.environ.get("CONFIG_FILE", os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini")))

@@ -34,7 +34,7 @@ async def http_request_info(url):
             raise web.HTTPInternalServerError(text="An error occurred while attempting to contact service.")
 
 
-async def parse_service_info(id, service, req={}):
+async def parse_service_info(id, service, url="", req={}):
     """Parse and validate service info.
 
     Service infos may use the same keys in different places, for example the
@@ -42,6 +42,7 @@ async def parse_service_info(id, service, req={}):
     This issue should be fixed in a future product-approval-process (PAP) of Beacon API.
     """
     LOG.debug("Parsing service info.")
+    LOG.info(service)
 
     service_info = {}
 
@@ -53,7 +54,7 @@ async def parse_service_info(id, service, req={}):
             "name": service.get("name", ""),
             "type": service.get("type", {}).get("artifact"),
             "description": service.get("description", ""),
-            "url": req.get("url", "") or service.get("url", ""),
+            "url": url if url else req.get("url", "") or service.get("url", ""),
             "contact_url": service.get("contactUrl", ""),
             "api_version": service.get("type", {}).get("version"),
             "service_version": service.get("version", ""),
@@ -64,29 +65,34 @@ async def parse_service_info(id, service, req={}):
         }
     else:
         LOG.debug("Using Beacon API endpoint.")
+        
+        # Beacon v2 has all instance info in 'response' obj
+        response = service.get("response")
+
         # Use Beacon API spec notation
         # Beacon API `/` doesn't have `type` or `environment`, so it's set here by default
         # If `apiVersion` is missing, we expect at least >1.0.0
         service_info = {
-            "id": id,
-            "name": service.get("name", ""),
+            "id": response.get("id") if response else id,
+            "name": response.get("name", "") if response else service.get("name", ""),
             "type": "beacon",
-            "description": service.get("description", ""),
-            "url": req.get("url", "") or service.get("url", ""),
-            "contact_url": service.get("organization", {}).get("contactUrl", ""),
-            "api_version": service.get("apiVersion", "1.0.0"),
-            "service_version": service.get("version", ""),
-            "environment": service.get("environment", "prod"),
-            "organization": service.get("organization").get("name"),
-            "organization_url": service.get("organization").get("welcomeUrl", ""),
-            "organization_logo": service.get("organization").get("logoUrl", ""),
+            "description": response.get("description", "") if response else service.get("description", ""),
+            "url": url if url else req.get("url", "") or service.get("url", ""),
+            "contact_url": response.get("organization", {}).get("contactUrl", "") if response else service.get("organization", {}).get("contactUrl", ""),
+            "api_version": response.get("apiVersion", "2.0.0").replace("v", "") if response else service.get("apiVersion", "1.0.0"),
+            "service_version": response.get("version", "") if response else service.get("version", ""),
+            "environment": response.get("environment", "prod") if response else service.get("environment", "prod"),
+            "organization": response.get("organization").get("name") if response else service.get("organization").get("name"),
+            "organization_url": response.get("organization").get("welcomeUrl") if response else service.get("organization").get("welcomeUrl", ""),
+            "organization_logo": response.get("organization").get("logoUrl", "") if response else service.get("organization").get("logoUrl", ""),
         }
 
+    # Beacon id is stored in 'meta' obj for v2 instances
+    meta = service.get("meta")
     # Validate service info, raise a fatal exception on any issue
-    await validate_service_info(service_info, service.get("id"))
+    await validate_service_info(service_info, meta.get("beaconId") if meta else service.get("id"))
 
     return service_info
-
 
 async def validate_service_info(service, fetched_service_id):
     """Validate parsed service info object."""

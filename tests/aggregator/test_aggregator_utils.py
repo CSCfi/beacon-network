@@ -119,6 +119,7 @@ class TestUtils(asynctest.TestCase):
         params = "searchInInput=g_variants&id=0&searchByInput="
         processed = await process_url(("https://beacon.fi", 2))
         findQuery = await find_query_endpoint(processed, params)
+        print("\x1b[6;30;42m" + str(findQuery) + "\x1b[0m")
         self.assertEqual("https://beacon.fi/g_variants", findQuery[0])
 
     async def test_remove_self(self):
@@ -282,8 +283,6 @@ class TestUtils(asynctest.TestCase):
             "assemblyId=GRCh38&referenceName=MT&start=9&end=10&referenceBases=T&alternateBases=C&includeDatasetResponses=HIT",
             "assemblyId=GRCh38&referenceName=MT&startMin=5&startMax=10&endMin=5&endMax=15&referenceBases=T&alternateBases=C&variantType=SNP\
 &includeDatasetResponses=HIT",
-            "filters=filter",
-            "assemblyId=GRCh38&referenceName=MT&start=9&end=10&referenceBases=T&alternateBases=C&includeDatasetResponses=HIT&filters=filter",
         ]
         expected_v1 = [
             {"assemblyId": "GRCh38", "referenceName": "MT", "start": 9, "referenceBases": "T", "alternateBases": "C", "includeDatasetResponses": "HIT"},
@@ -330,17 +329,6 @@ class TestUtils(asynctest.TestCase):
                 "variantType": "SNP",
                 "includeDatasetResponses": "HIT",
             },
-            {"assemblyId": "", "filters": "filter", "includeDatasetResponses": ""},
-            {
-                "assemblyId": "GRCh38",
-                "referenceName": "MT",
-                "start": "9",
-                "end": "10",
-                "referenceBases": "T",
-                "alternateBases": "C",
-                "includeDatasetResponses": "HIT",
-                "filters": "filter",
-            },
         ]
         self.assertEqual(await pre_process_payload(1, query_strings[0]), expected_v1[0])
         self.assertEqual(await pre_process_payload(1, query_strings[1]), expected_v1[1])
@@ -348,8 +336,6 @@ class TestUtils(asynctest.TestCase):
         self.assertEqual(await pre_process_payload(2, query_strings[0]), expected_v2[0])
         self.assertEqual(await pre_process_payload(2, query_strings[1]), expected_v2[1])
         self.assertEqual(await pre_process_payload(2, query_strings[2]), expected_v2[2])
-        self.assertEqual(await pre_process_payload(2, query_strings[3]), expected_v2[3])
-        self.assertEqual(await pre_process_payload(2, query_strings[4]), expected_v2[4])
 
 
 if __name__ == "__main__":
