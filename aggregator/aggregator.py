@@ -123,7 +123,7 @@ def set_cors(app):
 
 async def response_headers(_, res):
     """Modify response headers before returning response."""
-    del res.headers["Server"]
+    res.headers["Server"] = "Beacon-Network"
 
 
 async def init_app():

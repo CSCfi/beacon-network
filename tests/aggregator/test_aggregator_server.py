@@ -18,7 +18,8 @@ class AppTestCase(AioHTTPTestCase):
         """Test response headers are set correctly in on_prepare_response."""
         resp = await self.client.request("GET", "/")
         assert 200 == resp.status
-        assert "" == resp.headers.get("Server", "")
+        assert "Beacon-Network" == resp.headers.get("Server", "")
+
 
     @unittest_run_loop
     async def test_index(self):
