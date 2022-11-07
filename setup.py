@@ -54,7 +54,7 @@ setup(
             "aioresponses==0.7.3",
             "black==22.10.0",
         ],
-        "docs": ["sphinx >= 1.4", "sphinx_rtd_theme==1.0.0"],
+        "docs": ["sphinx >= 1.4", "sphinx_rtd_theme==1.1.1"],
     },
     entry_points={
         "console_scripts": ["beacon_registry=registry.registry:main", "beacon_aggregator=aggregator.aggregator:main"],
