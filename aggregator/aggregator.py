@@ -61,11 +61,11 @@ async def query(request):
         return web.json_response(response)
 
 
-@routes.post("/query")
-async def query(request):
+@routes.post("/query1")
+async def query1(request):
     """Forward variant query to Beacons."""
-    LOG.debug("GET /query received.")
-    LOG.info("GET /query received.")
+    LOG.debug("POST /query received.")
+    LOG.info("POST /query received.")
 
     # For websocket
     connection_header = request.headers.get("Connection", "default").lower().split(",")  # break down if multiple items
@@ -74,14 +74,14 @@ async def query(request):
     if "upgrade" in connection_header and request.headers.get("Upgrade", "default").lower() == "websocket":
         # Use asynchronous websocket connection
         # Send request for processing
-        websocket = await send_beacon_query_websocket(request)
+        websocket = await post_beacon_query(request)
 
         # Return websocket connection
         return websocket
     else:
         # Use standard synchronous http
         # Send request for processing
-        LOG.info("Use standard synchronous http. Send request for processing")
+        LOG.info("Use standard synchronous http. Send request for processing --- sending post_beacon_query neeew"+str(request.headers))
         response = await post_beacon_query(request)
 
         # Return results

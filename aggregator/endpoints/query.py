@@ -42,7 +42,10 @@ async def send_beacon_query(request):
 
 async def post_beacon_query(request):
     """Post Beacon queries and respond synchronously."""
-    LOG.debug("Normal response (sync), inside post_beacon_query")
+    LOG.info("Normal response (sync), inside .............post_beacon_query")
+
+    jsonObj = request.headers["query"]
+    LOG.info("json passed:......:"+str(jsonObj))
 
     # Task variables
     params = request.query_string  # query parameters (variant search)
@@ -54,7 +57,8 @@ async def post_beacon_query(request):
 
     for service in services:
         # Generate task queue
-        task = asyncio.ensure_future(post_query_service(service, params, access_token, request.headers.get("json")))
+        LOG.info("now calling service.........:"+str(service)+":params:"+str(params)+":access_token:"+str(access_token)+":request json:"+str(request.headers["query"]))
+        task = asyncio.ensure_future(post_query_service(service, params, access_token, request.headers["query"]))
         tasks.append(task)
 
     # Prepare and initiate co-routines
