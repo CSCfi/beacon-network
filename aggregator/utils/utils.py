@@ -18,6 +18,8 @@ from aiocache.serializers import JsonSerializer
 from ..config import CONFIG
 from .logging import LOG
 
+import json
+
 # Used by query_service() and ws_bundle_return() in a similar manner as ../endpoints/query.py
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -45,14 +47,17 @@ async def parse_version(semver):
 async def http_get_service_urls(registry):
     """Query an external registry for known service urls of desired type."""
     LOG.debug("Query external registry for given service type.")
+    LOG.info("registry inside http_get_service_urls:"+str(registry))
     service_urls = []
 
     # Query Registry for services
     async with aiohttp.ClientSession() as session:
         try:
             async with session.get(registry, ssl=await request_security()) as response:
+                LOG.info("registry:"+str(registry)+":response:"+str(response.json()))
                 if response.status == 200:
                     result = await response.json()
+                    LOG.info("registry:"+str(registry)+":result:"+str(result))
                     for r in result:
                         # Parse types: query beacons, or query aggregators, or both?
                         # Check if service has a type tag of Beacons
@@ -65,6 +70,7 @@ async def http_get_service_urls(registry):
                             service_urls.append((r["url"], await parse_version(r.get("type").get("version")), "beacon-aggregator"))
         except Exception as e:
             LOG.debug(f"Query error {e}.")
+            LOG.info(f"Query error {e}.")
             web.HTTPInternalServerError(text="An error occurred while attempting to query services.")
 
     return service_urls
@@ -75,16 +81,27 @@ async def http_get_service_urls(registry):
 async def get_services(url_self):
     """Return service urls."""
     LOG.debug("Fetch service urls.")
+    LOG.info("Fetch service urls.")
+    LOG.info("CONFIG:"+str(CONFIG))
 
     # Query Registries for their known Beacon services, fetch only URLs
     service_urls = set()
+    services_reg_str = str(CONFIG.registries)
+    LOG.info("services:"+services_reg_str)
+
     for registry in CONFIG.registries:
+        LOG.info("registry url:"+str(registry.get("url", "")))
         services = await http_get_service_urls(registry.get("url", ""))  # Request URLs from Registry
+        LOG.info("registry:"+str(registry)+":services:"+str(services))
         service_urls.update(services)  # Add found URLs to set (eliminate duplicates)
+
+    LOG.info("before preprocessing:"+str(service_urls))
 
     # Pre-process URLS
     service_urls = [await process_url(url) for url in service_urls]
+    LOG.info("after process urls:"+str(service_urls))
     service_urls = await remove_self(url_self, service_urls)
+    LOG.info("service_urls:"+str(service_urls))
 
     return service_urls
 
@@ -102,7 +119,7 @@ async def process_url(url):
     # Check which endpoint to use, Beacon 1.0 or 2.0
     query_endpoints = ["query"]
     if url[1] == 2:
-        query_endpoints = ["individuals", "g_variants", "biosamples", "runs", "analyses", "interactors", "cohorts", "filtering_terms"]
+        query_endpoints = ["individuals", "g_variants", "biosamples", "runs", "analyses", "interactors", "cohorts"]
 
     LOG.debug(f"Using endpoint {query_endpoints}")
     urls = []
@@ -142,6 +159,7 @@ async def remove_self(url_self, urls):
         for u in url[0]:
             url_split = str(u).split("/")
             if url_self in url_split:
+                LOG.info("Found and removed self from service URLs."+str(url))
                 urls.remove(url)
                 LOG.debug("Found and removed self from service URLs.")
 
@@ -189,13 +207,37 @@ async def pre_process_payload(version, params):
     if version == 2:
         # checks if a query is a listing search
         if (raw_data.get("referenceName")) is not None:
-            data = pre_process_beacon2(raw_data)
+            # default data which is always present
+            data = {
+                "assemblyId": raw_data.get("assemblyId"),
+                "includeDatasetResponses": raw_data.get("includeDatasetResponses"),
+            }
+
+            # optionals
+            if (rn := raw_data.get("referenceName")) is not None:
+                data["referenceName"] = rn
+            if (vt := raw_data.get("variantType")) is not None:
+                data["variantType"] = vt
+            if (rb := raw_data.get("referenceBases")) is not None:
+                data["referenceBases"] = rb
+            if (ab := raw_data.get("alternateBases")) is not None:
+                data["alternateBases"] = ab
+
+            # exact coordinates
+            if (s := raw_data.get("start")) is not None:
+                data["start"] = s
+            if (e := raw_data.get("end")) is not None:
+                data["end"] = e
+
+            # range coordinates
+            if (smin := raw_data.get("startMin")) is not None and (smax := raw_data.get("startMax")) is not None:
+                data["start"] = ",".join([smin, smax])
+            if (emin := raw_data.get("endMin")) is not None and (emax := raw_data.get("endMax")) is not None:
+                data["end"] = ",".join([emin, emax])
         else:
-            # beaconV2 expects some data but in listing search these are not needed and therefore they are empty
+            # beaconV2 expects some data but in listing search these are not needed thus they are empty
             data = {"assemblyId": "", "includeDatasetResponses": ""}
-            if (filter := raw_data.get("filters")) != "None" and (raw_data.get("filters")) != "null":
-                data["filters"] = filter
-        return data
+
     else:
         # convert string digits into integers
         # Beacon 1.0 uses integer coordinates, while Beacon 2.0 uses string coordinates (ignore referenceName, it should stay as a string)
@@ -203,41 +245,65 @@ async def pre_process_payload(version, params):
         # Beacon 1.0
         # Unmodified structure for version 1, straight parsing from GET query string to POST payload
         data = raw_data
-        # datasetIds must be a list instead of a string
-        if "datasetIds" in data:
-            data["datasetIds"] = data["datasetIds"].split(",")
+
     return data
 
 
-def pre_process_beacon2(raw_data):
-    """Pre-process GET query string into POST payload for beacon2."""
-    # default data which is always present
-    data = {"assemblyId": raw_data.get("assemblyId"), "includeDatasetResponses": raw_data.get("includeDatasetResponses")}
-    # optionals
-    if (rn := raw_data.get("referenceName")) is not None:
-        data["referenceName"] = rn
-    if (vt := raw_data.get("variantType")) is not None:
-        data["variantType"] = vt
-    if (rb := raw_data.get("referenceBases")) is not None:
-        data["referenceBases"] = rb
-    if (ab := raw_data.get("alternateBases")) is not None:
-        data["alternateBases"] = ab
-    if (di := raw_data.get("datasetIds")) is not None:
-        data["datasetIds"] = di.split(",")
-    # exact coordinates
-    if (s := raw_data.get("start")) is not None:
-        data["start"] = s
-    if (e := raw_data.get("end")) is not None:
-        data["end"] = e
-    # range coordinates
-    if (smin := raw_data.get("startMin")) is not None and (smax := raw_data.get("startMax")) is not None:
-        data["start"] = ",".join([smin, smax])
-    if (emin := raw_data.get("endMin")) is not None and (emax := raw_data.get("endMax")) is not None:
-        data["end"] = ",".join([emin, emax])
-    if (filter := raw_data.get("filters")) is not None:
-        data["filters"] = filter
-    return data
 
+async def pre_process_post_payload(version, params, filter_options):
+    """
+    Pre-process GET query string into POST payload.
+
+    This function serves as a translator between Beacon 1.0 and 2.0 specifications.
+    """
+    LOG.debug(f"Processing post payload for version {str(version)}.")
+    # parse the query string into a dict
+    raw_data = dict(parse.parse_qsl(params))
+    if version == 2:
+        # checks if a query is a listing search
+        if (filter_options) is not None:
+            data = filter_options  
+
+        elif (raw_data.get("referenceName")) is not None:
+            # default data which is always present
+            data = {
+                "assemblyId": raw_data.get("assemblyId"),
+                "includeDatasetResponses": raw_data.get("includeDatasetResponses"),
+            }
+
+            # optionals
+            if (rn := raw_data.get("referenceName")) is not None:
+                data["referenceName"] = rn
+            if (vt := raw_data.get("variantType")) is not None:
+                data["variantType"] = vt
+            if (rb := raw_data.get("referenceBases")) is not None:
+                data["referenceBases"] = rb
+            if (ab := raw_data.get("alternateBases")) is not None:
+                data["alternateBases"] = ab
+
+            # exact coordinates
+            if (s := raw_data.get("start")) is not None:
+                data["start"] = s
+            if (e := raw_data.get("end")) is not None:
+                data["end"] = e
+
+            # range coordinates
+            if (smin := raw_data.get("startMin")) is not None and (smax := raw_data.get("startMax")) is not None:
+                data["start"] = ",".join([smin, smax])
+            if (emin := raw_data.get("endMin")) is not None and (emax := raw_data.get("endMax")) is not None:
+                data["end"] = ",".join([emin, emax])
+        else:
+            # beaconV2 expects some data but in listing search these are not needed thus they are empty
+            data = {"assemblyId": "", "includeDatasetResponses": ""}
+
+    else:
+        # convert string digits into integers
+        # Beacon 1.0 uses integer coordinates, while Beacon 2.0 uses string coordinates (ignore referenceName, it should stay as a string)
+        raw_data = {k: int(v) if v.isdigit() and k != "referenceName" else v for k, v in raw_data.items()}
+        # Beacon 1.0
+        # Unmodified structure for version 1, straight parsing from GET query string to POST payload
+        data = raw_data
+    return data
 
 async def find_query_endpoint(service, params):
     """Find endpoint for queries by parameters."""
@@ -249,8 +315,6 @@ async def find_query_endpoint(service, params):
         return service[0]
     else:
         for endpoint in endpoints:
-            if params == "filter" and "filtering_terms" in endpoint[0]:
-                return endpoint
             if raw_data.get("searchInInput") is not None:
                 if raw_data.get("searchInInput") in endpoint[0]:
                     if raw_data.get("id") != "0" and raw_data.get("id") is not None:
@@ -348,6 +412,48 @@ async def query_service(service, params, access_token, ws=None):
                 web.HTTPInternalServerError(text="An error occurred while attempting to query services.")
 
 
+async def post_query_service(service, params, access_token, filter_options, ws=None):
+    """Query service with params."""
+    LOG.debug("post_query_service")
+    LOG.debug("post_query_service.......filter_options......."+str(filter_options))
+    headers = {}
+    if access_token:
+        headers.update({"Authorization": f"Bearer {access_token}"})
+    endpoint = await find_query_endpoint(service, params)
+    # Pre-process query string into payload format
+    if endpoint is not None:
+        data = await pre_process_post_payload(endpoint[1], params, filter_options)
+
+        # Query service in a session
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.post(endpoint[0], json=json.loads(data), headers=headers, ssl=await request_security()) as response:
+                    LOG.info(f"POST query to service: {endpoint} with filter options:"+str(data)+": and header:"+str(headers))
+                    # On successful response, forward response
+                    if response.status == 200:
+                        return await _service_response(response, ws)
+                    elif response.status == 405:
+                        return await _get_request(session, endpoint, params, headers, ws)
+                    else:
+                        # HTTP errors
+                        error = {
+                            "service": endpoint[0],
+                            "queryParams": params,
+                            "responseStatus": response.status,
+                            "exists": None,
+                        }
+
+                        LOG.error(f"Query to {service} failed: {response}.")
+                        if ws is not None:
+                            return await ws.send_str(ujson.dumps(error, escape_forward_slashes=False))
+                        else:
+                            return error
+            except Exception as e:
+                LOG.debug(f"Query error {e}.")
+                web.HTTPInternalServerError(text="An error occurred while attempting to query services.")
+
+
+
 async def ws_bundle_return(result, ws):
     """Create a bundle to be returned with websocket."""
     LOG.debug("Creating websocket bundle item.")
@@ -360,8 +466,10 @@ async def ws_bundle_return(result, ws):
 async def validate_service_key(key):
     """Validate received service key."""
     LOG.debug("Validating service key.")
+    LOG.info("Validating service key.")
 
     for registry in CONFIG.registries:
+        LOG.info("registry and key:"+registry+":key:"+key)
         if key == registry.get("key"):
             # If a matching key is found, return true
             LOG.debug(f'Using service key of: {registry.get("url")}.')
