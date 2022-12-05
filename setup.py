@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="beacon_network",
-    version="1.4.2",
+    version="1.6.3",
     description="Beacon Network services",
     long_description_content_type="text/markdown",
     project_urls={
