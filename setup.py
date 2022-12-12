@@ -33,7 +33,7 @@ setup(
         "aiohttp==3.8.3",
         "aiohttp-cors==0.7.0",
         "aiocache==0.11.1",
-        "aiomcache==0.7.0",
+        "aiomcache==0.8.0",
         "ujson==5.6.0",
         "uvloop==0.14.0; python_version < '3.7'",
         "uvloop==0.17.0; python_version >= '3.7'",
