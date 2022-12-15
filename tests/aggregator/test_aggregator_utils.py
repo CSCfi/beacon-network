@@ -119,7 +119,6 @@ class TestUtils(asynctest.TestCase):
         params = "searchInInput=g_variants&id=0&searchByInput="
         processed = await process_url(("https://beacon.fi", 2))
         findQuery = await find_query_endpoint(processed, params)
-        print("\x1b[6;30;42m" + str(findQuery) + "\x1b[0m")
         self.assertEqual("https://beacon.fi/g_variants", findQuery[0])
 
     async def test_remove_self(self):

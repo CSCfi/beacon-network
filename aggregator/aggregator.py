@@ -38,7 +38,6 @@ async def info(request):
 async def query(request):
     """Forward variant query to Beacons."""
     LOG.debug("GET /query received.")
-    LOG.info("GET /query received.")
 
     # For websocket
     connection_header = request.headers.get("Connection", "default").lower().split(",")  # break down if multiple items
@@ -65,7 +64,6 @@ async def query(request):
 async def query1(request):
     """Forward variant query to Beacons."""
     LOG.debug("POST /query received.")
-    LOG.info("POST /query received.")
 
     # For websocket
     connection_header = request.headers.get("Connection", "default").lower().split(",")  # break down if multiple items
@@ -93,7 +91,6 @@ async def query1(request):
 async def cache(request):
     """Invalidate cached Beacons."""
     LOG.debug("DELETE /beacons received.")
-    LOG.info("DELETE /beacons received.")
 
     # Send request for processing
     await invalidate_cache()

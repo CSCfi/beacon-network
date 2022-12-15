@@ -14,7 +14,7 @@ def load_json(json_file):
     json_file = os.environ.get("CONFIG_FILE", os.path.join(os.path.dirname(os.path.abspath(__file__)), "registries.json"))
     """Load data from an external JSON file."""
     LOG.debug(f"Loading data from file: {json_file}.")
-    LOG.info(f"Loading data from registries json file:"+json_file)
+    LOG.info(f"Loading data from registries json file:{json_file}")
     data = {}
     if os.path.isfile(json_file):
         with open(json_file, "r") as contents:
@@ -56,5 +56,5 @@ def parse_config_file(path):
     }
     return namedtuple("Config", config_vars.keys())(*config_vars.values())
 
-LOG.info("CONFIG_FILE:"+os.environ.get("CONFIG_FILE", os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini")))
+LOG.debug("CONFIG_FILE:"+os.environ.get("CONFIG_FILE", os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini")))
 CONFIG = parse_config_file(os.environ.get("CONFIG_FILE", os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini")))

@@ -47,7 +47,7 @@ async def parse_version(semver):
 async def http_get_service_urls(registry):
     """Query an external registry for known service urls of desired type."""
     LOG.debug("Query external registry for given service type.")
-    LOG.info("registry inside http_get_service_urls:"+str(registry))
+    LOG.info(f"registry inside http_get_service_urls: {registry}")
     service_urls = []
 
     # Query Registry for services
@@ -70,7 +70,7 @@ async def http_get_service_urls(registry):
                             service_urls.append((r["url"], await parse_version(r.get("type").get("version")), "beacon-aggregator"))
         except Exception as e:
             LOG.debug(f"Query error {e}.")
-            LOG.info(f"Query error {e}.")
+            LOG.error(f"Query error {e}.")
             web.HTTPInternalServerError(text="An error occurred while attempting to query services.")
 
     return service_urls
@@ -82,7 +82,6 @@ async def get_services(url_self):
     """Return service urls."""
     LOG.debug("Fetch service urls.")
     LOG.info("Fetch service urls.")
-    LOG.info("CONFIG:"+str(CONFIG))
 
     # Query Registries for their known Beacon services, fetch only URLs
     service_urls = set()
