@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="beacon_network",
-    version="1.6.3",
+    version="1.6.4",
     description="Beacon Network services",
     long_description_content_type="text/markdown",
     project_urls={
@@ -33,8 +33,8 @@ setup(
         "aiohttp==3.8.3",
         "aiohttp-cors==0.7.0",
         "aiocache==0.11.1",
-        "aiomcache==0.7.0",
-        "ujson==5.6.0",
+        "aiomcache==0.8.0",
+        "ujson==5.7.0",
         "uvloop==0.14.0; python_version < '3.7'",
         "uvloop==0.17.0; python_version >= '3.7'",
         "asyncpg==0.27.0",
@@ -43,16 +43,16 @@ setup(
     ],
     extras_require={
         "test": [
-            "coverage==6.5.0",
+            "coverage==7.0.4",
             "pytest<7.3",
             "pytest-cov==4.0.0",
-            "testfixtures==7.0.3",
-            "tox==3.27.1",
+            "testfixtures==7.0.4",
+            "tox==4.2.6",
             "flake8==6.0.0",
             "flake8-docstrings==1.6.0",
             "asynctest==0.13.0",
-            "aioresponses==0.7.3",
-            "black==22.10.0",
+            "aioresponses==0.7.4",
+            "black==22.12.0",
         ],
         "docs": ["sphinx >= 1.4", "sphinx_rtd_theme==1.1.1"],
     },
