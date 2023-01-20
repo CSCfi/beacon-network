@@ -177,35 +177,24 @@ async def get_access_token(request):
 
 
 async def pre_process_payload(version, params):
-    """
-    Pre-process GET query string into POST payload.
-
-    This function serves as a translator between Beacon 1.0 and 2.0 specifications.
-    """
+    """Pre-process GET query string into POST payload."""
     LOG.debug(f"Processing payload for version {str(version)}.")
 
     # parse the query string into a dict
-    raw_data = dict(parse.parse_qsl(params))
-    if version == 2:
-        # checks if a query is a listing search
-        if (raw_data.get("referenceName")) is not None:
-            data = pre_process_beacon2(raw_data)
-        else:
-            # beaconV2 expects some data but in listing search these are not needed and therefore they are empty
-            data = {"assemblyId": "", "includeDatasetResponses": ""}
-            if (filter := raw_data.get("filters")) != "None" and (raw_data.get("filters")) != "null":
-                data["filters"] = filter
-        return data
-    else:
-        # convert string digits into integers
-        # Beacon 1.0 uses integer coordinates, while Beacon 2.0 uses string coordinates (ignore referenceName, it should stay as a string)
-        raw_data = {k: int(v) if v.isdigit() and k != "referenceName" else v for k, v in raw_data.items()}
-        # Beacon 1.0
-        # Unmodified structure for version 1, straight parsing from GET query string to POST payload
-        data = raw_data
-        # datasetIds must be a list instead of a string
-        if "datasetIds" in data:
-            data["datasetIds"] = data["datasetIds"].split(",")
+    data = dict(parse.parse_qsl(params))
+    LOG.debug(f"parsed query string {params} to dict {data}")
+
+    # parse CSV's into lists and digit strings into integers
+    for k, v in data.items():
+        # CSVs to lists
+        if "," in v:
+            # many digits in lists to integers
+            data[k] = [int(dv) if dv.isdigit() else dv for dv in v.split(",")]
+        # single digits to integers (not in lists)
+        if v.isdigit():
+            data[k] = int(v)
+
+    LOG.debug(f"parsed to imaging-beacon format: {data}")
     return data
 
 
