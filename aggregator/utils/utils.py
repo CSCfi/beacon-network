@@ -194,6 +194,11 @@ async def pre_process_payload(version, params):
         if v.isdigit():
             data[k] = int(v)
 
+    # make sure searchTerm is a list if there is just one word
+    if "searchTerm" in data:
+        if type(data["searchTerm"]) is str:
+            data["searchTerm"] = [data["searchTerm"]]
+
     LOG.debug(f"parsed to imaging-beacon format: {data}")
     return data
 
