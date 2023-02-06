@@ -35,7 +35,6 @@ async def test_get_services(endpoint, expected_nb, expected_beacon, version):
         data = response.json()
         assert len(data) == expected_nb, "We did not find the expected number of services"
         if version == 1:
-
             assert re.search(f'"id":"{expected_beacon}"', ujson.dumps(data, escape_forward_slashes=False), re.M), "We did not find the expected beacon"
 
         # we don't fail this test as running on localhost this might be problematic
