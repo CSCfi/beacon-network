@@ -255,7 +255,6 @@ async def find_query_endpoint(service, params):
                 if raw_data.get("searchInInput") in endpoint[0]:
                     if raw_data.get("id") != "0" and raw_data.get("id") is not None:
                         if raw_data.get("searchByInput") != "" and raw_data.get("searchByInput") is not None:
-
                             url = list(endpoint)
                             url[0] += "/" + raw_data.get("id") + "/" + raw_data.get("searchByInput")
                             endpoint = tuple(url)
