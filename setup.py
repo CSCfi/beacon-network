@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="beacon_network",
-    version="1.6.4",
+    version="1.6.5",
     description="Beacon Network services",
     long_description_content_type="text/markdown",
     project_urls={
@@ -57,6 +57,9 @@ setup(
         "docs": ["sphinx >= 1.4", "sphinx_rtd_theme==1.2.0"],
     },
     entry_points={
-        "console_scripts": ["beacon_registry=registry.registry:main", "beacon_aggregator=aggregator.aggregator:main"],
+        "console_scripts": [
+            "beacon_registry=registry.registry:main",
+            "beacon_aggregator=aggregator.aggregator:main",
+        ],
     },
 )
