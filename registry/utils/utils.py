@@ -62,6 +62,23 @@ async def parse_service_info(id, service, req={}):
             "organization_url": service.get("organization").get("url", ""),
             "organization_logo": service.get("organization").get("logoUrl", ""),
         }
+    elif req.get("url", "").endswith("/api"):
+        LOG.debug("Using Beacon v2 endpoint.")
+        # For testing, not pretty, and some things may be hardcoded
+        service_info = {
+            "id": id,
+            "name": service["response"]["name"],
+            "type": "beacon",
+            "description": service["response"]["description"],
+            "url": req.get("url", "") or service.get("url", ""),
+            "contact_url": service["response"]["organization"]["contactUrl"],
+            "api_version": "2.0.0",
+            "service_version": "2.0.0",
+            "environment": "",
+            "organization": service["response"]["organization"]["name"],
+            "organization_url": service["response"]["organization"]["welcomeUrl"],
+            "organization_logo": service["response"]["organization"]["logoUrl"],
+        }
     else:
         LOG.debug("Using Beacon API endpoint.")
         # Use Beacon API spec notation
@@ -83,7 +100,8 @@ async def parse_service_info(id, service, req={}):
         }
 
     # Validate service info, raise a fatal exception on any issue
-    await validate_service_info(service_info, service.get("id"))
+    fetched_service_id = service.get("id") or service.get("response").get("id")
+    await validate_service_info(service_info, fetched_service_id)
 
     return service_info
 

@@ -102,7 +102,8 @@ async def process_url(url):
     # Check which endpoint to use, Beacon 1.0 or 2.0
     query_endpoints = ["query"]
     if url[1] == 2:
-        query_endpoints = ["individuals", "g_variants", "biosamples", "runs", "analyses", "interactors", "cohorts", "filtering_terms"]
+        # query_endpoints = ["individuals", "g_variants", "biosamples", "runs", "analyses", "interactors", "cohorts", "filtering_terms"]
+        query_endpoints = ["g_variants"]
 
     LOG.debug(f"Using endpoint {query_endpoints}")
     urls = []
