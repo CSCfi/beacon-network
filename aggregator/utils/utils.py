@@ -189,7 +189,7 @@ async def pre_process_payload(version, params):
     raw_data = dict(parse.parse_qsl(params))
     if version == 2:
         # checks if a query is a listing search
-        if (raw_data.get("referenceName")) is not None:
+        if (raw_data.get("referenceName")) is not None or (raw_data.get("gene")) is not None:
             data = pre_process_beacon2(raw_data)
         else:
             # beaconV2 expects some data but in listing search these are not needed and therefore they are empty
@@ -237,6 +237,15 @@ def pre_process_beacon2(raw_data):
         data["end"] = ",".join([emin, emax])
     if (filter := raw_data.get("filters")) is not None:
         data["filters"] = filter
+    # v2 query structure
+    if (gene := raw_data.get("gene")) is not None:
+        data.update({
+            "query": {
+                "requestParameters": {
+                    "gene": gene
+                }
+            }
+        })
     return data
 
 
