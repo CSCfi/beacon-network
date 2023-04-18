@@ -322,7 +322,7 @@ async def query_service(service, params, access_token, ws=None):
         # Query service in a session
         async with aiohttp.ClientSession() as session:
             try:
-                async with session.post(endpoint[0], json=data, headers=headers, ssl=await request_security()) as response:
+                async with session.post(endpoint[0], timeout=aiohttp.ClientTimeout(total=10), json=data, headers=headers, ssl=await request_security()) as response:
                     LOG.info(f"POST query to service: {endpoint}")
                     # On successful response, forward response
                     if response.status == 200:
