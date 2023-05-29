@@ -17,8 +17,11 @@ async def send_beacon_query(request):
     LOG.debug("Normal response (sync).")
 
     tasks = []  # requests to be done
-    services = await get_services(request.host)  # service urls (beacons, aggregators) to be queried
+    #services = await get_services(request.host)  # service urls (beacons, aggregators) to be queried
+    services = ["https://beacon.demo.umccr.org"]
     access_token = await get_access_token(request)  # Get access token if one exists
+
+    print(access_token)
 
     for service in services:
         # Generate task queue
