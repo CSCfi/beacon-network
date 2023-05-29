@@ -1,0 +1,6 @@
+.github/
+.s2i/
+docs/
+venv/
+Dockerfile
+deploy/aws/

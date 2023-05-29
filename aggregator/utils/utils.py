@@ -14,9 +14,11 @@ import uvloop
 from aiohttp import web
 from aiocache import cached, SimpleMemoryCache
 from aiocache.serializers import JsonSerializer
+from aiohttp_session import get_session
 
 from ..config import CONFIG
 from .logging import LOG
+from ..constants import SESSION_KEY_CILOGON_TOKEN
 
 # Used by query_service() and ws_bundle_return() in a similar manner as ../endpoints/query.py
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -154,6 +156,8 @@ async def get_access_token(request):
     LOG.debug("Look for access token.")
     access_token = None
 
+    session = await get_session(request)
+
     if "Authorization" in request.headers:
         LOG.debug("Auth from headers.")
         try:
@@ -169,6 +173,8 @@ async def get_access_token(request):
         LOG.debug("Auth from cookies.")
         # Then check if access token was stored in cookies
         access_token = request.cookies.get("access_token")
+    elif SESSION_KEY_CILOGON_TOKEN in session:
+        access_token = session[SESSION_KEY_CILOGON_TOKEN]
     else:
         LOG.debug("No auth.")
         # Otherwise send nothing
