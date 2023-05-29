@@ -35,7 +35,7 @@ async def info(request):
     return web.json_response(await get_info(request.host))
 
 
-@routes.post("/query1")
+@routes.post("/query")
 async def query1(request):
     """Forward variant query to Beacons."""
     LOG.debug("POST /query received.")
