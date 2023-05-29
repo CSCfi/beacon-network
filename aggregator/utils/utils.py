@@ -1,5 +1,5 @@
 """Small General-Purpose Utility Functions."""
-
+import json
 import os
 import sys
 import ujson
@@ -102,7 +102,8 @@ async def process_url(url):
     # Check which endpoint to use, Beacon 1.0 or 2.0
     query_endpoints = ["query"]
     if url[1] == 2:
-        query_endpoints = ["individuals", "g_variants", "biosamples", "runs", "analyses", "interactors", "cohorts", "filtering_terms"]
+        query_endpoints = ["individuals", "g_variants", "biosamples", "runs", "analyses", "interactors", "cohorts",
+                           "filtering_terms"]
 
     LOG.debug(f"Using endpoint {query_endpoints}")
     urls = []
@@ -237,6 +238,76 @@ def pre_process_beacon2(raw_data):
     if (filter := raw_data.get("filters")) is not None:
         data["filters"] = filter
     return data
+
+
+async def pre_process_post_payload(version, params, filter_options):
+    """
+    Pre-process GET query string into POST payload.
+    This function serves as a translator between Beacon 1.0 and 2.0 specifications.
+    """
+    LOG.debug(f"Processing post payload for version {str(version)}.")
+    # parse the query string into a dict
+    raw_data = dict(parse.parse_qsl(params))
+    if version == 2:
+        # checks if a query is a listing search
+        if (filter_options) is not None:
+            data = filter_options
+
+        elif (raw_data.get("referenceName")) is not None:
+            data = pre_process_beacon2(raw_data)
+        else:
+            # beaconV2 expects some data but in listing search these are not needed thus they are empty
+            data = {"assemblyId": "", "includeDatasetResponses": ""}
+
+    else:
+        # convert string digits into integers
+        # Beacon 1.0 uses integer coordinates, while Beacon 2.0 uses string coordinates (ignore referenceName, it should stay as a string)
+        raw_data = {k: int(v) if v.isdigit() and k != "referenceName" else v for k, v in raw_data.items()}
+        # Beacon 1.0
+        # Unmodified structure for version 1, straight parsing from GET query string to POST payload
+        data = raw_data
+    return data
+
+
+async def post_query_service(service, params, access_token, filter_options, ws=None):
+    """Query service with params."""
+    LOG.debug("post_query_service")
+    LOG.debug("post_query_service.......filter_options......."+str(filter_options))
+    headers = {}
+    if access_token:
+        headers.update({"Authorization": f"Bearer {access_token}"})
+    endpoint = await find_query_endpoint(service, params)
+    # Pre-process query string into payload format
+    if endpoint is not None:
+        data = await pre_process_post_payload(endpoint[1], params, filter_options)
+
+        # Query service in a session
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.post(endpoint[0], json=json.loads(data), headers=headers, ssl=await request_security()) as response:
+                    LOG.info(f"POST query to service: {endpoint} with filter options:"+str(data)+": and header:"+str(headers))
+                    # On successful response, forward response
+                    if response.status == 200:
+                        return await _service_response(response, ws)
+                    elif response.status == 405:
+                        return await _get_request(session, endpoint, params, headers, ws)
+                    else:
+                        # HTTP errors
+                        error = {
+                            "service": endpoint[0],
+                            "queryParams": params,
+                            "responseStatus": response.status,
+                            "exists": None,
+                        }
+
+                        LOG.error(f"Query to {service} failed: {response}.")
+                        if ws is not None:
+                            return await ws.send_str(ujson.dumps(error, escape_forward_slashes=False))
+                        else:
+                            return error
+            except Exception as e:
+                LOG.debug(f"Query error {e}.")
+                web.HTTPInternalServerError(text="An error occurred while attempting to query services.")
 
 
 async def find_query_endpoint(service, params):

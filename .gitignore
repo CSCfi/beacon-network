@@ -3,3 +3,5 @@ __pycache__/
 beacon_network.egg-info/
 .tox/
 .coverage
+/venv/
+/.idea/
