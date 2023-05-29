@@ -1,0 +1,28 @@
+{
+  "name": "beacon-network-deploy-aws",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A CDK stack for deploying beacon network to UMCCR/Biocommons",
+  "scripts": {
+    "umccr-dev-deploy": "cdk --app 'npx ts-node stacks.ts' deploy BeaconNetworkUmccrDev",
+    "umccr-dev-destroy": "cdk --app 'npx ts-node stacks.ts' destroy BeaconNetworkUmccrDev",
+    "biocommons-dev-deploy": "cdk --app 'npx ts-node stacks.ts' deploy BeaconNetworkAustralianBiocommonsProd",
+    "biocommons-dev-destroy": "cdk --app 'npx ts-node stacks.ts' destroy BeaconNetworkAustralianBiocommonsProd"
+  },
+  "devDependencies": {
+    "@tsconfig/node18": "2.0.0",
+    "@types/node": "18.16.3",
+    "aws-cdk": "2.79.0",
+    "prettier": "2.8.8",
+    "ts-node": "10.9.1",
+    "typescript": "5.0.4"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.79.0",
+    "@aws-cdk/aws-apprunner-alpha": "2.79.0-alpha.0",
+    "constructs": "10.2.13",
+    "esbuild": "0.17.18",
+    "source-map-support": "0.5.21"
+  }
+}
+
