@@ -54,7 +54,7 @@ setup(
             "aioresponses==0.7.4",
             "black==23.3.0",
         ],
-        "docs": ["sphinx >= 1.4", "sphinx_rtd_theme==1.2.0"],
+        "docs": ["sphinx >= 1.4", "sphinx_rtd_theme==1.2.1"],
     },
     entry_points={
         "console_scripts": [
