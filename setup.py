@@ -20,6 +20,7 @@ setup(
         "aggregator",
         "aggregator/config",
         "aggregator/endpoints",
+        "aggregator/schemas",
         "aggregator/utils",
         "registry",
         "registry/config",

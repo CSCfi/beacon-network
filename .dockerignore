@@ -4,3 +4,5 @@ docs/
 venv/
 Dockerfile
 deploy/aws/
+ui/dist/
+ui/node_modules/

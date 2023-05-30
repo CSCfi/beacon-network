@@ -1,15 +1,12 @@
 """Aggregator Query Endpoint."""
 
 import asyncio
-from dataclasses import dataclass
 from typing import List
 
 import aiohttp
 import uvloop
-
 from aiohttp import web
 from jsonschema import Draft7Validator, validators
-from jsonschema.exceptions import ValidationError
 
 from .endpoint import BeaconEndpoint
 from ..config import CONFIG
@@ -17,8 +14,6 @@ from ..schemas import load_schema
 from ..utils.logging import LOG
 from ..utils.utils import (
     get_access_token,
-    get_services,
-    query_service,
     parse_results,
     post_query_service,
 )
@@ -103,6 +98,8 @@ async def post_beacon_query(request: aiohttp.web.Request):
     schema = load_schema("beacon_body")
     request_json_body = await request.json()
 
+    LOG.debug(request_json_body)
+
     #try:
     #    LOG.debug("Validate against JSON schema")
     #
@@ -116,6 +113,8 @@ async def post_beacon_query(request: aiohttp.web.Request):
 
     endpoints: List[BeaconEndpoint] = CONFIG.endpoints
 
+    LOG.debug(endpoints)
+
     # get an access token if we have one (either from client or in our session)
     access_token = await get_access_token(request)
 
@@ -128,11 +127,6 @@ async def post_beacon_query(request: aiohttp.web.Request):
 
     # Prepare and initiate co-routines
     results = await asyncio.gather(*tasks)
-
-    # Check if this aggregator is aggregating aggregators
-    # Aggregators return lists instead of objects, so they need to be broken down into a single list
-    if CONFIG.aggregators:
-        results = await parse_results(results)
 
     return results
 
