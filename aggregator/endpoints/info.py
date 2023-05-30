@@ -16,7 +16,11 @@ async def get_info(host):
     service_info = {
         "id": ".".join(reversed(host.split("."))),
         "name": CONFIG.name,
-        "type": {"group": CONFIG.type_group, "artifact": CONFIG.type_artifact, "version": CONFIG.type_version},
+        "type": {
+            "group": CONFIG.type_group,
+            "artifact": CONFIG.type_artifact,
+            "version": CONFIG.type_version,
+        },
         "description": CONFIG.description,
         "organization": {"name": CONFIG.organization, "url": CONFIG.organization_url},
         "contactUrl": CONFIG.contact_url,
