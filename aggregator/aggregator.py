@@ -16,7 +16,7 @@ from jwt import PyJWKSet
 from aggregator.aio_http_session_helper import get_session_secret_from_env
 from aggregator.constants import SESSION_KEY_CILOGON_TOKEN
 from aggregator.endpoints.endpoint import BeaconEndpoint
-from aggregator.jwt_helper import get_private_key_from_env, generate_beacon_network_jwt
+from aggregator.jwt_helper import get_private_key_from_env, generate_beacon_network_jwt, OUR_KID
 from aggregator.oidc_helper import (
     get_oidc_client_from_env,
     CALLBACK_ROUTE,
@@ -47,10 +47,7 @@ jwt_private_key_key = "jwt_private_key"
 oidc_client_key = "oidc_client"
 oidc_server_jwks_key = "oidc_server_jwks"
 
-# a random string that we use for our minted JWT kid
-# should really be part of a key rotation exposed through JWKS but for the
-# moment is purely static
-OUR_KID = "dNEmoQYvSr"
+
 
 
 @routes.post("/cilogon/auth")

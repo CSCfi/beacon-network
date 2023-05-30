@@ -1,10 +1,18 @@
+import datetime
 import os
 from typing import List
 
 import jwt
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from jwt import PyJWKClient
 from .utils.logging import LOG
+
+
+# a random string that we use for our minted JWT kid
+# should really be part of a key rotation exposed through JWKS but for the
+# moment is purely static
+OUR_KID = "dNEmoQYvSr"
 
 
 def generate_beacon_network_jwt(
@@ -22,11 +30,16 @@ def generate_beacon_network_jwt(
         "aud": [issuer] + other_sites,
     }
 
+    LOG.debug(cilogon_decoded)
+
     if "groups" in cilogon_decoded:
         g: List[str] = cilogon_decoded["groups"]
 
         if "HGPP Researcher by Organisation" in g:
             payload["researcher"] = True
+
+        if "HGPP Trusted Researcher" in g:
+            payload["trusted_researcher"] = True
 
     LOG.debug(payload)
 
@@ -39,9 +52,12 @@ def generate_beacon_network_jwt(
 
 
 def test_beacon_network_jwt_create_and_decode():
-    jwt = generate_beacon_network_jwt(
-        "https://fake.site.com",
-        ["https://fake2.site.com"],
+    ISSUER = "https://beacon-network.dev.umccr.org"
+    AUD = "https://beacon.demo.umccr.org"
+
+    tok = generate_beacon_network_jwt(
+        ISSUER,
+        [AUD],
         {
             "sub": "http://cilogon.org/serverA/users/46001501",
             "iss": "https://test.cilogon.org",
@@ -55,21 +71,33 @@ def test_beacon_network_jwt_create_and_decode():
                 "OIDC mgrs",
                 "CO:admins",
             ],
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1),
             "given_name": "Andrew",
             "aud": "cilogon:/client_id/2f3284e8fb5c3d3d956448c316aec43c",
-            "auth_time": 1685325378,
             "name": "Andrew Patterson",
-            "exp": 1685326279,
-            "family_name": "Patterson",
-            "iat": 1685325379,
             "email": "andrew@patto.net",
             "jti": "https://test.cilogon.org/oauth2/idToken/value",
         },
         get_private_key_from_env(),
-        "AKID",
+        OUR_KID,
     )
 
-    print(jwt)
+    # this is how to get the JWKS dynamically from the deployed service
+    jwks_client = PyJWKClient("https://beacon-network.dev.umccr.org/.well-known/jwks.json")
+
+    signing_key = jwks_client.get_signing_key_from_jwt(tok)
+
+    # here we decode with the local one however as the deployed v local is not the same key
+    decoded = jwt.decode(
+        tok,
+        get_private_key_from_env().public_key(),
+        algorithms=["EdDSA"],
+        audience=AUD,
+        issuer=ISSUER,
+        options={},
+    )
+
+    print(decoded)
 
 
 def get_private_key_from_env():
@@ -114,8 +142,5 @@ def generate_private_key_for_env():
     # this is a technique for bash the allows insertion of escape sequences in env strings
     return f"export JWT_PEM=$'{private_key_pem_as_env_string}'"
 
-
-# # Create a JWT payload
-#
-#
-#
+if __name__ == "__main__":
+    test_beacon_network_jwt_create_and_decode()
