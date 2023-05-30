@@ -31,6 +31,7 @@ def get_client_id():
 def get_issuer():
     return "https://test.cilogon.org"
 
+
 async def get_oidc_client_from_env():
     SERVER = get_issuer()
     AUTHORIZE_URL = f"{SERVER}/authorize"
@@ -42,7 +43,9 @@ async def get_oidc_client_from_env():
     jwkset: Optional[PyJWKSet] = None
 
     async with aiohttp.ClientSession() as session:
-        async with session.get(f"{SERVER}/.well-known/openid-configuration") as response:
+        async with session.get(
+            f"{SERVER}/.well-known/openid-configuration"
+        ) as response:
             if response.status == 200:
                 oidc_config = await response.json()
 
@@ -55,11 +58,14 @@ async def get_oidc_client_from_env():
     if not jwkset:
         raise Exception("JWKS set not constructed")
 
-    return OAuth2Client(
-        client_id=get_client_id(),
-        client_secret=os.environ["CLIENT_SECRET"],
-        base_url=SERVER,
-        authorize_url=AUTHORIZE_URL,
-        access_token_url=TOKEN_URL,
-        logger=LOG
-    ), jwkset
+    return (
+        OAuth2Client(
+            client_id=get_client_id(),
+            client_secret=os.environ["CLIENT_SECRET"],
+            base_url=SERVER,
+            authorize_url=AUTHORIZE_URL,
+            access_token_url=TOKEN_URL,
+            logger=LOG,
+        ),
+        jwkset,
+    )

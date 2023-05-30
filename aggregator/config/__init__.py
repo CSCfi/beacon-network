@@ -28,7 +28,8 @@ def parse_config_file(path):
     config_vars = {
         "host": os.environ.get("APP_HOST", config.get("app", "host")) or "0.0.0.0",
         "port": int(os.environ.get("APP_PORT", config.get("app", "port")) or 8080),
-        "registries": load_json(config.get("app", "registries")) or [],
+        "endpoints": load_json(config.get("app", "endpoints")) or [],
+        # "registries": load_json(config.get("app", "registries")) or [],
         "beacons": bool(strtobool(config.get("app", "beacons"))) or True,
         "aggregators": bool(strtobool(config.get("app", "aggregators"))) or False,
         "cors": os.environ.get("APP_CORS", config.get("app", "cors")),
@@ -48,4 +49,9 @@ def parse_config_file(path):
     return namedtuple("Config", config_vars.keys())(*config_vars.values())
 
 
-CONFIG = parse_config_file(os.environ.get("CONFIG_FILE", os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini")))
+CONFIG = parse_config_file(
+    os.environ.get(
+        "CONFIG_FILE",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini"),
+    )
+)

@@ -1,0 +1,7 @@
+[
+    {
+        "type": "instance",
+        "base": "https://beacon.demo.umccr.org",
+        "individuals": "https://beacon.demo.umccr.org/individuals"
+    }
+]

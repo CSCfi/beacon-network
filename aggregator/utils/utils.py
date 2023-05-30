@@ -2,6 +2,8 @@
 import json
 import os
 import sys
+from typing import List, Any
+
 import ujson
 import ssl
 
@@ -19,6 +21,7 @@ from aiohttp_session import get_session
 from ..config import CONFIG
 from .logging import LOG
 from ..constants import SESSION_KEY_CILOGON_TOKEN
+from ..endpoints.query import BeaconEndpoint
 
 # Used by query_service() and ws_bundle_return() in a similar manner as ../endpoints/query.py
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -58,16 +61,36 @@ async def http_get_service_urls(registry):
                     for r in result:
                         # Parse types: query beacons, or query aggregators, or both?
                         # Check if service has a type tag of Beacons
-                        if CONFIG.beacons and r.get("type", {}).get("artifact") == "beacon":
+                        if (
+                            CONFIG.beacons
+                            and r.get("type", {}).get("artifact") == "beacon"
+                        ):
                             # Create a tuple of URL and service version
                             # the version is used later in deciding the request body
-                            service_urls.append((r["url"], await parse_version(r.get("type").get("version")), "beacon"))
+                            service_urls.append(
+                                (
+                                    r["url"],
+                                    await parse_version(r.get("type").get("version")),
+                                    "beacon",
+                                )
+                            )
                         # Check if service has a type tag of Aggregators
-                        if CONFIG.aggregators and r.get("type", {}).get("artifact") == "beacon-aggregator":
-                            service_urls.append((r["url"], await parse_version(r.get("type").get("version")), "beacon-aggregator"))
+                        if (
+                            CONFIG.aggregators
+                            and r.get("type", {}).get("artifact") == "beacon-aggregator"
+                        ):
+                            service_urls.append(
+                                (
+                                    r["url"],
+                                    await parse_version(r.get("type").get("version")),
+                                    "beacon-aggregator",
+                                )
+                            )
         except Exception as e:
             LOG.debug(f"Query error {e}.")
-            web.HTTPInternalServerError(text="An error occurred while attempting to query services.")
+            web.HTTPInternalServerError(
+                text="An error occurred while attempting to query services."
+            )
 
     return service_urls
 
@@ -81,7 +104,9 @@ async def get_services(url_self):
     # Query Registries for their known Beacon services, fetch only URLs
     service_urls = set()
     for registry in CONFIG.registries:
-        services = await http_get_service_urls(registry.get("url", ""))  # Request URLs from Registry
+        services = await http_get_service_urls(
+            registry.get("url", "")
+        )  # Request URLs from Registry
         service_urls.update(services)  # Add found URLs to set (eliminate duplicates)
 
     # Pre-process URLS
@@ -104,8 +129,16 @@ async def process_url(url):
     # Check which endpoint to use, Beacon 1.0 or 2.0
     query_endpoints = ["query"]
     if url[1] == 2:
-        query_endpoints = ["individuals", "g_variants", "biosamples", "runs", "analyses", "interactors", "cohorts",
-                           "filtering_terms"]
+        query_endpoints = [
+            "individuals",
+            "g_variants",
+            "biosamples",
+            "runs",
+            "analyses",
+            "interactors",
+            "cohorts",
+            "filtering_terms",
+        ]
 
     LOG.debug(f"Using endpoint {query_endpoints}")
     urls = []
@@ -165,10 +198,14 @@ async def get_access_token(request):
             auth_scheme, access_token = request.headers.get("Authorization").split(" ")
             if not auth_scheme == "Bearer":
                 LOG.debug(f'User tried to use "{auth_scheme}"" auth_scheme.')
-                raise web.HTTPBadRequest(text=f'Unallowed authorization scheme "{auth_scheme}", user "Bearer" instead.')
+                raise web.HTTPBadRequest(
+                    text=f'Unallowed authorization scheme "{auth_scheme}", user "Bearer" instead.'
+                )
         except ValueError as e:
             LOG.debug(f"Error while attempting to get token from headers: {e}")
-            raise web.HTTPBadRequest(text='Authorization header requires "Bearer" scheme.')
+            raise web.HTTPBadRequest(
+                text='Authorization header requires "Bearer" scheme.'
+            )
     elif "access_token" in request.cookies:
         LOG.debug("Auth from cookies.")
         # Then check if access token was stored in cookies
@@ -200,13 +237,18 @@ async def pre_process_payload(version, params):
         else:
             # beaconV2 expects some data but in listing search these are not needed and therefore they are empty
             data = {"assemblyId": "", "includeDatasetResponses": ""}
-            if (filter := raw_data.get("filters")) != "None" and (raw_data.get("filters")) != "null":
+            if (filter := raw_data.get("filters")) != "None" and (
+                raw_data.get("filters")
+            ) != "null":
                 data["filters"] = filter
         return data
     else:
         # convert string digits into integers
         # Beacon 1.0 uses integer coordinates, while Beacon 2.0 uses string coordinates (ignore referenceName, it should stay as a string)
-        raw_data = {k: int(v) if v.isdigit() and k != "referenceName" else v for k, v in raw_data.items()}
+        raw_data = {
+            k: int(v) if v.isdigit() and k != "referenceName" else v
+            for k, v in raw_data.items()
+        }
         # Beacon 1.0
         # Unmodified structure for version 1, straight parsing from GET query string to POST payload
         data = raw_data
@@ -219,7 +261,10 @@ async def pre_process_payload(version, params):
 def pre_process_beacon2(raw_data):
     """Pre-process GET query string into POST payload for beacon2."""
     # default data which is always present
-    data = {"assemblyId": raw_data.get("assemblyId"), "includeDatasetResponses": raw_data.get("includeDatasetResponses")}
+    data = {
+        "assemblyId": raw_data.get("assemblyId"),
+        "includeDatasetResponses": raw_data.get("includeDatasetResponses"),
+    }
     # optionals
     if (rn := raw_data.get("referenceName")) is not None:
         data["referenceName"] = rn
@@ -237,9 +282,13 @@ def pre_process_beacon2(raw_data):
     if (e := raw_data.get("end")) is not None:
         data["end"] = e
     # range coordinates
-    if (smin := raw_data.get("startMin")) is not None and (smax := raw_data.get("startMax")) is not None:
+    if (smin := raw_data.get("startMin")) is not None and (
+        smax := raw_data.get("startMax")
+    ) is not None:
         data["start"] = ",".join([smin, smax])
-    if (emin := raw_data.get("endMin")) is not None and (emax := raw_data.get("endMax")) is not None:
+    if (emin := raw_data.get("endMin")) is not None and (
+        emax := raw_data.get("endMax")
+    ) is not None:
         data["end"] = ",".join([emin, emax])
     if (filter := raw_data.get("filters")) is not None:
         data["filters"] = filter
@@ -268,59 +317,69 @@ async def pre_process_post_payload(version, params, filter_options):
     else:
         # convert string digits into integers
         # Beacon 1.0 uses integer coordinates, while Beacon 2.0 uses string coordinates (ignore referenceName, it should stay as a string)
-        raw_data = {k: int(v) if v.isdigit() and k != "referenceName" else v for k, v in raw_data.items()}
+        raw_data = {
+            k: int(v) if v.isdigit() and k != "referenceName" else v
+            for k, v in raw_data.items()
+        }
         # Beacon 1.0
         # Unmodified structure for version 1, straight parsing from GET query string to POST payload
         data = raw_data
     return data
 
 
-async def post_query_service(service, params, access_token, filter_options, ws=None):
+async def post_query_service(endpoint: BeaconEndpoint, access_token: str, body: Any):
     """Query service with params."""
     LOG.debug("post_query_service")
-    LOG.debug("post_query_service.......filter_options......."+str(filter_options))
+
     headers = {}
+
     if access_token:
         headers.update({"Authorization": f"Bearer {access_token}"})
-    endpoint = await find_query_endpoint(service, params)
-    # Pre-process query string into payload format
-    if endpoint is not None:
-        data = await pre_process_post_payload(endpoint[1], params, filter_options)
 
-        # Query service in a session
-        async with aiohttp.ClientSession() as session:
-            try:
-                async with session.post(endpoint[0], json=json.loads(data), headers=headers, ssl=await request_security()) as response:
-                    LOG.info(f"POST query to service: {endpoint} with filter options:"+str(data)+": and header:"+str(headers))
-                    # On successful response, forward response
-                    if response.status == 200:
-                        return await _service_response(response, ws)
-                    elif response.status == 405:
-                        return await _get_request(session, endpoint, params, headers, ws)
-                    else:
-                        # HTTP errors
-                        error = {
-                            "service": endpoint[0],
-                            "queryParams": params,
-                            "responseStatus": response.status,
-                            "exists": None,
-                        }
+    # Query service in a session
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.post(
+                endpoint["individuals"],
+                json=body,
+                headers=headers,
+                ssl=await request_security(),
+            ) as response:
+                LOG.info(
+                    f"POST query to service: {endpoint['individuals']} with body:"
+                    + str(body)
+                    + ": and header:"
+                    + str(headers)
+                )
+                # On successful response, forward response
+                if response.status == 200:
+                    return await _service_response(response, None)
+                elif response.status == 405:
+                    raise Exception("We do not support downgrading POST to GET")
+                else:
+                    # HTTP errors
+                    error = {
+                        "service": endpoint["base"],
+                        "queryParams": body,
+                        "responseStatus": response.status,
+                        "exists": None,
+                    }
 
-                        LOG.error(f"Query to {service} failed: {response}.")
-                        if ws is not None:
-                            return await ws.send_str(ujson.dumps(error, escape_forward_slashes=False))
-                        else:
-                            return error
-            except Exception as e:
-                LOG.debug(f"Query error {e}.")
-                web.HTTPInternalServerError(text="An error occurred while attempting to query services.")
+                    LOG.error(f"Query to {endpoint['base']} failed: {response}.")
+                    return error
+        except Exception as e:
+            LOG.debug(f"Query error {e}.")
+            web.HTTPInternalServerError(
+                text="An error occurred while attempting to query services."
+            )
 
 
-async def find_query_endpoint(service, params):
+async def find_query_endpoint(service: List[str], params):
     """Find endpoint for queries by parameters."""
     # since beaconV2 has multiple endpoints this method is used to define those endpoints from parameters
     endpoints = service
-    # if lenght is 1 then beacon is v1
+
+    # if length is 1 then beacon is v1
     raw_data = dict(parse.parse_qsl(params))
     if len(endpoints) <= 1 and raw_data.get("searchInInput") is None:
         return service[0]
@@ -331,9 +390,17 @@ async def find_query_endpoint(service, params):
             if raw_data.get("searchInInput") is not None:
                 if raw_data.get("searchInInput") in endpoint[0]:
                     if raw_data.get("id") != "0" and raw_data.get("id") is not None:
-                        if raw_data.get("searchByInput") != "" and raw_data.get("searchByInput") is not None:
+                        if (
+                            raw_data.get("searchByInput") != ""
+                            and raw_data.get("searchByInput") is not None
+                        ):
                             url = list(endpoint)
-                            url[0] += "/" + raw_data.get("id") + "/" + raw_data.get("searchByInput")
+                            url[0] += (
+                                "/"
+                                + raw_data.get("id")
+                                + "/"
+                                + raw_data.get("searchByInput")
+                            )
                             endpoint = tuple(url)
                             return endpoint
 
@@ -347,7 +414,9 @@ async def find_query_endpoint(service, params):
 async def _service_response(response, ws):
     """Process response to web socket or HTTP."""
     result = await response.json()
-    LOG.debug(f"result: {result}")
+
+    # LOG.debug(f"result: {result}")
+
     if ws is not None:
         # If the response comes from another aggregator, it's a list, and it needs to be broken down into dicts
         if isinstance(result, list):
@@ -369,7 +438,9 @@ async def _service_response(response, ws):
 
 async def _get_request(session, service, params, headers, ws):
     """Get request for 1.0 beacons."""
-    async with session.get(service[0], params=params, headers=headers, ssl=await request_security()) as response:
+    async with session.get(
+        service[0], params=params, headers=headers, ssl=await request_security()
+    ) as response:
         LOG.info(f"GET query to service: {service[0]}")
         # On successful response, forward response
         if response.status == 200:
@@ -377,10 +448,17 @@ async def _get_request(session, service, params, headers, ws):
 
         else:
             # HTTP errors
-            error = {"service": service[0], "queryParams": params, "responseStatus": response.status, "exists": None}
+            error = {
+                "service": service[0],
+                "queryParams": params,
+                "responseStatus": response.status,
+                "exists": None,
+            }
             LOG.error(f"Query to {service} failed: {response}.")
             if ws is not None:
-                return await ws.send_str(ujson.dumps(error, escape_forward_slashes=False))
+                return await ws.send_str(
+                    ujson.dumps(error, escape_forward_slashes=False)
+                )
             else:
                 return error
 
@@ -398,13 +476,20 @@ async def query_service(service, params, access_token, ws=None):
         # Query service in a session
         async with aiohttp.ClientSession() as session:
             try:
-                async with session.post(endpoint[0], json=data, headers=headers, ssl=await request_security()) as response:
+                async with session.post(
+                    endpoint[0],
+                    json=data,
+                    headers=headers,
+                    ssl=await request_security(),
+                ) as response:
                     LOG.info(f"POST query to service: {endpoint}")
                     # On successful response, forward response
                     if response.status == 200:
                         return await _service_response(response, ws)
                     elif response.status == 405:
-                        return await _get_request(session, endpoint, params, headers, ws)
+                        return await _get_request(
+                            session, endpoint, params, headers, ws
+                        )
                     else:
                         # HTTP errors
                         error = {
@@ -416,12 +501,16 @@ async def query_service(service, params, access_token, ws=None):
 
                         LOG.error(f"Query to {service} failed: {response}.")
                         if ws is not None:
-                            return await ws.send_str(ujson.dumps(error, escape_forward_slashes=False))
+                            return await ws.send_str(
+                                ujson.dumps(error, escape_forward_slashes=False)
+                            )
                         else:
                             return error
             except Exception as e:
                 LOG.debug(f"Query error {e}.")
-                web.HTTPInternalServerError(text="An error occurred while attempting to query services.")
+                web.HTTPInternalServerError(
+                    text="An error occurred while attempting to query services."
+                )
 
 
 async def ws_bundle_return(result, ws):
@@ -498,7 +587,9 @@ def load_certs(ssl_context):
             os.environ.get("PATH_SSL_CERT_FILE", "/etc/ssl/certs/cert.pem"),
             keyfile=os.environ.get("PATH_SSL_KEY_FILE", "/etc/ssl/certs/key.pem"),
         )
-        ssl_context.load_verify_locations(cafile=os.environ.get("PATH_SSL_CA_FILE", "/etc/ssl/certs/ca.pem"))
+        ssl_context.load_verify_locations(
+            cafile=os.environ.get("PATH_SSL_CA_FILE", "/etc/ssl/certs/ca.pem")
+        )
     except Exception as e:
         LOG.error(f"Certificates not found {e}")
         sys.exit(
@@ -544,7 +635,9 @@ def application_security():
         ssl_context.verify_mode = ssl.CERT_REQUIRED
         ssl_context = load_certs(ssl_context)
     else:
-        LOG.debug(f"Could not determine application security level ({level}), setting to default (0).")
+        LOG.debug(
+            f"Could not determine application security level ({level}), setting to default (0)."
+        )
 
     return ssl_context
 
@@ -581,6 +674,8 @@ async def request_security():
         ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         ssl_context = load_certs(ssl_context)
     else:
-        LOG.debug(f"Could not determine request security level ({level}), setting to default (0).")
+        LOG.debug(
+            f"Could not determine request security level ({level}), setting to default (0)."
+        )
 
     return ssl_context

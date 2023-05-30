@@ -1,0 +1,28 @@
+{
+  "definitions": {},
+  "type": "object",
+  "title": "POST/PUT /services schema",
+  "required": [
+    "type",
+    "url"
+  ],
+  "properties": {
+    "type": {
+      "title": "Service type of the application, must be one of the two allowed values",
+      "type": "string",
+      "enum": [
+        "beacon",
+        "beacon-aggregator"
+      ]
+    },
+    "url": {
+      "title": "URL to the info endpoint of the service. For example, GA4GH products use /service-info and Beacon API spec uses /. Use HTTPS, HTTP is for local testing only.",
+      "type": "string",
+      "examples": [
+        "https://beacon.ga4gh.org/service-info",
+        "https://elixir-beacon.elixir-europe.org/"
+      ],
+      "pattern": "^http:\/\/|^https:\/\/"
+    }
+  }
+}
