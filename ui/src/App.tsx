@@ -107,7 +107,7 @@ function App() {
           Set Filter to England
         </button>
         <button onClick={() => setFilter({ id: "GAZ:00002638" })}>
-          Set Filter to Northern Island
+          Set Filter to Northern Ireland
         </button>
         <pre>{JSON.stringify(filter, null, 2)}</pre>
       </p>

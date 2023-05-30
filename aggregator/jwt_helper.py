@@ -142,5 +142,6 @@ def generate_private_key_for_env():
     # this is a technique for bash the allows insertion of escape sequences in env strings
     return f"export JWT_PEM=$'{private_key_pem_as_env_string}'"
 
+
 if __name__ == "__main__":
     test_beacon_network_jwt_create_and_decode()

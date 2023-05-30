@@ -48,8 +48,6 @@ oidc_client_key = "oidc_client"
 oidc_server_jwks_key = "oidc_server_jwks"
 
 
-
-
 @routes.post("/cilogon/auth")
 @limiter.limit(DEFAULT_RATE_LIMIT)
 async def auth(request: aiohttp.web.Request):
