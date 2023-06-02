@@ -150,7 +150,7 @@ async def callback(request: aiohttp.web.Request):
     session[SESSION_KEY_CILOGON_TOKEN] = network_beacon_jwt
 
     # response sending them back to the dashboard page but also set some useful cookies for the frontend
-    response = web.HTTPTemporaryRedirect("/")
+    response = web.HTTPTemporaryRedirect("/dashboard")
     response.set_cookie("logged_in_name", decoded["name"])
     response.set_cookie("logged_in_email", decoded["email"])
     response.set_cookie("logged_in_sub", decoded["sub"])
