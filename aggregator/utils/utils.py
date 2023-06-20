@@ -184,15 +184,11 @@ async def pre_process_payload(version, params):
     data = dict(parse.parse_qsl(params))
     LOG.debug(f"parsed query string {params} to dict {data}")
 
-    # parse CSV's into lists and digit strings into integers
+    # parse CSV's into lists
     for k, v in data.items():
         # CSVs to lists
         if "," in v:
-            # many digits in lists to integers
-            data[k] = [int(dv) if dv.isdigit() else dv for dv in v.split(",")]
-        # single digits to integers (not in lists)
-        if v.isdigit():
-            data[k] = int(v)
+            data[k] = [dv for dv in v.split(",")]
 
     # make sure searchTerm is a list if there is just one word
     if "searchTerm" in data:
