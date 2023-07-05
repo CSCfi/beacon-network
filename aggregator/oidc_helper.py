@@ -29,7 +29,7 @@ def get_client_id():
 
 
 def get_issuer():
-    return "https://test.cilogon.org"
+    return os.environ["LOGIN_SERVER"]
 
 
 async def get_oidc_client_from_env():

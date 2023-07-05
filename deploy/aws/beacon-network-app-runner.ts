@@ -42,15 +42,10 @@ export class BeaconNetworkAppRunnerConstruct extends Construct {
           port: 8080,
           environmentSecrets: {
             CLIENT_ID: ecs.Secret.fromSecretsManager(secret, "clientId"),
-            CLIENT_SECRET: ecs.Secret.fromSecretsManager(
-              secret,
-              "clientSecret"
-            ),
-            SESSION_SECRET: ecs.Secret.fromSecretsManager(
-              secret,
-              "sessionSecret"
-            ),
+            CLIENT_SECRET: ecs.Secret.fromSecretsManager(secret,"clientSecret"),
+            SESSION_SECRET: ecs.Secret.fromSecretsManager(secret,"sessionSecret"),
             JWT_PEM: ecs.Secret.fromSecretsManager(secret, "jwtPem"),
+            LOGIN_SERVER: ecs.Secret.fromSecretsManager(secret, "loginServer")
           },
           environmentVariables: {
             DEPLOY_URL: props.deployUrl,
