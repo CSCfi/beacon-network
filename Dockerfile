@@ -1,16 +1,3 @@
-FROM node:18 as NODEBUILD
-
-LABEL maintainer="CCI"
-
-WORKDIR /app
-
-COPY ui/ /app
-
-RUN npm ci
-
-RUN npm run build
-
-
 FROM python:3.8-alpine3.13
 
 RUN apk add --update \
@@ -33,7 +20,6 @@ RUN pip install --upgrade pip && \
 COPY aggregator /app/aggregator
 
 # put the UI in place
-COPY --from=NODEBUILD /app/dist /app/ui/dist/
-
+COPY ui/dist /app/ui/dist
 
 ENTRYPOINT ["python", "-m", "aggregator.aggregator"]
