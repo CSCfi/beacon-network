@@ -31,6 +31,8 @@ export class BeaconNetworkAppRunnerConstruct extends Construct {
     const role = new Role(this, "ServiceRole", {
       assumedBy: new ServicePrincipal("tasks.apprunner.amazonaws.com"),
     });
+    secret.grantRead(role);
+    secret.grantRead(new ServicePrincipal("tasks.apprunner.amazon.com"))
 
     role.attachInlinePolicy(policy);
 
