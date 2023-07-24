@@ -280,7 +280,7 @@ Response
             "updatedAt": "2019-08-02 00:00:13.006256+00:00",
             "contactUrl": "https://www.csc.fi/contact-info",
             "environment": "dev",
-            "version": "1.6.5",
+            "version": "1.6.6",
             "url": "https://staging-elixirbeacon.rahtiapp.fi/"
         },
         {
@@ -301,7 +301,7 @@ Response
             "updatedAt": "2019-08-02 00:00:13.016122+00:00",
             "contactUrl": "https://www.csc.fi/contact-info",
             "environment": "prod",
-            "version": "1.6.5",
+            "version": "1.6.6",
             "url": "https://staging-elixirbeacon.rahtiapp.fi/"
         },
         {
@@ -362,7 +362,7 @@ Response
         "updatedAt": "2019-08-02 00:00:13.006256+00:00",
         "contactUrl": "https://www.csc.fi/contact-info",
         "environment": "dev",
-        "version": "1.6.5",
+        "version": "1.6.6",
         "url": "https://staging-elixirbeacon.rahtiapp.fi/"
     }
 
