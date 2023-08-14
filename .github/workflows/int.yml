@@ -48,7 +48,7 @@ jobs:
           path: beacon2
 
       - name: Download beacon 2 data
-        uses: carlosperate/download-file-action@v2.0.0
+        uses: carlosperate/download-file-action@v2.0.1
         id: download-data
         with:
           file-url:  'https://drive.google.com/uc?export=download&id=1PLv5F54a5pqR_ts5fL68jtmmkuJjDxMA'
