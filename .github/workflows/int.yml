@@ -23,7 +23,7 @@ jobs:
           - 5000:5000
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Get sources
 
       - name: Set up Docker Buildx
@@ -41,7 +41,7 @@ jobs:
           echo "BUILD_BRANCH=$BRANCH" >> $GITHUB_ENV
           
       - name: Clone beacon 2
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: 'CSCfi/beacon-2.x'
           ref: 'test'
