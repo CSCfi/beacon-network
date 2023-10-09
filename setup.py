@@ -30,7 +30,7 @@ setup(
     package_data={"": ["*.json", "*.ini"]},
     install_requires=[
         "asyncio==3.4.3",
-        "aiohttp==3.8.5",
+        "aiohttp==3.8.6",
         "aiohttp-cors==0.7.0",
         "aiocache==0.12.2",
         "aiomcache==0.8.1",
