@@ -1,4 +1,11 @@
-# Beacon Network
+# Archival Notice
+`beacon-network` was developed for ELIXIR Beacon implementation studies [2018](https://elixir-europe.org/internal-projects/commissioned-services/beacon-network-service) and [2019-2021](https://elixir-europe.org/internal-projects/commissioned-services/beacon-2019-21). Development on the Beacon v1 specification has ceased, and a new Beacon v2 specification has been finalised, and is being adopted by beacon providers.
+
+Users are encouraged to move to the next iteration of [Beacon Network v2](https://github.com/elixir-europe/beacon-network-backend). Beacon v2 development can be followed at [GA4GH Beacon v2 Project](https://beacon-project.io/).
+
+We thank all parties that have been involved with us in the development of the Beacon v1 products past these years.
+
+## Beacon Network
 
 ### Github Actions
 [![CodeQL](https://github.com/CSCfi/beacon-network/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/CSCfi/beacon-network/actions/workflows/codeql-analysis.yml)
