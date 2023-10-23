@@ -36,7 +36,7 @@ setup(
         "aiomcache==0.8.1",
         "ujson==5.8.0",
         "uvloop==0.14.0; python_version < '3.7'",
-        "uvloop==0.18.0; python_version >= '3.7'",
+        "uvloop==0.19.0; python_version >= '3.7'",
         "asyncpg==0.28.0",
         "jsonschema==4.19.1",
         "gunicorn==21.2.0",
